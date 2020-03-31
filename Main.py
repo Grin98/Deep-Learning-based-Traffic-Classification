@@ -1,6 +1,7 @@
 import dpkt
 import datetime
 import socket
+import dpkt.ethernet
 from dpkt.compat import compat_ord
 from os import listdir
 from os.path import isfile, join, splitext
@@ -57,17 +58,26 @@ if __name__ == '__main__':
 
         for i, (time, buf) in enumerate(reader):
             print("packet number %d" % (i + 1))
-            eth = dpkt.ethernet.Ethernet(buf)
-            ip = eth.data
-            transport = ip.data
+            print("arrival time %s" % str(datetime.datetime.utcfromtimestamp(time)))
+            print("size %d" % len(buf))
 
-            print("packet arrival time %s" % str(datetime.datetime.utcfromtimestamp(time)))
-            print("packet size %d" % len(buf))
-            if type(ip) is not dpkt.arp.ARP:
-                print("ips: %s -> %s" % (inet_to_str(ip.src), inet_to_str(ip.dst)))
+            eth: dpkt.ethernet.Ethernet = dpkt.ethernet.Ethernet(buf)
+            ip = eth.data
+            if type(ip) == bytes:
+                print("encrypted")
+                print("")
+                continue
+
+            transport = ip.data
+            t = type(ip)
+            if t is dpkt.arp.ARP:
+                print("protocol is ARP")
+            elif t is dpkt.llc.LLC:
+                print("protocol is LLC")
             else:
-                print("Packet protocol is ARP")
+                print("ips: %s -> %s" % (inet_to_str(ip.src), inet_to_str(ip.dst)))
+
             print("macs: %s -> %s" % (mac_addr(eth.src), mac_addr(eth.dst)))
             print("")
+
         f.close()
-        break
