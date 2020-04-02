@@ -50,12 +50,17 @@ if __name__ == '__main__':
 
         for i, p in enumerate(packets):
             print("packet number %d" % (i + 1))
-            if 'IP' not in p:
-                # probably ARP
-                print("No IP Layer")
+
+            if 'IP' in p:
+                ip = p['IP']
+            elif 'IPv6' in p:
+                ip = p['IPv6']
+            else:
+                if 'ARP' not in p:
+                    print(p.show())
                 continue
-            ip: scapy.layers.inet.IP = p['IP']
-            transport = scapy.layers.inet.TCP()  # temp init
+
+            transport = ''  # temp init
             protocol = ''
             if 'TCP' in p:
                 transport = p['TCP']
@@ -63,6 +68,9 @@ if __name__ == '__main__':
             if 'UDP' in p:
                 transport = p['UDP']
                 protocol = 'udp'
+            if 'ICMP' in p:
+                transport = p['ICMP']
+                protocol = 'icmp'
 
             size = len(p)
             arrivalTime = p.time
