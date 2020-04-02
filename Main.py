@@ -1,25 +1,13 @@
-import dpkt
-import datetime
-import socket
-import dpkt.ethernet
-from dpkt.compat import compat_ord
 from os import listdir
 from os.path import isfile, join, splitext
+from scapy.all import *
+import scapy.layers
+import scapy.layers.inet
+import datetime
 
 
 def printType(obj):
     print(type(obj))
-
-
-def mac_addr(address):
-    """Convert a MAC address to a readable/printable string
-
-       Args:
-           address (str): a MAC address in hex form (e.g. '\x01\x02\x03\x04\x05\x06')
-       Returns:
-           str: Printable/readable MAC address
-    """
-    return ':'.join('%02x' % compat_ord(b) for b in address)
 
 
 def inet_to_str(inet):
@@ -39,45 +27,47 @@ def inet_to_str(inet):
 
 if __name__ == '__main__':
     dataDirectoryPath = "dataset samples"
+    metaDirectoryPath = "metaSamples"
+
     filesNames = [f for f in listdir(dataDirectoryPath) if isfile(join(dataDirectoryPath, f))]
-
+    if not os.path.exists(metaDirectoryPath):
+        os.mkdir(metaDirectoryPath)
     print(filesNames)
-    for fileName in filesNames:
-        print("parsing " + fileName)
 
-        f = open(join(dataDirectoryPath, fileName), 'br')
-        _, fileExtension = splitext(fileName)
-        reader = ''
-        if fileExtension == '.pcap':
-            reader = dpkt.pcap.Reader(f)
-        elif fileExtension == '.pcapng':
-            reader = dpkt.pcapng.Reader(f)
+    for fileFullName in filesNames:
+        print("parsing " + fileFullName)
+
+        fileName, fileExtension = splitext(fileFullName)
+        pcapFile = open(join(dataDirectoryPath, fileFullName), 'br')
+        metadata = open(join(metaDirectoryPath, fileName + ".txt"), 'w+')
+
+        packets = ''
+        if fileExtension == '.pcap' or fileExtension == '.pcapng':
+            packets = rdpcap(pcapFile)
         else:
             print("illegal extension:" + fileExtension)
             continue
 
-        for i, (time, buf) in enumerate(reader):
+        for i, p in enumerate(packets):
             print("packet number %d" % (i + 1))
-            print("arrival time %s" % str(datetime.datetime.utcfromtimestamp(time)))
-            print("size %d" % len(buf))
-
-            eth: dpkt.ethernet.Ethernet = dpkt.ethernet.Ethernet(buf)
-            ip = eth.data
-            if type(ip) == bytes:
-                print("encrypted")
-                print("")
+            if 'IP' not in p:
+                # probably ARP
+                print("No IP Layer")
                 continue
+            ip: scapy.layers.inet.IP = p['IP']
+            transport = scapy.layers.inet.TCP()  # temp init
+            protocol = ''
+            if 'TCP' in p:
+                transport = p['TCP']
+                protocol = 'tcp'
+            if 'UDP' in p:
+                transport = p['UDP']
+                protocol = 'udp'
 
-            transport = ip.data
-            t = type(ip)
-            if t is dpkt.arp.ARP:
-                print("protocol is ARP")
-            elif t is dpkt.llc.LLC:
-                print("protocol is LLC")
-            else:
-                print("ips: %s -> %s" % (inet_to_str(ip.src), inet_to_str(ip.dst)))
+            size = len(p)
+            arrivalTime = p.time
+            fiveTuple = [ip.src, transport.sport, ip.dst, transport.dport, protocol]
+            metadata.write(str(fiveTuple) + " " + str(size) + " " + str(arrivalTime) + "\n")
 
-            print("macs: %s -> %s" % (mac_addr(eth.src), mac_addr(eth.dst)))
-            print("")
-
-        f.close()
+        pcapFile.close()
+        metadata.close()
