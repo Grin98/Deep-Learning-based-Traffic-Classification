@@ -23,7 +23,7 @@ class FlowPicBuilder:
             self.hist = torch.zeros(self.pic_width, self.pic_height)
             counter = 0
             for packet in f:
-                x_position = int(floor(float(packet[1]) * x_granularity))
+                x_position = int(round(float(packet[1]) * x_granularity))
                 y_position = packet[0]
                 if self.hist[x_position][y_position] == 0:
                     counter += 1
@@ -58,7 +58,7 @@ class FlowPicBuilder:
 
             # normalize time of the packets in the sub flow
             # and decrease size by 1 to fit the indexing of the tensor
-            sub_flow.append((size-1, time - start))
+            sub_flow.append((size - 1, time - start))
 
         # if sub_flow isn't empty add it
         if sub_flow:
