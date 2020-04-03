@@ -31,7 +31,7 @@ if __name__ == '__main__':
         fpb = FlowPicBuilder()
         for key in flows:
             x = fpb.build_pic(flows[key])
-            # TODO check option to save tensors as json and strings
+            # TODO check option to save tensors as json and not strings
             metadata.write(str(x))
 
         metadata.close()

@@ -15,7 +15,8 @@ class FlowPicBuilder:
         self.hist = torch.zeros((pic_width, pic_height), dtype=torch.int16)
 
     def build_pic(self, flow: Flow):
-        x_granularity = self.flow_duration * 1.0 / self.pic_width  # difference in seconds between hist indices
+        # scaling self.flow_duration in seconds to pic's pixel width
+        x_axis_to_second_ratio = self.pic_width * 1.0 / self.flow_duration
         flows = self.__splitFlow__(flow)
 
         flow_pics = []
@@ -23,7 +24,7 @@ class FlowPicBuilder:
             self.hist = torch.zeros(self.pic_width, self.pic_height)
             counter = 0
             for packet in f:
-                x_position = int(round(float(packet[1]) * x_granularity))
+                x_position = int(floor(float(packet[1]) * x_axis_to_second_ratio))
                 y_position = packet[0]
                 if self.hist[x_position][y_position] == 0:
                     counter += 1
