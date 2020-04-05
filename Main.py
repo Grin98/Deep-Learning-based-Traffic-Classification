@@ -3,13 +3,16 @@ from os.path import isfile, join, splitext
 from scapy.all import *
 from PcapParser import PcapParser
 from FlowPicBuilder import FlowPicBuilder
-
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
 
 def print_type(obj):
     print(type(obj))
 
 
 if __name__ == '__main__':
+
     dataDirectoryPath = "dataset samples"
     metaDirectoryPath = "metaSamples"
 
@@ -22,16 +25,29 @@ if __name__ == '__main__':
         print("parsing " + fileFullName)
 
         fileName, fileExtension = splitext(fileFullName)
-        metadata = open(join(metaDirectoryPath, fileName + ".txt"), 'w+')
+        with open(join(metaDirectoryPath, fileName + ".txt"), 'w+') as metadata:
 
-        flows = PcapParser().parse(join(dataDirectoryPath, fileFullName))
-        if flows is None:
-            continue
+            flows = PcapParser().parse(join(dataDirectoryPath, fileFullName))
+            if flows is None:
+                continue
 
-        fpb = FlowPicBuilder()
-        for key in flows:
-            x = fpb.build_pic(flows[key])
-            # TODO check option to save tensors as json and not strings
-            metadata.write(str(x))
+            fpb = FlowPicBuilder()
+            for key in flows:
+                pics = fpb.build_pic(flows[key])
 
-        metadata.close()
+                # for pic in pics:
+                #     x = pic[1]
+                #     if pic[0] == FlowPicBuilder.PicFormat.Sparse:
+                #         x = x.to_dense()
+                #     x = x.numpy()
+                #     x[x >= 1] = 1
+                #     if np.count_nonzero(x) >= 500:
+                #         print(x)
+                #         plt.imshow(x, cmap='binary')
+                #         plt.show()
+                #         exit()
+
+
+                # TODO check option to save tensors as json and not strings
+                metadata.write(str(key))
+                metadata.write(str(pics))

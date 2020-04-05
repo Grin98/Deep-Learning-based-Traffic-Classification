@@ -1,48 +1,57 @@
 from os.path import splitext
-from scapy.all import *
-
+import pyshark
+from pyshark import FileCapture
+from pyshark.packet.packet import Packet
+from pyshark.packet.packet_summary import PacketSummary
+from pyshark.packet.layer import Layer
+from pyshark.packet.fields import LayerFieldsContainer, LayerField
 
 class PcapParser:
     def parse(self, input_file_path):
         _, file_extension = splitext(input_file_path)
-        pcap_file = open(input_file_path, 'br')
 
-        if file_extension == '.pcap' or file_extension == '.pcapng':
-            packets = rdpcap(pcap_file)
-        else:
+        if file_extension != '.pcap' and file_extension != '.pcapng':
             print("illegal extension:" + file_extension)
             return None
 
+        packets = pyshark.FileCapture(input_file_path)
+
         flows = {}
-        for i, p in enumerate(packets):
+        for i, packet in enumerate(packets):
             print("packet number %d" % (i + 1))
 
+            p: Packet = packet
             if 'IP' in p:
-                ip = p['IP']
+                ip: Layer = p['IP']
+                size = int(ip.len)
             elif 'IPv6' in p:
-                ip = p['IPv6']
+                ip: Layer = p['IPv6']
+                print(ip.field_names)
+                size = int(ip.plen)
             else:
-                if 'ARP' not in p:
-                    print(p.show())
+                print("No IP Layer")
                 continue
 
-            transport = ''  # temp init
-            protocol = ''  # temp init
-            if 'TCP' in p:
-                transport = p['TCP']
-                protocol = 'tcp'
-            elif 'UDP' in p:
-                transport = p['UDP']
-                protocol = 'udp'
-            elif 'ICMP' in p:
+            if p.transport_layer is None:
+                print("No Transport Layer")
                 continue
 
-            size = ip.len
-            arrival_time = p.time
-            five_tuple = (ip.src, transport.sport, ip.dst, transport.dport, protocol)
+            highest_protocol = p.highest_layer
+            transport_protocol = p.transport_layer
+            transport: Layer = p[p.transport_layer]
+
+            arrival_time = float(p.sniff_timestamp)
+            src_ip = ip.src
+            dst_ip = ip.dst
+            src_port = transport.srcport
+            dst_port = transport.dstport
+
+            # TODO figure out what len to use
+            five_tuple = (src_ip, src_port, dst_ip, dst_port, transport_protocol)
             if five_tuple in flows:
                 flows[five_tuple].append((size, arrival_time))
             else:
                 flows[five_tuple] = [(size, arrival_time)]
 
+        packets.close()
         return flows

@@ -14,7 +14,7 @@ class FlowPicBuilder:
         self.pic_height = pic_height
         self.hist = torch.zeros((pic_width, pic_height), dtype=torch.int16)
 
-    def build_pic(self, flow: Flow):
+    def build_pic(self, flow: Flow) -> List[tuple]:
         # scaling self.flow_duration in seconds to pic's pixel width
         x_axis_to_second_ratio = self.pic_width * 1.0 / self.flow_duration
         flows = self.__splitFlow__(flow)
