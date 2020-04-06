@@ -24,6 +24,7 @@ class FlowPicBuilder:
             self.hist = torch.zeros(self.pic_width, self.pic_height)
             counter = 0
             for packet in f:
+                # packet is (size, time)
                 x_position = int(floor(float(packet[1]) * x_axis_to_second_ratio))
                 y_position = packet[0]
                 if self.hist[x_position][y_position] == 0:

@@ -6,7 +6,12 @@ from pyshark.packet.packet_summary import PacketSummary
 from pyshark.packet.layer import Layer
 from pyshark.packet.fields import LayerFieldsContainer, LayerField
 
+
 class PcapParser:
+
+    """
+    returns a dict where the keys are 5-tuples and the values are lists of (size, time)
+    """
     def parse(self, input_file_path):
         _, file_extension = splitext(input_file_path)
 
@@ -15,28 +20,23 @@ class PcapParser:
             return None
 
         packets = pyshark.FileCapture(input_file_path)
-
         flows = {}
         for i, packet in enumerate(packets):
             print("packet number %d" % (i + 1))
 
             p: Packet = packet
+            if not self.__is_relevant_packet__(p):
+                continue
+
             if 'IP' in p:
                 ip: Layer = p['IP']
                 size = int(ip.len)
             elif 'IPv6' in p:
                 ip: Layer = p['IPv6']
-                print(ip.field_names)
                 size = int(ip.plen)
             else:
-                print("No IP Layer")
                 continue
 
-            if p.transport_layer is None:
-                print("No Transport Layer")
-                continue
-
-            highest_protocol = p.highest_layer
             transport_protocol = p.transport_layer
             transport: Layer = p[p.transport_layer]
 
@@ -46,7 +46,6 @@ class PcapParser:
             src_port = transport.srcport
             dst_port = transport.dstport
 
-            # TODO figure out what len to use
             five_tuple = (src_ip, src_port, dst_ip, dst_port, transport_protocol)
             if five_tuple in flows:
                 flows[five_tuple].append((size, arrival_time))
@@ -55,3 +54,19 @@ class PcapParser:
 
         packets.close()
         return flows
+
+    def __is_relevant_packet__(self, p: Packet):
+
+        if 'Data' in p and 'UDP' in p:
+            return True
+        else:
+            return False
+
+        if 'DNS' in p or 'STUN' in p:
+            return False
+
+        if p.transport_layer is None:
+            return False
+
+        return True
+
