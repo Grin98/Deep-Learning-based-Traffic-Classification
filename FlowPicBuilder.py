@@ -14,62 +14,18 @@ class FlowPicBuilder:
         self.pic_height = pic_height
         self.hist = torch.zeros((pic_width, pic_height), dtype=torch.int16)
 
-    def build_pic(self, flow: Flow) -> List[tuple]:
+    def build_pic(self, flow: Flow):
         # scaling self.flow_duration in seconds to pic's pixel width
         x_axis_to_second_ratio = self.pic_width * 1.0 / self.flow_duration
-        flows = self.__splitFlow__(flow)
 
-        flow_pics = []
-        for f in flows:
-            self.hist = torch.zeros(self.pic_width, self.pic_height)
-            counter = 0
-            for packet in f:
-                # packet is (size, time)
-                x_position = int(floor(float(packet[1]) * x_axis_to_second_ratio))
-                y_position = packet[0]
-                if self.hist[x_position][y_position] == 0:
-                    counter += 1
-                self.hist[x_position][y_position] += 1
+        # reset hist
+        self.hist = torch.zeros(self.pic_width, self.pic_height)
 
-            # TODO decide if it's even worth it to save pics in different formats
-            if counter < (1.0/3) * self.pic_width * self.pic_height:  # less than third of the hist was changed
-                pic = self.hist.to_sparse()  # changing to sparse to save on memory
-                pic_format = FlowPicBuilder.PicFormat.Sparse
-            else:
-                pic = self.hist.clone()
-                pic_format = FlowPicBuilder.PicFormat.Dense
+        for packet in flow:
+            # packet is (size, time)
+            x_position = int(floor(float(packet[1]) * x_axis_to_second_ratio))
+            y_position = packet[0]
+            self.hist[x_position][y_position] += 1
 
-            flow_pics.insert(0, (pic_format, pic))
-
-        return flow_pics
-
-    def __splitFlow__(self, flow: Flow):
-        start = flow[0][1]
-        splitted_flows = []
-        sub_flow = []
-        for size, time in flow:
-            # throw too large packets
-            if size > self.pic_height:
-                continue
-
-            time_passed = time - start
-            if time_passed >= self.flow_duration:
-                start = time
-                splitted_flows.insert(0, sub_flow.copy())
-                sub_flow = []
-
-            # normalize time of the packets in the sub flow
-            # and decrease size by 1 to fit the indexing of the tensor
-            sub_flow.append((size - 1, time - start))
-
-        # if sub_flow isn't empty add it
-        if sub_flow:
-            splitted_flows.insert(0, sub_flow)
-
-        return splitted_flows
-
-    class PicFormat(Enum):
-        Sparse = 1
-        Dense = 2
-
+        return self.hist.clone()
 
