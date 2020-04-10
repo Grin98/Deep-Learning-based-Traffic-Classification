@@ -6,6 +6,7 @@ import csv
 from typing import List
 import numpy as np
 import torch
+from FlowPicBuilder import FlowPicBuilder
 
 
 def load_dataset(dataset_root_dir):
@@ -32,7 +33,7 @@ def __gather_datasets__(path, label):
 
     dirs = [d for d in listdir(path) if isdir(join(path, d))]
     if not dirs:
-        return [FlowsDataSet(join(path, file), label) for file in listdir(path)]
+        return [FlowsDataSet(join(path, file), label, transform=FlowPicBuilder().build_pic) for file in listdir(path)]
 
     datasets = []
     for d in dirs:
