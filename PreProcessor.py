@@ -19,38 +19,36 @@ class PreProcessor:
         self.packet_size_limit = packet_size_limit
 
     def process_dataset(self):
-        self.process_dir_categories(self.inPath, self.outPath)
+        self.__process_dir_categories__(self.inPath, self.outPath)
 
-    def process_dir_categories(self, input_dir_path, output_dir_path):
+    def __process_dir_categories__(self, input_dir_path, output_dir_path):
 
         if not os.path.exists(output_dir_path):
             os.mkdir(output_dir_path)
 
         categories = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
-        print(listdir(input_dir_path))
-
         for name in categories:
-            self.process_dir_encryptions(join(input_dir_path, name), join(output_dir_path, name))
+            self.__process_dir_encryptions__(join(input_dir_path, name), join(output_dir_path, name))
 
-    def process_dir_encryptions(self, input_dir_path, output_dir_path):
+    def __process_dir_encryptions__(self, input_dir_path, output_dir_path):
 
         if not os.path.exists(output_dir_path):
             os.mkdir(output_dir_path)
 
         encryptions = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
         for name in encryptions:
-            self.process_dir_files(join(input_dir_path, name), join(output_dir_path, name))
+            self.__process_dir_files__(join(input_dir_path, name), join(output_dir_path, name))
 
-    def process_dir_files(self, input_dir_path, output_dir_path):
+    def __process_dir_files__(self, input_dir_path, output_dir_path):
 
         if not os.path.exists(output_dir_path):
             os.mkdir(output_dir_path)
 
         files_names = [f for f in listdir(input_dir_path) if isfile(join(input_dir_path, f))]
         for name in files_names:
-            self.process_file(join(input_dir_path, name), join(output_dir_path, name))
+            self.__process_file__(join(input_dir_path, name), join(output_dir_path, name))
 
-    def process_file(self, input_file_path, output_file_path):
+    def __process_file__(self, input_file_path, output_file_path):
 
         _, file_extension = splitext(input_file_path)
         if file_extension != '.csv':
