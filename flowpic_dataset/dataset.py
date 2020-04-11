@@ -6,7 +6,7 @@ import csv
 from typing import List
 import numpy as np
 import torch
-from FlowPicBuilder import FlowPicBuilder
+from flowpic_dataset.flowpic_builder import FlowPicBuilder
 
 
 def load_dataset(dataset_root_dir):

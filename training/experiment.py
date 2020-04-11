@@ -1,0 +1,118 @@
+import abc
+import argparse
+import json
+import os
+import sys
+from training.result_types import FitResult
+
+
+class Experiment(abc.ABC):
+    """
+        A class abstracting the various tasks of an experiment.
+        Provides methods to run, save and load an experiment
+
+        Use parse_cli to parse the flags needed to conduct the experiment
+        """
+
+    def __init__(self, run_name, data_dir='../data', out_dir='./results', seed=None, **kw):
+        self.experiment_name = run_name
+        self.data_dir = data_dir
+        self.torch_seed = seed
+        self.output_dir = out_dir
+        self.config = locals()
+        self.result = self.__run__(**kw)
+        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
+
+    @staticmethod
+    def parse_cli():
+        p = argparse.ArgumentParser(description='Experiments')
+        sp = p.add_subparsers(help='Sub-commands')
+
+        # Experiment config
+        sp_exp = sp.add_parser('run-exp', help='Run experiment with a single '
+                                               'configuration')
+        sp_exp.add_argument('--run-name', '-n', type=str,
+                            help='Name of run and output file', required=True)
+        sp_exp.add_argument('--out-dir', '-o', type=str, help='Output folder',
+                            default='./results', required=False)
+        sp_exp.add_argument('--seed', '-s', type=int, help='Random seed',
+                            default=None, required=False)
+
+        # # Training
+        sp_exp.add_argument('--bs-train', type=int, help='Train batch size',
+                            default=128, metavar='BATCH_SIZE')
+        sp_exp.add_argument('--bs-test', type=int, help='Test batch size',
+                            metavar='BATCH_SIZE')
+        sp_exp.add_argument('--batches', type=int,
+                            help='Number of batches per epoch', default=100)
+        sp_exp.add_argument('--epochs', type=int,
+                            help='Maximal number of epochs', default=100)
+        sp_exp.add_argument('--early-stopping', type=int,
+                            help='Stop after this many epochs without '
+                                 'improvement', default=3)
+        sp_exp.add_argument('--checkpoints', type=int,
+                            help='Save model checkpoints to this file when test '
+                                 'accuracy improves', default=None)
+        sp_exp.add_argument('--load_checkpoint', help='whether to start training using '
+                                                      'the file provided in --checkpoints as starting point',
+                            default=False)
+        sp_exp.add_argument('--lr', type=float,
+                            help='Learning rate', default=1e-3)
+        sp_exp.add_argument('--reg', type=float,
+                            help='L2 regularization', default=1e-3)
+
+        # # Model
+        sp_exp.add_argument('--filters-per-layer', '-K', type=int, nargs='+',
+                            help='Number of filters per conv layer in a block',
+                            metavar='K', required=True)
+        sp_exp.add_argument('--layers-per-block', '-L', type=int, metavar='L',
+                            help='Number of layers in each block', required=True)
+        sp_exp.add_argument('--pool-every', '-P', type=int, metavar='P',
+                            help='Pool after this number of conv layers',
+                            required=True)
+        sp_exp.add_argument('--hidden-dims', '-H', type=int, nargs='+',
+                            help='Output size of hidden linear layers',
+                            metavar='H', required=True)
+
+        parsed = p.parse_args()
+
+        if 'subcmd_fn' not in parsed:
+            p.print_help()
+            sys.exit()
+        return parsed
+
+    def __run__(self,
+                # Training params
+                bs_train=128, bs_test=None, batches=100, epochs=100,
+                early_stopping=3, checkpoints=None, lr=1e-3, reg=1e-3,
+                # Model params
+                filters_per_layer=[64], layers_per_block=2, pool_every=2,
+                hidden_dims=[1024], ycn=False,
+                **kw):
+        """
+            Execute a single run of experiment with given configuration
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def save_experiment(run_name, out_dir, config, fit_res):
+        output = dict(
+            config=config,
+            results=fit_res._asdict()
+        )
+        output_filename = f'{os.path.join(out_dir, run_name)}.json'
+        os.makedirs(out_dir, exist_ok=True)
+        with open(output_filename, 'w') as f:
+            json.dump(output, f, indent=2)
+
+        print(f'*** Output file {output_filename} written')
+
+    @staticmethod
+    def load_experiment(filename):
+        with open(filename, 'r') as f:
+            output = json.load(f)
+
+        config = output['config']
+        fit_res = FitResult(**output['results'])
+
+        return config, fit_res

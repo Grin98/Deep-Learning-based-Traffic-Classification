@@ -4,8 +4,6 @@ import os
 import csv
 from typing import List, Tuple
 import numpy as np
-from FlowPicBuilder import FlowPicBuilder
-from Utils import show_flow_pic
 
 Flow = List[Tuple[int, float]]
 
