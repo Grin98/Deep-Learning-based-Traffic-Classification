@@ -15,14 +15,14 @@ def load_dataset(dataset_root_dir):
     and returns a ConcatDataset of all of them
     """
 
-    print("Loading dataset")
+    print("=== Loading dataset ===")
     dirs = [d for d in listdir(dataset_root_dir) if isdir(join(dataset_root_dir, d))]
     datasets = []
     for d in dirs:
         print("Loading %s" % d)
         datasets += __gather_datasets__(join(dataset_root_dir, d), d)
 
-    print("\nDataset loading completed\n")
+    print("\n=== Dataset loading completed :D ===\n")
     return ConcatDataset(datasets)
 
 
@@ -41,12 +41,11 @@ def __gather_datasets__(path, label):
     return datasets
 
 
-'''
-parameter label will be the label of all the data entries in the file
-'''
-
-
 class FlowsDataSet(Dataset):
+    """
+    parameter label will be the label of all the data entries in the file
+    """
+
     def __init__(self, csv_file_path, label, transform=None):
         self.label = label
         self.transform = transform
@@ -58,19 +57,11 @@ class FlowsDataSet(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        if not torch.is_tensor(idx):
-            idx = [idx]
+        x = self.data[idx]
+        if self.transform:
+            x = self.transform(x)
 
-        res = []
-        for i in idx:
-            x = self.data[i]
-            if self.transform:
-                x = self.transform(x)
-            res.append((x, self.label))
-
-        if len(res) == 1:
-            return res[0]
-        return res
+        return x, self.label
 
     @staticmethod
     def __transform_row_to_flow__(row: List[str]):
