@@ -29,61 +29,54 @@ class Experiment(abc.ABC):
     @staticmethod
     def parse_cli():
         p = argparse.ArgumentParser(description='Experiments')
-        sp = p.add_subparsers(help='Sub-commands')
 
         # Experiment config
-        sp_exp = sp.add_parser('run-exp', help='Run experiment with a single '
-                                               'configuration')
-        sp_exp.add_argument('--run-name', '-n', type=str,
-                            help='Name of run and output file', required=True)
-        sp_exp.add_argument('--out-dir', '-o', type=str, help='Output folder',
-                            default='./results', required=False)
-        sp_exp.add_argument('--seed', '-s', type=int, help='Random seed',
-                            default=None, required=False)
+        p.add_argument('--run-name', '-n', type=str,
+                       help='Name of run and output file', required=True)
+        p.add_argument('--out-dir', '-o', type=str, help='Output folder',
+                       default='./results', required=False)
+        p.add_argument('--seed', '-s', type=int, help='Random seed',
+                       default=None, required=False)
 
         # # Training
-        sp_exp.add_argument('--bs-train', type=int, help='Train batch size',
-                            default=128, metavar='BATCH_SIZE')
-        sp_exp.add_argument('--bs-test', type=int, help='Test batch size',
-                            metavar='BATCH_SIZE')
-        sp_exp.add_argument('--batches', type=int,
-                            help='Number of batches per epoch', default=100)
-        sp_exp.add_argument('--epochs', type=int,
-                            help='Maximal number of epochs', default=100)
-        sp_exp.add_argument('--early-stopping', type=int,
-                            help='Stop after this many epochs without '
-                                 'improvement', default=3)
-        sp_exp.add_argument('--checkpoints', type=int,
-                            help='Save model checkpoints to this file when test '
-                                 'accuracy improves', default=None)
-        sp_exp.add_argument('--load-checkpoint', help='whether to start training using '
-                                                      'the file provided in --checkpoints as starting point',
-                            default=False)
-        sp_exp.add_argument('--lr', type=float,
-                            help='Learning rate', default=1e-3)
-        sp_exp.add_argument('--reg', type=float,
-                            help='L2 regularization', default=1e-3)
+        p.add_argument('--bs-train', type=int, help='Train batch size',
+                       default=128, metavar='BATCH_SIZE')
+        p.add_argument('--bs-test', type=int, help='Test batch size',
+                       metavar='BATCH_SIZE')
+        p.add_argument('--batches', type=int,
+                       help='Number of batches per epoch', default=100)
+        p.add_argument('--epochs', type=int,
+                       help='Maximal number of epochs', default=100)
+        p.add_argument('--early-stopping', type=int,
+                       help='Stop after this many epochs without '
+                            'improvement', default=3)
+        p.add_argument('--checkpoints', type=int,
+                       help='Save model checkpoints to this file when test '
+                            'accuracy improves', default=None)
+        p.add_argument('--load-checkpoint', help='whether to start training using '
+                                                 'the file provided in --checkpoints as starting point',
+                       default=False)
+        p.add_argument('--lr', type=float,
+                       help='Learning rate', default=1e-3)
+        p.add_argument('--reg', type=float,
+                       help='L2 regularization', default=1e-3)
 
         # # Model
-        sp_exp.add_argument('--filters-per-layer', '-K', type=int, nargs='+',
-                            help='Number of filters per conv layer in a block',
-                            metavar='K', required=True)
-        sp_exp.add_argument('--layers-per-block', '-L', type=int, metavar='L',
-                            help='Number of layers in each block')
-        sp_exp.add_argument('--out-classes', '-O', type=int,
-                            help='Number of output classes', required=True)
-        sp_exp.add_argument('--pool-every', '-P', type=int, metavar='P',
-                            help='Pool after this number of conv layers',
-                            required=True)
-        sp_exp.add_argument('--hidden-dims', '-H', type=int, nargs='+',
-                            help='Output size of hidden linear layers',
-                            metavar='H')
+        p.add_argument('--filters-per-layer', '-K', type=int, nargs='+',
+                       help='Number of filters per conv layer in a block',
+                       metavar='K')
+        p.add_argument('--layers-per-block', '-L', type=int, metavar='L',
+                       help='Number of layers in each block', default=2)
+        p.add_argument('--out-classes', '-O', type=int,
+                       help='Number of output classes', default=4)
+        p.add_argument('--pool-every', '-P', type=int, metavar='P',
+                       help='Pool after this number of conv layers')
+        p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
+                       help='Output size of hidden linear layers',
+                       metavar='H')
 
         parsed = p.parse_args()
 
-        if 'subcmd_fn' not in parsed:
-            p.print_help()
-            sys.exit()
         return parsed
 
     def __run__(self,
@@ -91,8 +84,8 @@ class Experiment(abc.ABC):
                 bs_train=128, bs_test=None, batches=100, epochs=100,
                 early_stopping=3, checkpoints=None, load_checkpoint=False, lr=1e-3, reg=1e-3,
                 # Model params
-                filters_per_layer=[10, 20], layers_per_block=2, out_classes=5, pool_every=2,
-                hidden_dims=[64], ycn=False,
+                filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
+                hidden_dims=None, ycn=False,
                 **kw):
         """
             Execute a single run of experiment with given configuration
