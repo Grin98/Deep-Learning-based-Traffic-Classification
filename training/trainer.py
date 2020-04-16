@@ -2,6 +2,8 @@ import abc
 import os
 import sys
 import tqdm
+import torch
+from pathlib import Path
 from torch.utils.data import DataLoader
 from typing import Callable, Any
 from training.result_types import EpochResult, FitResult, BatchResult
@@ -35,12 +37,15 @@ class Trainer(abc.ABC):
 
     def fit(self, dl_train: DataLoader, dl_test: DataLoader,
             num_epochs, checkpoints: str = None,
-            checkpoint_every: int =1,
+            checkpoint_every: int = 1,
+            load_checkpoint: bool = False,
             early_stopping: int = None,
             print_every=1, **kw) -> FitResult:
         """
         Trains the model for multiple epochs with a given training set,
         and calculates validation loss over a given validation set.
+        :param load_checkpoint: Whether to load a saved checkpoint or not
+        :param checkpoint_every: Number of epochs for every checkpoint save
         :param dl_train: Dataloader for the training set.
         :param dl_test: Dataloader for the test set.
         :param num_epochs: Number of epochs to train for.
@@ -57,6 +62,17 @@ class Trainer(abc.ABC):
 
         best_acc = None
         epochs_without_improvement = 0
+        if checkpoints is not None and load_checkpoint == True:
+            checkpoint_filename = f'{checkpoints}.pt'
+            Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
+            if os.path.isfile(checkpoint_filename):
+                print(f'*** Loading checkpoint file {checkpoint_filename}')
+                saved_state = torch.load(checkpoint_filename,
+                                         map_location=self.device)
+                best_acc = saved_state.get('best_acc', best_acc)
+                epochs_without_improvement = \
+                    saved_state.get('ewi', epochs_without_improvement)
+                self.model.load_state_dict(saved_state['model_state'])
 
         for epoch in range(num_epochs):
             verbose = False  # pass this to train/test_epoch.
@@ -73,9 +89,15 @@ class Trainer(abc.ABC):
 
             epochs_without_improvement = epochs_without_improvement + 1
 
-            # TODO: add checkpoint
-            # if checkpoints is not None and epoch % checkpoint_every == 0:
-                
+            if checkpoints is not None and epoch % checkpoint_every == 0:
+                checkpoint_filename = f'{checkpoints}.pt'
+                saved_state = dict(best_acc=best_acc,
+                                   ewi=epochs_without_improvement,
+                                   model_state=self.model.state_dict())
+                torch.save(saved_state, checkpoint_filename)
+                print(f'*** Saved checkpoint {checkpoint_filename} '
+                      f'at epoch {epoch + 1}')
+
             if best_acc is None or acc > best_acc:
                 best_acc = acc
                 epochs_without_improvement = 0
