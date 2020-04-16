@@ -32,7 +32,6 @@ class FlowPicExperiment(Experiment):
         dataset = load_dataset(self.data_dir)
         dataset_length = len(dataset)
         train_length = int(dataset_length * 0.8)
-        test_length = int(dataset_length * 0.2)
         ds_train, ds_test = random_split(dataset, (train_length, dataset_length-train_length))
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)
@@ -43,7 +42,6 @@ class FlowPicExperiment(Experiment):
             filters += temp
 
         x0, _ = ds_train[0]
-
         model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims)
         loss_fn = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)

@@ -66,7 +66,7 @@ class Experiment(abc.ABC):
                        help='Number of filters per conv layer in a block',
                        metavar='K')
         p.add_argument('--layers-per-block', '-L', type=int, metavar='L',
-                       help='Number of layers in each block', default=2)
+                       help='Number of layers in each block', default=1)
         p.add_argument('--out-classes', '-O', type=int,
                        help='Number of output classes', default=4)
         p.add_argument('--pool-every', '-P', type=int, metavar='P',

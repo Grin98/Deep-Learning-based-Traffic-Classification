@@ -22,19 +22,26 @@ class FlowPicModel(nn.Module):
         self.classifier = self._make_classifier()
 
     def _make_feature_extractor(self):
-        in_channels, _ = tuple(self.in_size)
-
+        in_channels, in_h, in_w = tuple(self.in_size)
         layers = []
         # [(Conv -> ReLU) -> MaxPool]*N
         N = len(self.filters)
         for i in range(N):
-            layers.append(nn.Conv2d(in_channels, self.filters[i], kernel_size=10, stride=5))
+            layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5))
+            in_h = (in_h - 10) // 5 + 1
+            in_w = (in_w - 10) // 5 + 1
             layers.append(nn.ReLU())
             in_channels = self.filters[i]
-            layers.append(nn.MaxPool2d(kernel_size=150))
-        self.features = in_channels * in_channels
+            layers.append(nn.MaxPool2d(2, stride=2))
+            in_h = (in_h-2)//2 + 1
+            in_w = (in_w-2)//2 + 1
 
+        self.features = in_channels * in_h * in_w
+        print("in_channels: ", in_channels)
+        print("in_h: ", in_h)
+        print("features: ", self.features)
         seq = nn.Sequential(*layers)
+        print(seq)
         return seq
 
     def _make_classifier(self):

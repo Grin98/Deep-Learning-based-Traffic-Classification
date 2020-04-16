@@ -12,7 +12,6 @@ class FlowPicTrainer(Trainer):
         if self.device:
             X = X.to(self.device)
             y = y.to(self.device)
-
         out = self.model(X)
         self.optimizer.zero_grad()
         loss = self.loss_fn(out, y)
