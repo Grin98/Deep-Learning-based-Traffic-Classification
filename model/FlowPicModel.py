@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class FlowPicModel(nn.Module):
 
-    def __init__(self, in_size, out_classes, filters, hidden_dims):
+    def __init__(self, in_size, out_classes, filters, hidden_dims, drop_every):
         """
         :param in_size: Size of input pixel images, (Packet size, arrival time).
         :param out_classes: Number of classes to output in the final layer.
@@ -17,6 +17,7 @@ class FlowPicModel(nn.Module):
         self.out_classes = out_classes
         self.filters = filters
         self.hidden_dims = hidden_dims
+        self.drop_every = drop_every
 
         self.feature_extractor = self._make_feature_extractor()
         self.classifier = self._make_classifier()
@@ -28,6 +29,8 @@ class FlowPicModel(nn.Module):
         N = len(self.filters)
         for i in range(N):
             layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5, padding=3))
+            if (i+1) % self.drop_every == 0:
+                layers.append(nn.Dropout(0.25))
             in_h = (in_h - 10 + 6) // 5 + 1
             in_w = (in_w - 10 + 6) // 5 + 1
             print("conv %dx%d" % (in_w, in_h))
@@ -53,12 +56,14 @@ class FlowPicModel(nn.Module):
         input = self.features
         for i in range(M):
             layers.append(nn.Linear(input, self.hidden_dims[i]))
+            layers.append(nn.Dropout(0.5))
             layers.append(nn.ReLU())
             input = self.hidden_dims[i]
         layers.append(nn.Linear(input, self.out_classes))
         layers.append(nn.Softmax())
 
         seq = nn.Sequential(*layers)
+        print(seq)
         return seq
 
     def forward(self, x):

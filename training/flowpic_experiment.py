@@ -16,7 +16,7 @@ class FlowPicExperiment(Experiment):
     # TODO: Implement the training loop
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, lr=1e-3, reg=1e-3, filters_per_layer=None,
-                layers_per_block=2, out_classes=5, pool_every=2, hidden_dims=None, ycn=False,
+                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -42,7 +42,7 @@ class FlowPicExperiment(Experiment):
             filters += temp
 
         x0, _ = ds_train[0]
-        model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims)
+        model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims, drop_every)
         loss_fn = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 

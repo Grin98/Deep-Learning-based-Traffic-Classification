@@ -23,7 +23,7 @@ def load_dataset(dataset_root_dir):
         print("Loading %s" % d)
         datasets += __gather_datasets__(join(dataset_root_dir, d), category)
         category += 1
-        break
+
     print("\n=== Dataset loading completed :D ===\n")
     return ConcatDataset(datasets)
 

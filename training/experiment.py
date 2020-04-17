@@ -44,9 +44,9 @@ class Experiment(abc.ABC):
         p.add_argument('--bs-test', type=int, help='Test batch size',
                        metavar='BATCH_SIZE')
         p.add_argument('--batches', type=int,
-                       help='Number of batches per epoch', default=100)
+                       help='Number of batches per epoch', default=10)
         p.add_argument('--epochs', type=int,
-                       help='Maximal number of epochs', default=100)
+                       help='Maximal number of epochs', default=40)
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
                             'improvement', default=3)
@@ -68,9 +68,11 @@ class Experiment(abc.ABC):
         p.add_argument('--layers-per-block', '-L', type=int, metavar='L',
                        help='Number of layers in each block', default=1)
         p.add_argument('--out-classes', '-O', type=int,
-                       help='Number of output classes', default=4)
+                       help='Number of output classes', default=5)
         p.add_argument('--pool-every', '-P', type=int, metavar='P',
                        help='Pool after this number of conv layers')
+        p.add_argument('--drop-every', '-D', type=int, metavar='P',
+                       help='Pool after this number of conv layers', default=2)
         p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
                        help='Output size of hidden linear layers',
                        metavar='H')
@@ -85,8 +87,7 @@ class Experiment(abc.ABC):
                 early_stopping=3, checkpoints=None, load_checkpoint=False, lr=1e-3, reg=1e-3,
                 # Model params
                 filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
-                hidden_dims=None, ycn=False,
-                **kw):
+                drop_every=2, hidden_dims=None, ycn=False, **kw):
         """
             Execute a single run of experiment with given configuration
         """
