@@ -45,7 +45,7 @@ class FlowPicExperiment(Experiment):
         x0, _ = ds_train[0]
         model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims, drop_every)
         loss_fn = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
+        optimizer = torch.optim.Adam(model.parameters())
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 
