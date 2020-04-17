@@ -56,9 +56,10 @@ class FlowPicModel(nn.Module):
         input = self.features
         for i in range(M):
             layers.append(nn.Linear(input, self.hidden_dims[i]))
-            layers.append(nn.Dropout(0.5))
+            # layers.append(nn.Dropout(0.5))
             layers.append(nn.ReLU())
             input = self.hidden_dims[i]
+        print("out classes:", self.out_classes)
         layers.append(nn.Linear(input, self.out_classes))
         layers.append(nn.Softmax())
 

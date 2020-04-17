@@ -18,7 +18,7 @@ def load_dataset(dataset_root_dir):
     print("=== Loading dataset ===")
     dirs = [d for d in listdir(dataset_root_dir) if isdir(join(dataset_root_dir, d))]
     datasets = []
-    category = 1
+    category = 0
     for d in dirs:
         print("Loading %s" % d)
         datasets += __gather_datasets__(join(dataset_root_dir, d), category)
