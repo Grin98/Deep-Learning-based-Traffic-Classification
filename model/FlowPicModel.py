@@ -27,14 +27,16 @@ class FlowPicModel(nn.Module):
         # [(Conv -> ReLU) -> MaxPool]*N
         N = len(self.filters)
         for i in range(N):
-            layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5))
-            in_h = (in_h - 10) // 5 + 1
-            in_w = (in_w - 10) // 5 + 1
+            layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5, padding=3))
+            in_h = (in_h - 10 + 6) // 5 + 1
+            in_w = (in_w - 10 + 6) // 5 + 1
+            print("conv %dx%d" % (in_w, in_h))
             layers.append(nn.ReLU())
             in_channels = self.filters[i]
             layers.append(nn.MaxPool2d(2, stride=2))
             in_h = (in_h-2)//2 + 1
             in_w = (in_w-2)//2 + 1
+            print("maxpool %dx%d" % (in_w, in_h))
 
         self.features = in_channels * in_h * in_w
         print("in_channels: ", in_channels)
