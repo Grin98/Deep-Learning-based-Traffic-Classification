@@ -24,7 +24,7 @@ class Experiment(abc.ABC):
         self.output_dir = out_dir
         self.config = locals()
         self.result = self.__run__(**kw)
-        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
+#        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 
     @staticmethod
     def parse_cli():
