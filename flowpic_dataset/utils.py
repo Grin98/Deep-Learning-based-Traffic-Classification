@@ -18,11 +18,10 @@ def show_flow_pic(pic):
 
 
 def create_dataset_weights(dataset: Dataset, label_probabilities: List[float]):
-    return [0.2, 0.2, 0.2, 0.2, 0.2]
     return [label_probabilities[y] for _, y in dataset]
 
 
 def create_under_sampling_sampler(dataset: Dataset, bach_size: int, label_probabilities: List[float]):
     return WeightedRandomSampler(create_dataset_weights(dataset, label_probabilities),
-                                 bach_size,
+                                 bach_size*10,
                                  replacement=True)

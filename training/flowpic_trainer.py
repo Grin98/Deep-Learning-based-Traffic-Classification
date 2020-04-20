@@ -1,3 +1,5 @@
+from collections import Counter
+
 import torch
 from training.trainer import Trainer
 from training.result_types import BatchResult
@@ -9,6 +11,7 @@ class FlowPicTrainer(Trainer):
 
     def train_batch(self, batch) -> BatchResult:
         X, y = batch
+        # print(Counter(y.tolist()))
         if self.device:
             X = X.to(self.device)
             y = y.to(self.device)

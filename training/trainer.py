@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 from training.result_types import EpochResult, FitResult, BatchResult
 
+torch.utils.data.sampler.SequentialSampler
+
 
 class Trainer(abc.ABC):
     """
@@ -170,8 +172,9 @@ class Trainer(abc.ABC):
         """
         losses = []
         num_correct = 0
-        num_samples = len(dl.sampler)
-        num_batches = len(dl.batch_sampler)
+        num_batches = max_batches
+        num_samples = num_batches * dl.batch_size
+
         if max_batches is not None:
             if max_batches < num_batches:
                 num_batches = max_batches
@@ -189,6 +192,8 @@ class Trainer(abc.ABC):
             for batch_idx in range(num_batches):
                 data = next(dl_iter)
                 batch_res = forward_fn(data)
+
+
 
                 pbar.set_description(f'{pbar_name} ({batch_res.loss:.3f})')
                 pbar.update()
