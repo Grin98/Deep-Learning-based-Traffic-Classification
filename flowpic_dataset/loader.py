@@ -11,6 +11,8 @@ class FlowPicDataLoader:
     def __init__(self, dataset_root_dir):
         self.root_dir = dataset_root_dir
         self.labels = {}
+        self.labels_count = {}
+
 
     def load_dataset(self, label_level=1, filter_fun=None):
         """
@@ -23,6 +25,7 @@ class FlowPicDataLoader:
         """
 
         self.labels = {}
+        self.labels_count = {}
 
         if label_level == 0:
             raise ValueError("label_level must be greater then 0")
@@ -50,7 +53,10 @@ class FlowPicDataLoader:
         if not dirs:
             dss = [FlowsDataSet(join(path, file), label, transform=FlowPicBuilder().build_pic) for file in
                    listdir(path)]
-            print(path, sum(map(len, dss)))
+            num_flows = sum(map(len, dss))
+            self.__add_to_count__(num_flows, label)
+            print(path, num_flows)
+
             return dss
 
         datasets = []
@@ -65,6 +71,10 @@ class FlowPicDataLoader:
 
         return datasets
 
+    def get_label_weights(self):
+        quantities = list(self.labels_count.values())
+        return [1.0 / x for x in quantities]
+
     @staticmethod
     def __is_label__(label_level: int):
         return label_level == 1
@@ -73,3 +83,9 @@ class FlowPicDataLoader:
         if d not in self.labels:
             self.labels[d] = len(self.labels)
         return self.labels[d]
+
+    def __add_to_count__(self, num, label):
+        if label not in self.labels_count:
+            self.labels_count[label] = num
+        else:
+            self.labels_count[label] += num

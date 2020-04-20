@@ -1,6 +1,10 @@
+from typing import List
+
 import matplotlib as plt
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from torch.utils.data.dataset import Dataset
+from torch.utils.data import WeightedRandomSampler
 
 
 def show_flow_pic(pic):
@@ -11,3 +15,14 @@ def show_flow_pic(pic):
     plt.imshow(x, cmap='binary')
     plt.gca().invert_yaxis()
     plt.show()
+
+
+def create_dataset_weights(dataset: Dataset, label_probabilities: List[float]):
+    return [0.2, 0.2, 0.2, 0.2, 0.2]
+    return [label_probabilities[y] for _, y in dataset]
+
+
+def create_under_sampling_sampler(dataset: Dataset, bach_size: int, label_probabilities: List[float]):
+    return WeightedRandomSampler(create_dataset_weights(dataset, label_probabilities),
+                                 bach_size,
+                                 replacement=True)
