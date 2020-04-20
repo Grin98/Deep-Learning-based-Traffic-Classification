@@ -1,4 +1,5 @@
 import sys
+from time import time
 
 sys.path.append("../")
 sys.path.append("./")
@@ -11,6 +12,7 @@ from flowpic_dataset.loader import FlowPicDataLoader
 from model.FlowPicModel import FlowPicModel
 from training.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
+from flowpic_dataset.utils import create_under_sampling_sampler
 
 
 class FlowPicExperiment(Experiment):
@@ -30,12 +32,28 @@ class FlowPicExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset = FlowPicDataLoader(self.data_dir).load_dataset()
+        dataset_loader = FlowPicDataLoader(self.data_dir)
+        dataset = dataset_loader.load_dataset()
+
         dataset_length = len(dataset)
+        label_probabilities = dataset_loader.get_label_weights()
         train_length = int(dataset_length * 0.8)
-        ds_train, ds_test = random_split(dataset, (train_length, dataset_length-train_length))
-        dl_train = DataLoader(ds_train, bs_train, shuffle=True)
-        dl_test = DataLoader(ds_test, bs_test, shuffle=True)
+        test_length = dataset_length - train_length
+
+        ds_train, ds_test = random_split(dataset, (train_length, test_length))
+
+        print('creating sampler for train')
+        s = time()
+        sampler_train = create_under_sampling_sampler(ds_train, bs_train, label_probabilities)
+        print(time() - s)
+        print('creating sampler for test')
+        s = time()
+        sampler_test = create_under_sampling_sampler(ds_test, bs_test, label_probabilities)
+        print(time() - s)
+        print('done creating sampler')
+
+        dl_train = DataLoader(ds_train, bs_train, shuffle=False, sampler=sampler_train)
+        dl_test = DataLoader(ds_test, bs_test, shuffle=False, sampler=sampler_test)
 
         filters = []
         for filter in filters_per_layer:
