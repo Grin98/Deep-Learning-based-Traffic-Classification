@@ -7,7 +7,7 @@ import torch
 import torch.optim
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
-from flowpic_dataset.dataset import load_dataset
+from flowpic_dataset.loader import FlowPicDataLoader
 from model.FlowPicModel import FlowPicModel
 from training.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
@@ -30,7 +30,7 @@ class FlowPicExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset = load_dataset(self.data_dir)
+        dataset = FlowPicDataLoader(self.data_dir).load_dataset()
         dataset_length = len(dataset)
         train_length = int(dataset_length * 0.8)
         ds_train, ds_test = random_split(dataset, (train_length, dataset_length-train_length))

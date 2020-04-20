@@ -7,6 +7,7 @@ import numpy as np
 
 Flow = List[Tuple[int, float]]
 
+
 class PreProcessor:
     def __init__(self, dataset_dir, processed_dir,
                  flow_duration_in_seconds: int = 60,
@@ -17,25 +18,20 @@ class PreProcessor:
         self.packet_size_limit = packet_size_limit
 
     def process_dataset(self):
-        self.__process_dir_categories__(self.inPath, self.outPath)
+        self.__process_dirs__(self.inPath, self.outPath)
 
-    def __process_dir_categories__(self, input_dir_path, output_dir_path):
-
-        if not os.path.exists(output_dir_path):
-            os.mkdir(output_dir_path)
-
-        categories = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
-        for name in categories:
-            self.__process_dir_encryptions__(join(input_dir_path, name), join(output_dir_path, name))
-
-    def __process_dir_encryptions__(self, input_dir_path, output_dir_path):
+    def __process_dirs__(self, input_dir_path, output_dir_path):
 
         if not os.path.exists(output_dir_path):
             os.mkdir(output_dir_path)
 
-        encryptions = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
-        for name in encryptions:
-            self.__process_dir_files__(join(input_dir_path, name), join(output_dir_path, name))
+        dirs = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
+        if not dirs:
+            for name in listdir(input_dir_path):
+                self.__process_file__(join(input_dir_path, name), join(output_dir_path, name))
+
+        for name in dirs:
+            self.__process_dirs__(join(input_dir_path, name), join(output_dir_path, name))
 
     def __process_dir_files__(self, input_dir_path, output_dir_path):
 
@@ -105,4 +101,3 @@ class PreProcessor:
             splitted_flows.insert(0, sub_flow)
 
         return splitted_flows
-
