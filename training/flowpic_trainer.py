@@ -44,6 +44,10 @@ class FlowPicTrainer(Trainer):
             y = y.cpu()
             pred = pred.cpu()
             m = confusion_matrix(y, pred)
-            print(m.diagonal() / m.sum(1))
+            acc = m.diagonal() / m.sum(1)
+            print("\n")
+            for i, a in enumerate(acc):
+                print(i, ':', a)
+            print("\n")
 
         return BatchResult(loss, num_correct)
