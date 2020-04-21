@@ -20,17 +20,10 @@ class FlowPicTrainer(Trainer):
         loss = self.loss_fn(out, y)
         loss.backward()
         self.optimizer.step()
-        print(out)
-        print(y)
-        print(torch.max(out, dim=1))
-        print(out[range(out.shape[0]), y])
-        values, pred = torch.max(out, dim=1)
+        values, _ = torch.max(out, dim=1)
         num_correct = values - out[range(out.shape[0]), y]
         num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
         num_correct = sum(num_correct)
-
-        m = confusion_matrix(y, pred)
-        print(m.diagonal()/m.sum(1))
 
         return BatchResult(loss, num_correct)
 
@@ -48,6 +41,8 @@ class FlowPicTrainer(Trainer):
             num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
             num_correct = sum(num_correct)
 
+            y = y.cpu()
+            pred = pred.cpu()
             m = confusion_matrix(y, pred)
             print(m.diagonal() / m.sum(1))
 
