@@ -3,6 +3,7 @@ from collections import Counter
 import torch
 from training.trainer import Trainer
 from training.result_types import BatchResult
+from sklearn.metrics import confusion_matrix
 
 
 class FlowPicTrainer(Trainer):
@@ -20,9 +21,17 @@ class FlowPicTrainer(Trainer):
         loss = self.loss_fn(out, y)
         loss.backward()
         self.optimizer.step()
-        num_correct = torch.max(out, dim=1)[0] - out[range(out.shape[0]), y]
+        print(out)
+        print(y)
+        print(torch.max(out, dim=1))
+        print(out[range(out.shape[0]), y])
+        values, pred = torch.max(out, dim=1)
+        num_correct = values - out[range(out.shape[0]), y]
         num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
         num_correct = sum(num_correct)
+
+        m = confusion_matrix(y, pred)
+        print(m.diagonal()/m.sum(1))
 
         return BatchResult(loss, num_correct)
 
@@ -35,8 +44,12 @@ class FlowPicTrainer(Trainer):
         with torch.no_grad():
             out = self.model(X)
             loss = self.loss_fn(out, y)
-            num_correct = torch.max(out, dim=1)[0] - out[range(out.shape[0]), y]
+            values, pred = torch.max(out, dim=1)
+            num_correct = values - out[range(out.shape[0]), y]
             num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
             num_correct = sum(num_correct)
+
+            m = confusion_matrix(y, pred)
+            print(m.diagonal() / m.sum(1))
 
         return BatchResult(loss, num_correct)
