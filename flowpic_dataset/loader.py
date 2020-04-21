@@ -20,7 +20,7 @@ class FlowPicDataLoader:
 
         def tor(d): return d != 'reg' and d != 'vpn'
 
-        def vpn(d): return d != 'reg' and d != 'tor'
+        def vpn(d): return d != 'reg' and d != 'tor' and d != 'browsing'
 
         self.filters = [everything, reg, tor, vpn]
         self.filter_fun = self.filters[0]
@@ -87,9 +87,6 @@ class FlowPicDataLoader:
                 label = self.__get_directory_label__(d)
 
             datasets += self.__gather_datasets__(join(path, d), label_level - 1, label)
-            if self.__is_label__(label_level) and not datasets:
-                # there is no data with such label
-                self.__remove_directory_label__(d)
 
         return datasets
 
@@ -97,7 +94,7 @@ class FlowPicDataLoader:
     def __is_label__(label_level: int):
         return label_level == 0
 
-    def __add_directory_label__(self, d: str) -> int:
+    def __add_directory_label__(self, d: str):
         if d not in self.labels:
             self.labels[d] = len(self.labels)
 
