@@ -20,6 +20,7 @@ class FlowPicExperiment(Experiment):
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, lr=1e-3, reg=1e-3, filters_per_layer=None,
                 layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
+                label_level=1, filter_fun=0,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -33,8 +34,9 @@ class FlowPicExperiment(Experiment):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         dataset_loader = FlowPicDataLoader(self.data_dir)
-        dataset = dataset_loader.load_dataset()
+        dataset = dataset_loader.load_dataset(label_level, filter_fun)
 
+        out_classes = dataset_loader.get_num_labels()
         dataset_length = len(dataset)
         label_probabilities = dataset_loader.get_label_weights()
         train_length = int(dataset_length * 0.8)
@@ -68,7 +70,7 @@ class FlowPicExperiment(Experiment):
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 
         fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints, early_stopping, print_every=5,
-                              max_batches=batches, **kw)
+                              num_batches=batches, **kw)
 
         return fit_res
 

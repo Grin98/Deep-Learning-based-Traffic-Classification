@@ -29,8 +29,8 @@ class FlowPicModel(nn.Module):
         N = len(self.filters)
         for i in range(N):
             layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5, padding=3))
-            if (i+1) % self.drop_every == 0:
-                layers.append(nn.Dropout(0.25))
+            # if (i+1) % self.drop_every == 0:
+            #     layers.append(nn.Dropout(0.25))
             in_h = (in_h - 10 + 6) // 5 + 1
             in_w = (in_w - 10 + 6) // 5 + 1
             print("conv %dx%d" % (in_w, in_h))

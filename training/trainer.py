@@ -165,20 +165,15 @@ class Trainer(abc.ABC):
     @staticmethod
     def _foreach_batch(dl: DataLoader,
                        forward_fn: Callable[[Any], BatchResult],
-                       verbose=True, max_batches=None) -> EpochResult:
+                       num_batches,
+                       verbose=True) -> EpochResult:
         """
         Evaluates the given forward-function on batches from the given
         dataloader, and prints progress along the way.
         """
         losses = []
         num_correct = 0
-        num_batches = max_batches
         num_samples = num_batches * dl.batch_size
-
-        if max_batches is not None:
-            if max_batches < num_batches:
-                num_batches = max_batches
-                num_samples = num_batches * dl.batch_size
 
         if verbose:
             pbar_file = sys.stdout

@@ -76,6 +76,9 @@ class Experiment(abc.ABC):
         p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
                        help='Output size of hidden linear layers',
                        metavar='H')
+        # Dataset Loader
+        p.add_argument('--label-level', '-LL', type=int, default=1, metavar='LL')
+        p.add_argument('--filter-fun', '-FF', type=int, default=0, metavar='FF')
 
         parsed = p.parse_args()
 
@@ -87,7 +90,10 @@ class Experiment(abc.ABC):
                 early_stopping=3, checkpoints=None, load_checkpoint=False, lr=1e-3, reg=1e-3,
                 # Model params
                 filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
-                drop_every=2, hidden_dims=None, ycn=False, **kw):
+                drop_every=2, hidden_dims=None, ycn=False,
+                # Dataset Loader params
+                label_level=1, filter_fun=0,
+                **kw):
         """
             Execute a single run of experiment with given configuration
         """

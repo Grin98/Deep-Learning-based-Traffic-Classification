@@ -13,41 +13,59 @@ class FlowPicDataLoader:
         self.labels = {}
         self.labels_count = {}
 
+        # possible filters
+        def everything(_): return True
 
-    def load_dataset(self, label_level=1, filter_fun=None):
+        def reg(d): return d != 'tor' and d != 'vpn'
+
+        def tor(d): return d != 'reg' and d != 'vpn'
+
+        def vpn(d): return d != 'reg' and d != 'tor'
+
+        self.filters = [everything, reg, tor, vpn]
+        self.filter_fun = self.filters[0]
+
+    def get_label_weights(self):
+        quantities = list(self.labels_count.values())
+        return [1.0 / x for x in quantities]
+
+    def get_num_labels(self):
+        return len(self.labels)
+
+    def add_possible_filter(self, filter_fun):
+        """
+        :param filter_fun: a function of type (str) -> bool
+        :return: index of function in filters
+        """
+        index = len(self.filters)
+        self.filters.append(filter_fun)
+        return index
+
+    def load_dataset(self, label_level=1, filter_fun=0):
         """
         creates a FlowDataset from each file at the leaf level of the directory tree
         and returns a ConcatDataset of all of them
-        :param dataset_root_dir: path of the dataset directory
-        :param filter_fun: a function that receives a directory name and returns a boolean
+
+        :param filter_fun: an index of a filtering function that receives a directory name and returns a boolean
         :param label_level: what level of the directory tree is used as labeling
-        :return: a ConcatDataset object
+        :return: a ConcatDataset object of all files in the leaf level
         """
+        if not (0 <= filter_fun < len(self.filters)):
+            raise ValueError("filter_fun is out of range")
+
+        if label_level <= 0:
+            raise ValueError("label_level must be greater then 0")
 
         self.labels = {}
         self.labels_count = {}
-
-        if label_level == 0:
-            raise ValueError("label_level must be greater then 0")
+        self.filter_fun = self.filters[filter_fun]
 
         print("=== Loading dataset from %s ===" % self.root_dir)
-        dirs = [d for d in listdir(self.root_dir) if isdir(join(self.root_dir, d))]
-        datasets = []
-        for d in dirs:
-            if filter_fun and not filter_fun(d):
-                continue  # skip directory
-
-            print("Loading %s" % d)
-            label = None
-            if self.__is_label__(label_level):
-                label = self.__get_label__(d)
-
-            datasets += self.__gather_datasets__(join(self.root_dir, d), filter_fun, label_level - 1, label)
-
-        print("\n=== Dataset loading completed :D ===\n")
+        datasets = self.__gather_datasets__(self.root_dir, label_level - 1, None)
+        print("=== Dataset loading completed :D ===\n")
         return ConcatDataset(datasets)
 
-    def __gather_datasets__(self, path, filter, label_level, label):
+    def __gather_datasets__(self, path, label_level, label):
 
         dirs = [d for d in listdir(path) if isdir(join(path, d))]
         if not dirs:
@@ -55,36 +73,44 @@ class FlowPicDataLoader:
                    listdir(path)]
             num_flows = sum(map(len, dss))
             self.__add_to_count__(num_flows, label)
-            print(path, num_flows)
+            print("path: %s, num entries: %d, label: %d" % (path, num_flows, label))
 
             return dss
 
         datasets = []
         for d in dirs:
-            if filter and not filter(d):
+            if not self.filter_fun(d):
                 continue  # skip directory
 
-            if label is None and self.__is_label__(label_level):
-                label = self.__get_label__(d)
+            if self.__is_label__(label_level):
+                self.__add_directory_label__(d)
+                label = self.__get_directory_label__(d)
 
-            datasets += self.__gather_datasets__(join(path, d), filter, label_level - 1, label)
+            datasets += self.__gather_datasets__(join(path, d), label_level - 1, label)
+            if self.__is_label__(label_level) and not datasets:
+                # there is no data with such label
+                self.__remove_directory_label__(d)
 
         return datasets
 
-    def get_label_weights(self):
-        quantities = list(self.labels_count.values())
-        return [1.0 / x for x in quantities]
-
     @staticmethod
     def __is_label__(label_level: int):
-        return label_level == 1
+        return label_level == 0
 
-    def __get_label__(self, d: str):
+    def __add_directory_label__(self, d: str) -> int:
         if d not in self.labels:
             self.labels[d] = len(self.labels)
+
+    def __remove_directory_label__(self, label: str):
+        if label in self.labels:
+            i = self.labels.pop(label)
+            if i in self.labels_count:
+                self.labels_count.pop(i)
+
+    def __get_directory_label__(self, d):
         return self.labels[d]
 
-    def __add_to_count__(self, num, label):
+    def __add_to_count__(self, num: int, label: int):
         if label not in self.labels_count:
             self.labels_count[label] = num
         else:
