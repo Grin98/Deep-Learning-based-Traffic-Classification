@@ -44,14 +44,8 @@ class FlowPicTrainer(Trainer):
             y = y.cpu()
             pred = pred.cpu()
             # m = confusion_matrix(y, pred)
-            def_s = f1_score(y, pred, average=None)
+            # def_s = f1_score(y, pred, average=None)
             weighted_s = f1_score(y, pred, average='weighted')
-            macro_s = f1_score(y, pred, average='macro')
+            # macro_s = f1_score(y, pred, average='macro')
 
-            print()
-            print('f1 per class:', def_s)
-            print('weighted average:', weighted_s)
-            print('average:', macro_s)
-            print()
-
-        return BatchResult(loss, num_correct)
+        return BatchResult(loss, num_correct, weighted_s)

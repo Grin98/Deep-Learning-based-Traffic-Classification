@@ -173,6 +173,7 @@ class Trainer(abc.ABC):
         """
         losses = []
         num_correct = 0
+        f1_scores = []
         num_samples = num_batches * dl.batch_size
 
         if verbose:
@@ -195,11 +196,14 @@ class Trainer(abc.ABC):
 
                 losses.append(batch_res.loss)
                 num_correct += batch_res.num_correct
+                f1_scores.append(batch_res.f1_score)
 
             avg_loss = sum(losses) / num_batches
             accuracy = 100. * num_correct / num_samples
+            avg_f1 = sum(f1_scores) / len(f1_scores)
             pbar.set_description(f'{pbar_name} '
                                  f'(Avg. Loss {avg_loss:.3f}, '
-                                 f'Accuracy {accuracy:.1f})')
+                                 f'Accuracy {accuracy:.1f}'
+                                 f'Avg. F1 {avg_f1:.3f})')
 
         return EpochResult(losses=losses, accuracy=accuracy)
