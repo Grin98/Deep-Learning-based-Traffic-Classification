@@ -20,12 +20,16 @@ class FlowPicTrainer(Trainer):
         loss = self.loss_fn(out, y)
         loss.backward()
         self.optimizer.step()
-        values, _ = torch.max(out, dim=1)
+        values, pred = torch.max(out, dim=1)
         num_correct = values - out[range(out.shape[0]), y]
         num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
         num_correct = sum(num_correct)
 
-        return BatchResult(loss, num_correct)
+        y = y.cpu()
+        pred = pred.cpu()
+        weighted_s = f1_score(y, pred, average='weighted')
+
+        return BatchResult(loss, num_correct, weighted_s)
 
     def test_batch(self, batch) -> BatchResult:
         X, y = batch
