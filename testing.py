@@ -6,12 +6,16 @@ from torch.utils.data import random_split
 
 from flowpic_dataset.loader import FlowPicDataLoader
 from flowpic_dataset.utils import create_dataset_weights
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 
 if __name__ == '__main__':
-    py = [1, 0, 2, 3, 2, 2, 2, 1]
+
     ty = [4, 2, 2, 3, 1, 0, 2, 2]
+    py = [1, 0, 2, 3, 2, 2, 2, 1]
+
     m = confusion_matrix(ty, py)
+    s = f1_score(ty, py, average='weighted')
+    print(s)
     print(m)
     print(m.diagonal()/m.sum(1))
 

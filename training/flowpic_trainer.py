@@ -3,7 +3,7 @@ from collections import Counter
 import torch
 from training.trainer import Trainer
 from training.result_types import BatchResult
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 
 
 class FlowPicTrainer(Trainer):
@@ -43,11 +43,12 @@ class FlowPicTrainer(Trainer):
 
             y = y.cpu()
             pred = pred.cpu()
-            m = confusion_matrix(y, pred)
-            acc = m.diagonal() / m.sum(1)
-            print("\n")
-            for i, a in enumerate(acc):
-                print(i, ':', a)
-            print("\n")
+            # m = confusion_matrix(y, pred)
+            def_s = f1_score(y, pred, average=None)
+            weighted_s = f1_score(y, pred, average='weighted')
+            macro_s = f1_score(y, pred, average='macro')
+            print('f1 per class:', def_s)
+            print('weighted average:', weighted_s)
+            print('average:', macro_s)
 
         return BatchResult(loss, num_correct)
