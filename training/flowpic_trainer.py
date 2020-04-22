@@ -47,8 +47,11 @@ class FlowPicTrainer(Trainer):
             def_s = f1_score(y, pred, average=None)
             weighted_s = f1_score(y, pred, average='weighted')
             macro_s = f1_score(y, pred, average='macro')
+
+            print()
             print('f1 per class:', def_s)
             print('weighted average:', weighted_s)
             print('average:', macro_s)
+            print()
 
         return BatchResult(loss, num_correct)
