@@ -8,6 +8,7 @@ class BatchResult(NamedTuple):
     loss: float
     num_correct: int
     f1_score: float
+    f1_per_class: List[float]
 
 
 class EpochResult(NamedTuple):

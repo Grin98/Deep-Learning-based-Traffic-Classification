@@ -18,7 +18,7 @@ from flowpic_dataset.utils import create_under_sampling_sampler
 class FlowPicExperiment(Experiment):
     # TODO: Implement the training loop
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
-                load_checkpoint=False, lr=1e-3, reg=1e-3, filters_per_layer=None,
+                load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
                 layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
                 label_level=1, filter_fun=0,
                 **kw):
@@ -46,11 +46,11 @@ class FlowPicExperiment(Experiment):
 
         print('creating sampler for train')
         s = time()
-        sampler_train = create_under_sampling_sampler(ds_train, bs_train, label_probabilities)
+        sampler_train = create_under_sampling_sampler(ds_train, bs_train, batches, label_probabilities)
         print(time() - s)
         print('creating sampler for test')
         s = time()
-        sampler_test = create_under_sampling_sampler(ds_test, bs_test, label_probabilities)
+        sampler_test = create_under_sampling_sampler(ds_test, bs_test, batches, label_probabilities)
         print(time() - s)
         print('done creating sampler')
 
@@ -65,7 +65,7 @@ class FlowPicExperiment(Experiment):
         x0, _ = ds_train[0]
         model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims, drop_every)
         loss_fn = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 

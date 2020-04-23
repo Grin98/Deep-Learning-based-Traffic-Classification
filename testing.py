@@ -19,6 +19,9 @@ if __name__ == '__main__':
     print(m)
     print(m.diagonal()/m.sum(1))
 
+    l = FlowPicDataLoader('./classes_csvs')
+    l.load_dataset()
+
     # s = WeightedRandomSampler([0.2]*10, 6, replacement=True)
     # i1 = iter(s)
     # i2 = iter(s)

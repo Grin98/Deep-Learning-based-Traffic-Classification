@@ -1,6 +1,8 @@
 import abc
 import os
 import sys
+from operator import add
+
 import tqdm
 import torch
 from pathlib import Path
@@ -174,6 +176,7 @@ class Trainer(abc.ABC):
         losses = []
         num_correct = 0
         f1_scores = []
+        f1_per_class = None
         num_samples = num_batches * dl.batch_size
 
         if verbose:
@@ -189,21 +192,25 @@ class Trainer(abc.ABC):
                 data = next(dl_iter)
                 batch_res = forward_fn(data)
 
-
-
                 pbar.set_description(f'{pbar_name} ({batch_res.loss:.3f})')
                 pbar.update()
 
                 losses.append(batch_res.loss)
                 num_correct += batch_res.num_correct
                 f1_scores.append(batch_res.f1_score)
+                if f1_per_class is None:
+                    f1_per_class = batch_res.f1_per_class
+                else:
+                    f1_per_class = list(map(add, f1_per_class, batch_res.f1_per_class))
 
             avg_loss = sum(losses) / num_batches
             accuracy = 100. * num_correct / num_samples
             avg_f1 = sum(f1_scores) / len(f1_scores)
+            avg_f1_per_class = f1_per_class / num_batches
             pbar.set_description(f'{pbar_name} '
                                  f'(Avg. Loss {avg_loss:.3f}, '
                                  f'Accuracy {accuracy:.1f}'
-                                 f'Avg. F1 {avg_f1:.3f})')
+                                 f'Avg. F1 {avg_f1:.3f})'
+                                 f'Avg F1 Classes {avg_f1_per_class}')
 
         return EpochResult(losses=losses, accuracy=accuracy)

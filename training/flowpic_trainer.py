@@ -28,8 +28,10 @@ class FlowPicTrainer(Trainer):
         y = y.cpu()
         pred = pred.cpu()
         weighted_s = f1_score(y, pred, average='weighted')
+        pre_class_s = f1_score(y, pred, average=None)
 
-        return BatchResult(loss, num_correct, weighted_s)
+
+        return BatchResult(loss, num_correct, weighted_s, pre_class_s)
 
     def test_batch(self, batch) -> BatchResult:
         X, y = batch
@@ -47,9 +49,7 @@ class FlowPicTrainer(Trainer):
 
             y = y.cpu()
             pred = pred.cpu()
-            # m = confusion_matrix(y, pred)
-            # def_s = f1_score(y, pred, average=None)
             weighted_s = f1_score(y, pred, average='weighted')
-            # macro_s = f1_score(y, pred, average='macro')
+            per_class_s = f1_score(y, pred, average=None)
 
-        return BatchResult(loss, num_correct, weighted_s)
+        return BatchResult(loss, num_correct, weighted_s, per_class_s)

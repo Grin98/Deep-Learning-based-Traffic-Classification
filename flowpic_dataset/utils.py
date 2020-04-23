@@ -21,7 +21,7 @@ def create_dataset_weights(dataset: Dataset, label_probabilities: List[float]):
     return [label_probabilities[y] for _, y in dataset]
 
 
-def create_under_sampling_sampler(dataset: Dataset, bach_size: int, label_probabilities: List[float]):
+def create_under_sampling_sampler(dataset: Dataset, bach_size: int, num_batches: int, label_probabilities: List[float]):
     return WeightedRandomSampler(create_dataset_weights(dataset, label_probabilities),
-                                 bach_size*10,
+                                 bach_size*num_batches,
                                  replacement=True)
