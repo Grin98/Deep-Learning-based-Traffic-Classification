@@ -209,8 +209,8 @@ class Trainer(abc.ABC):
             avg_f1_per_class = f1_per_class / num_batches
             pbar.set_description(f'{pbar_name} '
                                  f'(Avg. Loss {avg_loss:.3f}, '
-                                 f'Accuracy {accuracy:.1f}'
-                                 f'Avg. F1 {avg_f1:.3f})'
+                                 f'Accuracy {accuracy:.1f}, '
+                                 f'Avg. F1 {avg_f1:.3f}), '
                                  f'Avg F1 Classes {avg_f1_per_class}')
 
         return EpochResult(losses=losses, accuracy=accuracy)
