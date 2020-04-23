@@ -1,7 +1,7 @@
 import abc
 import os
 import sys
-from operator import add, di
+from operator import add
 
 import tqdm
 import torch
