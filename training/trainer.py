@@ -10,8 +10,6 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 from training.result_types import EpochResult, FitResult, BatchResult
 
-torch.utils.data.sampler.SequentialSampler
-
 
 class Trainer(abc.ABC):
     """
