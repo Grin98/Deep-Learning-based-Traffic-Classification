@@ -17,9 +17,10 @@ class PreProcessor:
         self.packet_size_limit = packet_size_limit
 
     def process_dataset(self):
-        self.__process_dirs__(self.inPath, self.outPath, [])
+        self.__process_dirs__(self.inPath, self.outPath)
+        print('finished processing')
 
-    def __process_dirs__(self, input_dir_path, output_dir_path, labels: List[str]):
+    def __process_dirs__(self, input_dir_path, output_dir_path):
 
         if not os.path.exists(output_dir_path):
             os.mkdir(output_dir_path)
@@ -28,14 +29,12 @@ class PreProcessor:
         if not dirs:
             # there are only files
             for name in listdir(input_dir_path):
-                self.__process_file__(join(input_dir_path, name), join(output_dir_path, name), labels)
+                self.__process_file__(join(input_dir_path, name), join(output_dir_path, name))
 
         for name in dirs:
-            labels.append(name)
-            self.__process_dirs__(join(input_dir_path, name), join(output_dir_path, name), labels)
-            labels.pop()
+            self.__process_dirs__(join(input_dir_path, name), join(output_dir_path, name))
 
-    def __process_file__(self, input_file_path: str, output_file_path: str, labels: List[str]):
+    def __process_file__(self, input_file_path: str, output_file_path: str):
 
         _, file_extension = splitext(input_file_path)
         if file_extension != '.csv':
@@ -63,7 +62,7 @@ class PreProcessor:
                         # normalize times to start from 0
                         block_times = block_times - b*self.block_delta
 
-                        block = labels + [app] + [len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
+                        block = [len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
                         writer.writerow(block)
 
     def __transform_row_to_flow__(self, row: List[str]) -> Tuple:

@@ -1,4 +1,6 @@
 import multiprocessing
+from collections import Counter
+
 import numpy as np
 from time import time
 
@@ -8,6 +10,7 @@ from torch.utils.data import random_split
 from flowpic_dataset.loader import FlowPicDataLoader
 from flowpic_dataset.utils import create_dataset_weights
 from flowpic_dataset.preprocessor import PreProcessor
+from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 
 
@@ -20,6 +23,14 @@ class C:
 
 
 if __name__ == '__main__':
+    # a = {'a': 2, 'b': 3}
+    # b = {'b': 1}
+    # c = {'a': 4, 'c': 1}
+    # input = [a, b, c]
+    # s = sum(
+    #     (Counter(x) for x in input),
+    #     Counter())
+    # print(s)
 
     # TPS = 60  # TimePerSession in secs
     # DELTA_T = 15  # Delta T between splitted sessions
@@ -42,11 +53,15 @@ if __name__ == '__main__':
     p = PreProcessor('./classes_csvs', './overlapped_data')
     p.process_dataset()
 
-    print('\n==========\n')
-
-    l = FlowPicDataLoader('./overlapped_data', testing=True)
-    l.load_dataset()
-    print('\n==========\n')
+    # print('\n==========\n')
+    #
+    # l = FlowPicDataLoader('./overlapped_data', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
+    #
+    # d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv', FlowsDataSet.Label.Category)
+    # x, y = d[0]
+    # print(y)
 
     # l = FlowPicDataLoader('./data')
     # l.load_dataset()
