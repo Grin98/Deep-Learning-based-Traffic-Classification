@@ -8,8 +8,9 @@ from flowpic_dataset.flowpic_builder import FlowPicBuilder
 
 
 class FlowPicDataLoader:
-    def __init__(self, dataset_root_dir):
+    def __init__(self, dataset_root_dir, testing=False):
         self.root_dir = dataset_root_dir
+        self.testing = testing
         self.labels = {}
         self.labels_count = {}
 
@@ -69,7 +70,7 @@ class FlowPicDataLoader:
 
         dirs = [d for d in listdir(path) if isdir(join(path, d))]
         if not dirs:
-            dss = [FlowsDataSet(join(path, file), label, transform=FlowPicBuilder().build_pic) for file in
+            dss = [FlowsDataSet(join(path, file), label, transform=FlowPicBuilder().build_pic, testing=self.testing) for file in
                    listdir(path)]
             num_flows = sum(map(len, dss))
             self.__add_to_count__(num_flows, label)

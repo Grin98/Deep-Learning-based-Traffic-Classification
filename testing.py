@@ -1,4 +1,5 @@
 import multiprocessing
+import numpy as np
 from time import time
 
 from torch.utils.data import WeightedRandomSampler
@@ -19,17 +20,36 @@ class C:
 
 
 if __name__ == '__main__':
+
+    # TPS = 60  # TimePerSession in secs
+    # DELTA_T = 15  # Delta T between splitted sessions
+    # MIN_TPS = 40
+    # MIN_LENGTH = 10
+    #
+    # ts = np.array([0, 0.34, 1.2, 3.4, 10.2, 10.3, 15.34, 20, 22.3, 59, 65, 75, 76, 120, 200], dtype=float)
+    # sizes = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], dtype=int)
+    #
+    # print(int(ts[-1] / DELTA_T - TPS / DELTA_T) + 1)
+    # for t in range(int(ts[-1] / DELTA_T - TPS / DELTA_T) + 1):
+    #     mask = ((ts >= t * DELTA_T) & (ts <= (t * DELTA_T + TPS)))
+    #     ts_mask = ts[mask]
+    #     sizes_mask = sizes[mask]
+    #
+    #     print(ts_mask, sizes_mask)
+    #     print(mask)
+
+
     p = PreProcessor('./classes_csvs', './overlapped_data')
     p.process_dataset()
 
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./overlapped_data')
+    l = FlowPicDataLoader('./overlapped_data', testing=True)
     l.load_dataset()
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./data')
-    l.load_dataset()
+    # l = FlowPicDataLoader('./data')
+    # l.load_dataset()
 
     # ty = [4, 2, 2, 3, 1, 0, 2, 2]
     # py = [1, 0, 2, 3, 2, 2, 2, 1]

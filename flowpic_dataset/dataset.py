@@ -13,13 +13,16 @@ class FlowsDataSet(Dataset):
     parameter label will be the label of all the data entries in the file
     """
 
-    def __init__(self, csv_file_path, label, transform=None):
+    def __init__(self, csv_file_path, label, transform=None, testing: bool = False):
         self.label = label
         self.transform = transform
 
         with open(csv_file_path, newline='') as f:
             # self.__transform_row_to_flow__(row)
-            self.data = [self.__transform_row_to_flow__(row) for row in csv.reader(f, delimiter=',')]
+            if testing:
+                self.data = [row for row in csv.reader(f, delimiter=',')]
+            else:
+                self.data = [self.__transform_row_to_flow__(row) for row in csv.reader(f, delimiter=',')]
 
     def __len__(self):
         return len(self.data)

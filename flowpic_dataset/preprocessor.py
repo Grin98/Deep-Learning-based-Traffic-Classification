@@ -2,47 +2,18 @@ from os.path import isfile, join, splitext, isdir
 from os import listdir
 import os
 import csv
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple
 import numpy as np
-
-
-class Packet(NamedTuple):
-    size: int
-    time: float
-
-
-class SubFlow:
-    def __init__(self, start: float, labels: List[str], writer):
-
-        self.labels = labels
-        self.writer = writer
-        self.start = start
-        self.packets = []
-        self.has_overlapped = False
-
-    def add_packet(self, p: Packet):
-        self.packets.append((p.size - 1, p.time - self.start))
-
-    def write_to_file(self):
-        if not self.packets:
-            return
-
-        sizes, times = zip(*self.packets)
-        sizes = list(sizes)
-        times = list(times)
-        data = self.labels + [len(self.packets)] + times + sizes
-        self.writer.writerow(data)
-
 
 class PreProcessor:
     def __init__(self, dataset_dir, processed_dir,
-                 flow_duration_in_seconds: int = 60,
-                 overlap_in_seconds: int = 15,
+                 block_duration_in_seconds: int = 60,
+                 block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500):
         self.inPath = dataset_dir
         self.outPath = processed_dir
-        self.flow_duration = flow_duration_in_seconds
-        self.overlap = overlap_in_seconds
+        self.block_duration = block_duration_in_seconds
+        self.block_delta = block_delta_in_seconds
         self.packet_size_limit = packet_size_limit
 
     def process_dataset(self):
@@ -79,22 +50,23 @@ class PreProcessor:
                 data = csv.reader(f_in, delimiter=',')
                 for row in data:
 
-                    app, flow = self.__transform_row_to_flow__(row)
-                    labels.append(app)
-                    sub_flows: List[SubFlow] = [SubFlow(flow[0].time, labels, writer)]
-                    for p in flow:
-                        if p.size > self.packet_size_limit:
-                            continue
+                    app, sizes, times = self.__transform_row_to_flow__(row)
+                    num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
+                    for b in range(num_blocks):
+                        start = b * self.block_delta
+                        end = b * self.block_delta + self.block_duration
 
-                        self.__add_packet_to_sub_flows__(sub_flows, p)
+                        mask = ((times >= start) & (times <= end))
+                        block_times = times[mask]
+                        block_sizes = sizes[mask]
 
-                    for f in sub_flows:
-                        f.write_to_file()
-                    labels.pop()
+                        # normalize times to start from 0
+                        block_times = block_times - b*self.block_delta
 
+                        block = labels + [app] + [len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
+                        writer.writerow(block)
 
-    @staticmethod
-    def __transform_row_to_flow__(row: List[str]) -> Tuple[str, List[Packet]]:
+    def __transform_row_to_flow__(self, row: List[str]) -> Tuple:
         app = row[0]
         num_packets = int(row[7])
         off_set = 8  # meta data occupies first 8 indices
@@ -105,51 +77,8 @@ class PreProcessor:
         times = np.array(times, dtype=np.float)
         sizes = np.array(sizes, dtype=np.int)
 
-        return app, [Packet(size=s, time=t) for s, t in zip(sizes, times)]
+        mask = sizes <= self.packet_size_limit
+        times = times[mask]
+        sizes = sizes[mask]
 
-    def __add_packet_to_sub_flows__(self, sub_flows: List[SubFlow], p: Packet):
-        for f in sub_flows:
-            time_passed = p.time - f.start
-            if time_passed >= self.flow_duration:
-                f.write_to_file()
-                sub_flows.remove(f)
-
-                if not f.has_overlapped:
-                    self.__add_new_flow__(sub_flows, p.time, f.labels, f.writer)
-                continue
-
-            if time_passed >= (self.flow_duration - self.overlap) and not f.has_overlapped:
-                self.__add_new_flow__(sub_flows, p.time, f.labels, f.writer)
-                f.has_overlapped = True
-
-            f.add_packet(p)
-
-    @staticmethod
-    def __add_new_flow__(sub_flows: List[SubFlow], start: float, labels: List[str], writer):
-        new_flow = SubFlow(start, labels, writer)
-        sub_flows.append(new_flow)
-
-    # def __splitFlow__(self, flow: List[Tuple[int, float]]):
-    #     start = flow[0][1]
-    #     splitted_flows = []
-    #     sub_flow = []
-    #     for size, time in flow:
-    #         # throw too large packets
-    #         if size > self.packet_size_limit:
-    #             continue
-    #
-    #         time_passed = time - start
-    #         if time_passed >= self.flow_duration:
-    #             start = time
-    #             splitted_flows.insert(0, sub_flow.copy())
-    #             sub_flow = []
-    #
-    #         # normalize time of the packets in the sub flow
-    #         # and decrease size by 1 to fit the indexing of the tensor
-    #         sub_flow.append((size - 1, time - start))
-    #
-    #     # if sub_flow isn't empty add it
-    #     if sub_flow:
-    #         splitted_flows.insert(0, sub_flow)
-    #
-    #     return splitted_flows
+        return app, sizes, times
