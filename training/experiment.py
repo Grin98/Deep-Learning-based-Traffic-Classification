@@ -15,9 +15,10 @@ class Experiment(abc.ABC):
         Use parse_cli to parse the flags needed to conduct the experiment
         """
 
-    def __init__(self, run_name, data_dir='../data', out_dir='./results', seed=None, **kw):
+    def __init__(self, run_name, test_dir='../test', train_dir='../train', out_dir='./results', seed=None, **kw):
         self.experiment_name = run_name
-        self.data_dir = data_dir
+        self.test_dir = test_dir
+        self.train_dir = train_dir
         if not seed:
             seed = random.randint(0, 2 ** 31)
         self.torch_seed = seed

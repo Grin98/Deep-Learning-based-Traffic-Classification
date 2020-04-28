@@ -12,6 +12,7 @@ from flowpic_dataset.utils import create_dataset_weights
 from flowpic_dataset.preprocessor import PreProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
+import random
 
 
 class C:
@@ -23,43 +24,40 @@ class C:
 
 
 if __name__ == '__main__':
-    # a = {'a': 2, 'b': 3}
-    # b = {'b': 1}
-    # c = {'a': 4, 'c': 1}
-    # input = [a, b, c]
-    # s = sum(
-    #     (Counter(x) for x in input),
-    #     Counter())
-    # print(s)
-
-    # TPS = 60  # TimePerSession in secs
-    # DELTA_T = 15  # Delta T between splitted sessions
-    # MIN_TPS = 40
-    # MIN_LENGTH = 10
-    #
-    # ts = np.array([0, 0.34, 1.2, 3.4, 10.2, 10.3, 15.34, 20, 22.3, 59, 65, 75, 76, 120, 200], dtype=float)
-    # sizes = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], dtype=int)
-    #
-    # print(int(ts[-1] / DELTA_T - TPS / DELTA_T) + 1)
-    # for t in range(int(ts[-1] / DELTA_T - TPS / DELTA_T) + 1):
-    #     mask = ((ts >= t * DELTA_T) & (ts <= (t * DELTA_T + TPS)))
-    #     ts_mask = ts[mask]
-    #     sizes_mask = sizes[mask]
-    #
-    #     print(ts_mask, sizes_mask)
-    #     print(mask)
+    # flows = np.array([(1, 'a'), (2, 'b')])
+    # num_flows = len(flows)
+    # test_indices = random.sample(range(num_flows), 1)
+    # train = flows
+    # test = flows[test_indices]
+    # train = np.delete(train, test_indices)
+    # print(test_indices)
+    # print(test)
+    # print(train)
 
 
-    p = PreProcessor('./classes_csvs', './overlapped_data')
+    p = PreProcessor('./classes_csvs', './test', './train')
     p.process_dataset()
 
-    # print('\n==========\n')
-    #
+    print('\n==========\n')
+
+    l = FlowPicDataLoader('./test', testing=True)
+    l.load_dataset()
+    print('\n==========\n')
+
+    l = FlowPicDataLoader('./train', testing=True)
+    l.load_dataset()
+    print('\n==========\n')
+
     # l = FlowPicDataLoader('./overlapped_data', testing=True)
     # l.load_dataset()
     # print('\n==========\n')
     #
-    # d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv', FlowsDataSet.Label.Category)
+    # l = FlowPicDataLoader('./classes_csvs', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
+
+
+    # d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv')
     # x, y = d[0]
     # print(y)
 

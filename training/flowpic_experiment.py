@@ -33,24 +33,22 @@ class FlowPicExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset_loader = FlowPicDataLoader(self.data_dir)
-        dataset = dataset_loader.load_dataset(label_level, filter_fun)
+        dataset_loader = FlowPicDataLoader(self.test_dir)
+        ds_test = dataset_loader.load_dataset(label_level, filter_fun)
+        test_label_probabilities = dataset_loader.get_label_weights()
 
+        dataset_loader.root_dir = self.train_dir
+        ds_train = dataset_loader.load_dataset(label_level, filter_fun)
+        train_label_probabilities = dataset_loader.get_label_weights()
         out_classes = dataset_loader.get_num_labels()
-        dataset_length = len(dataset)
-        label_probabilities = dataset_loader.get_label_weights()
-        train_length = int(dataset_length * 0.8)
-        test_length = dataset_length - train_length
-
-        ds_train, ds_test = random_split(dataset, (train_length, test_length))
 
         print('creating sampler for train')
         s = time()
-        sampler_train = create_under_sampling_sampler(ds_train, bs_train, batches, label_probabilities)
+        sampler_train = create_under_sampling_sampler(ds_train, bs_train, batches, train_label_probabilities)
         print(time() - s)
         print('creating sampler for test')
         s = time()
-        sampler_test = create_under_sampling_sampler(ds_test, bs_test, batches, label_probabilities)
+        sampler_test = create_under_sampling_sampler(ds_test, bs_test, batches, test_label_probabilities)
         print(time() - s)
         print('done creating sampler')
 
