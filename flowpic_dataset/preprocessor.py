@@ -90,9 +90,9 @@ class PreProcessor:
         times = np.array(times, dtype=np.float)
         sizes = np.array(sizes, dtype=np.int)
 
-        mask = sizes < self.packet_size_limit
+        mask = sizes <= self.packet_size_limit
         times = times[mask]
-        sizes = sizes[mask]
+        sizes = sizes[mask] - 1
 
         return app, sizes, times
 
