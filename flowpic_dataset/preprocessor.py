@@ -30,18 +30,27 @@ class PreProcessor:
 
         dirs = [d for d in listdir(input_dir_path) if isdir(join(input_dir_path, d))]
         if not dirs:
-            # there are only files
-            for name in listdir(input_dir_path):
-                self.__process_file__(join(input_dir_path, name),
-                                      join(test_dir_path, name),
-                                      join(train_dir_path, name))
+            out_file = 'data'
+            test_file_path = join(test_dir_path, out_file)
+            train_file_path = join(train_dir_path, out_file)
+
+            with open(test_file_path, 'w+', newline='') as test_out:
+                test_writer = csv.writer(test_out, delimiter=',')
+
+                with open(train_file_path, 'w+', newline='') as train_out:
+                    train_writer = csv.writer(train_out, delimiter=',')
+
+                    for name in listdir(input_dir_path):
+                        self.__process_file__(join(input_dir_path, name),
+                                              test_writer,
+                                              train_writer)
 
         for name in dirs:
             self.__process_dirs__(join(input_dir_path, name),
                                   join(test_dir_path, name),
                                   join(train_dir_path, name))
 
-    def __process_file__(self, input_file_path: str, test_file_path: str, train_file_path: str):
+    def __process_file__(self, input_file_path: str, test_writer, train_writer):
 
         _, file_extension = splitext(input_file_path)
         if file_extension != '.csv':
@@ -49,35 +58,31 @@ class PreProcessor:
 
         print('processing ' + input_file_path)
 
-        with open(test_file_path, 'w+', newline='') as test_out:
-            test_writer = csv.writer(test_out, delimiter=',')
+        with open(input_file_path, newline='') as f_in:
+            data = csv.reader(f_in, delimiter=',')
 
-            with open(train_file_path, 'w+', newline='') as train_out:
-                train_writer = csv.writer(train_out, delimiter=',')
+            flows = [self.__transform_row_to_flow__(row) for row in data]
+            num_flows = len(flows)
 
-                with open(input_file_path, newline='') as f_in:
-                    data = csv.reader(f_in, delimiter=',')
+            # create ndarray of tuples
+            train_flows = np.empty(num_flows, dtype=object)
+            train_flows[:] = flows
 
-                    flows = [self.__transform_row_to_flow__(row) for row in data]
-                    num_flows = len(flows)
+            # w = W()
+            # for app, sizes, times in train_flows:
+            #     self.__write_flow_as_blocks__(times, sizes, w)
+            # print(w.c)
 
-                    # create ndarray of tuples
-                    train_flows = np.empty(num_flows, dtype=object)
-                    train_flows[:] = flows
+            # split
+            test_indices = random.sample(range(num_flows), max(1, int(num_flows * 0.1)))
+            test_flows = train_flows[test_indices]
+            train_flows = np.delete(train_flows, test_indices)
 
-                    # split
-                    test_indices = random.sample(range(num_flows), max(1, int(num_flows * 0.1)))
-                    test_flows = train_flows[test_indices]
-                    train_flows = np.delete(train_flows, test_indices)
+            for app, sizes, times in train_flows:
+                self.__write_flow_as_blocks__(times, sizes, train_writer)
 
-                    for app, sizes, times in train_flows:
-                        self.__write_flow_as_blocks__(times, sizes, train_writer)
-
-                    for app, sizes, times in test_flows:
-                        self.__write_flow_as_blocks__(times, sizes, test_writer)
-
-
-
+            for app, sizes, times in test_flows:
+                self.__write_flow_as_blocks__(times, sizes, test_writer)
 
     def __transform_row_to_flow__(self, row: List[str]) -> Tuple:
         app = row[0]
@@ -95,31 +100,6 @@ class PreProcessor:
         sizes = sizes[mask] - 1
 
         return app, sizes, times
-
-    #
-    # def __split_flow__(self, times, sizes, test_percent: float = 0.1):
-    #     end = times[-1]
-    #     start = times[-1] * (1 - test_percent)
-    #     test_mask = (times >= start) & (times <= end)
-    #     train_mask = times < start
-    #
-    #     test_times = times[test_mask]
-    #     test_sizes = sizes[test_mask]
-    #     train_times = times[train_mask]
-    #     train_sizes = sizes[train_mask]
-    #
-    #     test_times = test_times - test_times[0]
-    #
-    #     testb = len(range(int(test_times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1))
-    #     trainb = len(range(int(train_times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1))
-    #     totalb = len(range(int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1))
-    #
-    #     if totalb != 0:
-    #         print(testb, trainb, totalb)
-    #         print(testb/totalb, trainb/totalb)
-    #         print('============')
-    #
-    #     return test_times, test_sizes, train_times, train_sizes
 
     def __write_flow_as_blocks__(self, times, sizes, writer):
         num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
