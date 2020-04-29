@@ -79,7 +79,7 @@ class PreProcessor:
             # print(w.c)
 
             # split
-            test_indices = random.sample(range(num_flows), max(2, int(num_flows * 0.1)))
+            test_indices = random.sample(range(num_flows), max(1, int(num_flows * 0.1)))
             test_flows = train_flows[test_indices]
             train_flows = np.delete(train_flows, test_indices)
 
