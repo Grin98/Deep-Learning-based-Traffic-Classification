@@ -40,21 +40,26 @@ class PreProcessor:
                 with open(train_file_path, 'w+', newline='') as train_out:
                     train_writer = csv.writer(train_out, delimiter=',')
 
+                    test_blocks = []
+                    train_blocks = []
                     for name in listdir(input_dir_path):
-                        self.__process_file__(join(input_dir_path, name),
-                                              test_writer,
-                                              train_writer)
+                        file_test_blocks, file_train_blocks = self.__process_file__(join(input_dir_path, name))
+                        test_blocks += file_test_blocks
+                        train_blocks += file_train_blocks
+
+                    self.__sample_and_write_blocks__(test_blocks, test_writer, approximate_amount=300)
+                    self.__sample_and_write_blocks__(train_blocks, train_writer, approximate_amount=3000)
 
         for name in dirs:
             self.__process_dirs__(join(input_dir_path, name),
                                   join(test_dir_path, name),
                                   join(train_dir_path, name))
 
-    def __process_file__(self, input_file_path: str, test_writer, train_writer):
+    def __process_file__(self, input_file_path: str):
 
         _, file_extension = splitext(input_file_path)
         if file_extension != '.csv':
-            return
+            return [], []
 
         print('processing ' + input_file_path)
 
@@ -78,11 +83,28 @@ class PreProcessor:
             test_flows = train_flows[test_indices]
             train_flows = np.delete(train_flows, test_indices)
 
-            for app, sizes, times in train_flows:
-                self.__write_flow_as_blocks__(times, sizes, train_writer)
+            test_blocks = []
+            train_blocks = []
 
             for app, sizes, times in test_flows:
-                self.__write_flow_as_blocks__(times, sizes, test_writer)
+                test_blocks += self.__split_flow_to_blocks__(times, sizes)
+
+            for app, sizes, times in train_flows:
+                train_blocks += self.__split_flow_to_blocks__(times, sizes)
+
+            return test_blocks, train_blocks
+
+    @staticmethod
+    def __sample_and_write_blocks__(blocks, writer, approximate_amount: int):
+        if len(blocks) <= approximate_amount:
+            condition = lambda: True
+        else:
+            prob = approximate_amount / len(blocks)
+            condition = lambda: random.random() < prob
+
+        for b in blocks:
+            if condition():
+                writer.writerow(b)
 
     def __transform_row_to_flow__(self, row: List[str]) -> Tuple:
         app = row[0]
@@ -101,8 +123,9 @@ class PreProcessor:
 
         return app, sizes, times
 
-    def __write_flow_as_blocks__(self, times, sizes, writer):
+    def __split_flow_to_blocks__(self, times, sizes):
         num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
+        blocks = []
         for b in range(num_blocks):
             start = b * self.block_delta
             end = b * self.block_delta + self.block_duration
@@ -115,8 +138,8 @@ class PreProcessor:
             block_times = block_times - b * self.block_delta
 
             block = [len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
-            writer.writerow(block)
-
+            blocks.append(block)
+        return blocks
 
     def __create_dir__(self, dir: str):
         if not os.path.exists(dir):
