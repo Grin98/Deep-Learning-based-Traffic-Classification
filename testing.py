@@ -1,6 +1,7 @@
 import multiprocessing
 from collections import Counter
 
+import torch
 import numpy as np
 from time import time
 
@@ -24,20 +25,20 @@ class C:
 
 
 if __name__ == '__main__':
-    # flows = np.array([(1, 'a'), (2, 'b')])
-    # num_flows = len(flows)
-    # test_indices = random.sample(range(num_flows), 1)
-    # train = flows
-    # test = flows[test_indices]
-    # train = np.delete(train, test_indices)
-    # print(test_indices)
-    # print(test)
-    # print(train)
+    x = torch.tensor([[1, 2, 3, 4],
+                      [11,12,13,14]], dtype=torch.int16)
+    z = x.double()
+    z[0,0] = 100
+    print(x)
+    print(z)
+    y = z / 255
+    print(y)
 
-    p = PreProcessor('./classes_csvs', './test', './train')
-    p.process_dataset()
 
-    print('\n==========\n')
+    # p = PreProcessor('./classes_csvs', './test', './train')
+    # p.process_dataset()
+    #
+    # print('\n==========\n')
 
     # l = FlowPicDataLoader('./full_test', testing=True)
     # l.load_dataset()
@@ -55,52 +56,61 @@ if __name__ == '__main__':
     # l.load_dataset()
     # print('\n==========\n')
 
+    # flows = np.array([(1, 'a'), (2, 'b')])
+    # num_flows = len(flows)
+    # test_indices = random.sample(range(num_flows), 1)
+    # train = flows
+    # test = flows[test_indices]
+    # train = np.delete(train, test_indices)
+    # print(test_indices)
+    # print(test)
+    # print(train)
 
-    # d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv')
-    # x, y = d[0]
-    # print(y)
+# d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv')
+# x, y = d[0]
+# print(y)
 
-    # l = FlowPicDataLoader('./data')
-    # l.load_dataset()
+# l = FlowPicDataLoader('./data')
+# l.load_dataset()
 
-    # ty = [4, 2, 2, 3, 1, 0, 2, 2]
-    # py = [1, 0, 2, 3, 2, 2, 2, 1]
-    #
-    # m = confusion_matrix(ty, py)
-    # s = f1_score(ty, py, average='weighted')
-    # print(s)
-    # print(m)
-    # print(m.diagonal()/m.sum(1))
-    #
-    # l = FlowPicDataLoader('./classes_csvs')
-    # l.load_dataset()
+# ty = [4, 2, 2, 3, 1, 0, 2, 2]
+# py = [1, 0, 2, 3, 2, 2, 2, 1]
+#
+# m = confusion_matrix(ty, py)
+# s = f1_score(ty, py, average='weighted')
+# print(s)
+# print(m)
+# print(m.diagonal()/m.sum(1))
+#
+# l = FlowPicDataLoader('./classes_csvs')
+# l.load_dataset()
 
-    # s = WeightedRandomSampler([0.2]*10, 6, replacement=True)
-    # i1 = iter(s)
-    # i2 = iter(s)
-    # i3 = iter(s)
-    # while True:
-    #     print(next(i1), next(i2), next(i3))
+# s = WeightedRandomSampler([0.2]*10, 6, replacement=True)
+# i1 = iter(s)
+# i2 = iter(s)
+# i3 = iter(s)
+# while True:
+#     print(next(i1), next(i2), next(i3))
 
-    # f = lambda d: d != 'tor'
-    # l = FlowPicDataLoader('./data')
-    # ds = l.load_dataset()
-    #
-    # dataset_length = len(ds)
-    # label_probabilities = l.get_label_weights()
-    # print(label_probabilities)
-    # train_length = int(dataset_length * 0.8)
-    # test_length = dataset_length - train_length
-    #
-    # ds_train, ds_test = random_split(ds, (train_length, test_length))
-    #
-    # print("creating weights")
-    # start = time()
-    # w = create_dataset_weights(ds_train, l.get_label_weights())
-    # print(time() - start)
-    # print(len(ds_train), len(w))
-    # print(w)
+# f = lambda d: d != 'tor'
+# l = FlowPicDataLoader('./data')
+# ds = l.load_dataset()
+#
+# dataset_length = len(ds)
+# label_probabilities = l.get_label_weights()
+# print(label_probabilities)
+# train_length = int(dataset_length * 0.8)
+# test_length = dataset_length - train_length
+#
+# ds_train, ds_test = random_split(ds, (train_length, test_length))
+#
+# print("creating weights")
+# start = time()
+# w = create_dataset_weights(ds_train, l.get_label_weights())
+# print(time() - start)
+# print(len(ds_train), len(w))
+# print(w)
 
-    # x = {'a': 2, 'b': 5}
-    # v = list(x.values())
-    # print(type(v), v)
+# x = {'a': 2, 'b': 5}
+# v = list(x.values())
+# print(type(v), v)

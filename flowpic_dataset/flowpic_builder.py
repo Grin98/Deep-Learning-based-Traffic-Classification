@@ -27,5 +27,5 @@ class FlowPicBuilder:
             y_position = packet[0]
             self.hist[x_position][y_position] += 1
 
-        return self.hist.clone()
+        return self.hist.float() / 300
 
