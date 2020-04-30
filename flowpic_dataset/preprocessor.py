@@ -83,16 +83,17 @@ class PreProcessor:
             test_flows = train_flows[test_indices]
             train_flows = np.delete(train_flows, test_indices)
 
-            test_blocks = []
-            train_blocks = []
-
-            for app, sizes, times in test_flows:
-                test_blocks += self.__split_flow_to_blocks__(times, sizes)
-
-            for app, sizes, times in train_flows:
-                train_blocks += self.__split_flow_to_blocks__(times, sizes)
+            test_blocks = self.__process_flows__(test_flows)
+            train_blocks = self.__process_flows__(train_flows)
 
             return test_blocks, train_blocks
+
+    def __process_flows__(self, flows):
+        blocks = []
+        for app, sizes, times in flows:
+            blocks += self.__split_flow_to_blocks__(times, sizes)
+
+        return blocks
 
     @staticmethod
     def __sample_and_write_blocks__(blocks, writer, approximate_amount: int):

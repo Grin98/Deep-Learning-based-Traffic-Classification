@@ -34,20 +34,19 @@ if __name__ == '__main__':
     # print(test)
     # print(train)
 
-
     p = PreProcessor('./classes_csvs', './test', './train')
     p.process_dataset()
 
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./test', testing=True)
-    l.load_dataset()
-    print('\n==========\n')
-
-    l = FlowPicDataLoader('./train', testing=True)
-    l.load_dataset()
-    print('\n==========\n')
-
+    # l = FlowPicDataLoader('./full_test', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
+    #
+    # l = FlowPicDataLoader('./full_train', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
+    #
     # l = FlowPicDataLoader('./overlapped_data', testing=True)
     # l.load_dataset()
     # print('\n==========\n')
