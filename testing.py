@@ -25,28 +25,18 @@ class C:
 
 
 if __name__ == '__main__':
-    x = torch.tensor([[1, 2, 3, 4],
-                      [11,12,13,14]], dtype=torch.int16)
-    z = x.double()
-    z[0,0] = 100
-    print(x)
-    print(z)
-    y = z / 255
-    print(y)
 
+    p = PreProcessor('./classes_csvs', './test', './train')
+    p.process_dataset()
+    print('\n==========\n')
 
-    # p = PreProcessor('./classes_csvs', './test', './train')
-    # p.process_dataset()
-    #
-    # print('\n==========\n')
+    l = FlowPicDataLoader('./test', testing=True)
+    l.load_dataset()
+    print('\n==========\n')
 
-    # l = FlowPicDataLoader('./full_test', testing=True)
-    # l.load_dataset()
-    # print('\n==========\n')
-    #
-    # l = FlowPicDataLoader('./full_train', testing=True)
-    # l.load_dataset()
-    # print('\n==========\n')
+    l = FlowPicDataLoader('./train', testing=True)
+    l.load_dataset()
+    print('\n==========\n')
     #
     # l = FlowPicDataLoader('./overlapped_data', testing=True)
     # l.load_dataset()
