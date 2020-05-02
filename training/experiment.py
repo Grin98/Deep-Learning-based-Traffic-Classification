@@ -15,10 +15,9 @@ class Experiment(abc.ABC):
         Use parse_cli to parse the flags needed to conduct the experiment
         """
 
-    def __init__(self, run_name, test_dir='../test', train_dir='../train', out_dir='./results', seed=None, **kw):
+    def __init__(self, run_name, data_dir: str, out_dir='./results', seed=None, **kw):
         self.experiment_name = run_name
-        self.test_dir = test_dir
-        self.train_dir = train_dir
+        self.data_dir = data_dir
         if not seed:
             seed = random.randint(0, 2 ** 31)
         self.torch_seed = seed
@@ -34,6 +33,7 @@ class Experiment(abc.ABC):
         # Experiment config
         p.add_argument('--run-name', '-n', type=str,
                        help='Name of run and output file', required=True)
+        p.add_argument('--data-dir', '-d', type=str, help='data folder', required=True)
         p.add_argument('--out-dir', '-o', type=str, help='Output folder',
                        default='./results', required=False)
         p.add_argument('--seed', '-s', type=int, help='Random seed',
@@ -77,9 +77,10 @@ class Experiment(abc.ABC):
         p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
                        help='Output size of hidden linear layers',
                        metavar='H')
-        # Dataset Loader
+        # Dataset
         p.add_argument('--label-level', '-LL', type=int, default=1, metavar='LL')
         p.add_argument('--filter-fun', '-FF', type=int, default=0, metavar='FF')
+        p.add_argument('--train-portion', type=float, default=0.9)
 
         parsed = p.parse_args()
 

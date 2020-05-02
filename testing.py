@@ -38,13 +38,17 @@ if __name__ == '__main__':
     # # # # print(pathlib.Path(os.path.join(*p.parts)).parts)
     # exit()
 
-    p = NoOverlapProcessor('data_no_overlap')
-    p.process_dataset('classes_csvs')
+    p = NoOverlapProcessor('data_reg')
+    p.process_dataset('classes_reg')
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./data_no_overlap', testing=True)
+    l = FlowPicDataLoader('./data_tor', testing=False)
     l.load_dataset()
     print('\n==========\n')
+    #
+    # l = FlowPicDataLoader('./classes_tor', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
 
     ''' ========================================================================================== '''
 
