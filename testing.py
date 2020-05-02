@@ -10,10 +10,13 @@ from torch.utils.data import random_split
 
 from flowpic_dataset.loader import FlowPicDataLoader
 from flowpic_dataset.utils import create_dataset_weights
-from flowpic_dataset.preprocessor import PreProcessor
+from flowpic_dataset.preprocessor import SplitProcessor, NoOverlapProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 import random
+from imblearn.under_sampling import RandomUnderSampler
+import pathlib
+import os
 
 
 class C:
@@ -23,20 +26,39 @@ class C:
     def p(self):
         print(self.x)
 
-
 if __name__ == '__main__':
 
-    p = PreProcessor('./classes_csvs', './test', './train')
-    p.process_dataset()
+    # path = './classes_csvs/classes_csvs/browsing'
+    # p = pathlib.Path(path)
+    # pr = p.parts
+    # p2 = pathlib.Path(*pr)
+    # print(p2)
+    # # print([x for x in p.glob('**/*')])
+    # #
+    # # # # print(pathlib.Path(os.path.join(*p.parts)).parts)
+    # exit()
+
+    p = NoOverlapProcessor('data_no_overlap')
+    p.process_dataset('classes_csvs')
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./test', testing=True)
+    l = FlowPicDataLoader('./data_no_overlap', testing=True)
     l.load_dataset()
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./train', testing=True)
-    l.load_dataset()
-    print('\n==========\n')
+    ''' ========================================================================================== '''
+
+    # p = OverlapProcessor('data_overlap_test', 'data_overlap_train')
+    # p.process_dataset('classes_csvs')
+    # print('\n==========\n')
+    #
+    # l = FlowPicDataLoader('./data_overlap_test', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
+    # #
+    # l = FlowPicDataLoader('./data_overlap_train', testing=True)
+    # l.load_dataset()
+    # print('\n==========\n')
     #
     # l = FlowPicDataLoader('./overlapped_data', testing=True)
     # l.load_dataset()
