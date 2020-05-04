@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python process_data.py
+python flowpic_dataset/process_data.py

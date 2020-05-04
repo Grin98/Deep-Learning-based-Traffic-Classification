@@ -1,3 +1,8 @@
+import sys
+
+sys.path.append("../")
+sys.path.append("./")
+
 from flowpic_dataset.loader import FlowPicDataLoader
 from flowpic_dataset.preprocessor import NoOverlapProcessor
 
