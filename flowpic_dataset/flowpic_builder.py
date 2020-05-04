@@ -25,6 +25,8 @@ class FlowPicBuilder:
             # packet is (size, time)
             x_position = int(floor(float(packet[1]) * x_axis_to_second_ratio))
             y_position = packet[0]
+            if x_position >= 1500 or y_position >= 1500:
+                print('x,y = ', x_position, y_position)
             self.hist[x_position][y_position] += 1
 
         return self.hist.clone()

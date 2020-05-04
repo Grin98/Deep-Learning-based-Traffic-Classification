@@ -67,7 +67,7 @@ class BaseProcessor(ABC):
             start = b * self.block_delta
             end = b * self.block_delta + self.block_duration
 
-            mask = ((times >= start) & (times <= end))
+            mask = ((times >= start) & (times < end))
             if np.count_nonzero(mask) == 0:
                 continue
 

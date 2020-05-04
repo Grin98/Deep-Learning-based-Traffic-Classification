@@ -9,12 +9,12 @@ from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
 from flowpic_dataset.loader import FlowPicDataLoader
-from flowpic_dataset.utils import create_dataset_weights
 from flowpic_dataset.preprocessor import SplitProcessor, NoOverlapProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 import random
 from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 import pathlib
 import os
 
@@ -26,27 +26,55 @@ class C:
     def p(self):
         print(self.x)
 
+
 if __name__ == '__main__':
 
-    # path = './classes_csvs/classes_csvs/browsing'
-    # p = pathlib.Path(path)
-    # pr = p.parts
-    # p2 = pathlib.Path(*pr)
-    # print(p2)
-    # # print([x for x in p.glob('**/*')])
-    # #
-    # # # # print(pathlib.Path(os.path.join(*p.parts)).parts)
+    # d = list({0: 1, 1: 2}.items())
+    # print(dict(map(lambda a: (a[0], a[1]+3), d)))
     # exit()
+    # x = [[0], [1], [2], [3],
+    #      [4], [5], [6], [7],
+    #      [8], [9]]
+    # print(x)
+    # y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2]
+    # rus = RandomUnderSampler({0: 1, 1: 1, 2: 1}, replacement=True)
+    # ros = RandomOverSampler({0: 5, 1: 5, 2: 2})
+    # print(rus.fit_resample(x, y))
+    # print(rus.sample_indices_)
+    # print(ros.fit_resample(x, y))
+    # exit()
+
+    # print(random.sample(range(300), 20))
+    # exit()
+
+    p = NoOverlapProcessor('data_tor')
+    p.process_dataset('classes_tor')
+    print('\n==========\n')
+
+    p = NoOverlapProcessor('data_vpn')
+    p.process_dataset('classes_vpn')
+    print('\n==========\n')
 
     p = NoOverlapProcessor('data_reg')
     p.process_dataset('classes_reg')
     print('\n==========\n')
 
-    l = FlowPicDataLoader('./data_tor', testing=False)
-    l.load_dataset()
-    print('\n==========\n')
+    FlowPicDataLoader('./data_reg', testing=False).load_dataset()
+    FlowPicDataLoader('./data_tor', testing=False).load_dataset()
+    FlowPicDataLoader('./data_vpn', testing=False).load_dataset()
+
+    # l = FlowPicDataLoader('./data_tor', testing=False)
+    # ds = l.load_dataset()
+    # print(ds)
+    # ds.balance(num_samples_per_class=350)
+    # print(ds)
+    # print('\n==========\n')
+
+    # l = FlowPicDataLoader('./data_overlap_train', testing=False)
+    # l.load_dataset()
+    # print('\n==========\n')
     #
-    # l = FlowPicDataLoader('./classes_tor', testing=True)
+    # l = FlowPicDataLoader('./data_overlap_test', testing=False)
     # l.load_dataset()
     # print('\n==========\n')
 

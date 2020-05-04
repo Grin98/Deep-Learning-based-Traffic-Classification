@@ -80,7 +80,8 @@ class Experiment(abc.ABC):
         # Dataset
         p.add_argument('--label-level', '-LL', type=int, default=1, metavar='LL')
         p.add_argument('--filter-fun', '-FF', type=int, default=0, metavar='FF')
-        p.add_argument('--train-portion', type=float, default=0.9)
+        p.add_argument('--train-portion', type=float, default=0.8)
+        p.add_argument('--num-samples-per-class', '-nspc', type=int, default=0)
 
         parsed = p.parse_args()
 

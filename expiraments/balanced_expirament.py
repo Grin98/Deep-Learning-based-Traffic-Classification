@@ -1,26 +1,24 @@
 import sys
-from time import time
+from collections import Counter
 
 sys.path.append("../")
 sys.path.append("./")
 
 import torch
 import torch.optim
-from torch.utils.data import DataLoader
-from torch.utils.data import random_split
+from torch.utils.data import DataLoader, RandomSampler
 from flowpic_dataset.loader import FlowPicDataLoader
 from model.FlowPicModel import FlowPicModel
-from training.experiment import Experiment
+from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
-from flowpic_dataset.utils import create_under_sampling_sampler
 
 
-class FlowPicExperiment(Experiment):
+class BalancedExperiment(Experiment):
     # TODO: Implement the training loop
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
                 layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
-                label_level=1, filter_fun=0, train_portion = 0.9,
+                label_level=1, filter_fun=0, train_portion=0.8, num_samples_per_class=0,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -35,25 +33,18 @@ class FlowPicExperiment(Experiment):
 
         dataset_loader = FlowPicDataLoader(self.data_dir)
         ds = dataset_loader.load_dataset(label_level, filter_fun)
-        label_probabilities = dataset_loader.get_label_weights()
-        out_classes = dataset_loader.get_num_labels()
+        ds_train, ds_test = ds.split_set(train_percent=train_portion)
 
-        ds_train_length = int(len(ds) * train_portion)
-        ds_test_length = len(ds) - ds_train_length
-        ds_train, ds_test = random_split(ds, [ds_train_length, ds_test_length])
+        if num_samples_per_class == 0:
+            label_count = Counter(ds_train.labels).values()
+            num_samples_per_class = sum(label_count) // len(label_count)
+        ds_train.balance(num_samples_per_class=num_samples_per_class)
 
-        print('creating sampler for train')
-        s = time()
-        sampler_train = create_under_sampling_sampler(ds_train, bs_train, batches, label_probabilities)
-        print(time() - s)
-        print('creating sampler for test')
-        s = time()
-        sampler_test = create_under_sampling_sampler(ds_test, bs_test, batches, label_probabilities)
-        print(time() - s)
-        print('done creating sampler')
+        print('ds_train', ds_train)
+        print('ds_test', ds_test)
 
-        dl_train = DataLoader(ds_train, bs_train, shuffle=False, sampler=sampler_train)
-        dl_test = DataLoader(ds_test, bs_test, shuffle=False, sampler=sampler_test)
+        dl_train = DataLoader(ds_train, bs_train, shuffle=True)
+        dl_test = DataLoader(ds_test, bs_test, shuffle=False,)
 
         filters = []
         for filter in filters_per_layer:
@@ -74,6 +65,6 @@ class FlowPicExperiment(Experiment):
 
 
 if __name__ == '__main__':
-    parsed_args = FlowPicExperiment.parse_cli()
-    print(f'*** Starting {FlowPicExperiment.__name__} with config:\n{parsed_args}')
-    exp = FlowPicExperiment(**vars(parsed_args))
+    parsed_args = BalancedExperiment.parse_cli()
+    print(f'*** Starting {BalancedExperiment.__name__} with config:\n{parsed_args}')
+    exp = BalancedExperiment(**vars(parsed_args))

@@ -5,6 +5,8 @@ from torch.utils.data.dataset import ConcatDataset
 
 from flowpic_dataset.dataset import FlowsDataSet
 from flowpic_dataset.flowpic_builder import FlowPicBuilder
+import numpy as np
+import torch
 
 
 class FlowPicDataLoader:
@@ -64,13 +66,13 @@ class FlowPicDataLoader:
         print("=== Loading dataset from %s ===" % self.root_dir)
         datasets = self.__gather_datasets__(self.root_dir, label_level - 1, None)
         print("=== Dataset loading completed :D ===\n")
-        return ConcatDataset(datasets)
+        return FlowsDataSet.concatenate(datasets)
 
     def __gather_datasets__(self, path, label_level, label):
 
         dirs = [d for d in listdir(path) if isdir(join(path, d))]
         if not dirs:
-            dss = [FlowsDataSet(join(path, file), label, transform=FlowPicBuilder().build_pic, testing=self.testing) for file in
+            dss = [FlowsDataSet(join(path, file), label, testing=self.testing) for file in
                    listdir(path)]
             num_flows = sum(map(len, dss))
             self.__add_to_count__(num_flows, label)
