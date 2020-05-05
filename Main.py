@@ -1,6 +1,5 @@
 from os import listdir
 from os.path import isfile, join, splitext
-from scapy.all import *
 
 
 def print_type(obj):

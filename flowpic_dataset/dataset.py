@@ -68,10 +68,10 @@ class FlowsDataSet(Dataset):
         rus = RandomUnderSampler(under_sample_quantities, replacement=False)
         ros = RandomOverSampler(over_sample_quantities)
 
-        self.apply_sampler(rus)
-        self.apply_sampler(ros)
+        self._apply_sampler(rus)
+        self._apply_sampler(ros)
 
-    def apply_sampler(self, sampler):
+    def _apply_sampler(self, sampler):
         dummy_data = [[0]] * len(self.data)
         sampler.fit_resample(dummy_data, self.labels)
         indices = sampler.sample_indices_
@@ -79,10 +79,10 @@ class FlowsDataSet(Dataset):
         self.data = self.data[indices]
         self.labels = self.labels[indices]
 
-    def _sample(self, num_to_sample: int) -> List[int]:
-        return list(WeightedRandomSampler(self._create_dataset_weights(),
-                                          num_to_sample,
-                                          replacement=True))
+    def create_sampler(self, num_to_sample: int, replacement: bool = False) -> WeightedRandomSampler:
+        return WeightedRandomSampler(self._create_dataset_weights(),
+                                     num_to_sample,
+                                     replacement=replacement)
 
     def _create_dataset_weights(self) -> List[float]:
         label_probabilities = list(map(lambda x: 1 / x,
