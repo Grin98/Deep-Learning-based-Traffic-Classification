@@ -50,9 +50,6 @@ class FlowPicTrainer(Trainer):
             y = y.cpu()
             pred = pred.cpu()
 
-            print(y)
-            print(pred)
-
             weighted_s = f1_score(y, pred, average='weighted')
             per_class_s = f1_score(y, pred, average=None)
 
