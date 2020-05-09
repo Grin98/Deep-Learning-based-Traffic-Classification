@@ -9,7 +9,7 @@ from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
 from flowpic_dataset.loader import FlowPicDataLoader
-from flowpic_dataset.preprocessor import SplitProcessor, NoOverlapProcessor
+from flowpic_dataset.processor import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 import random
@@ -17,6 +17,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 import pathlib
 import os
+import matplotlib.pyplot as plt
 
 
 class C:
@@ -28,6 +29,20 @@ class C:
 
 
 if __name__ == '__main__':
+
+    p = StatisticsProcessor('classes_csvs_statistics')
+    p.process_dataset('classes_csvs')
+
+    # x = [random.gauss(3, 1) for _ in range(10000)]
+    # y = [random.gauss(4, 2) for _ in range(5000)] + [200]
+    #
+    # bins1 = np.linspace(-10, 10, 100)
+    # bins2 = np.linspace(-20, 20, 100)
+    #
+    # plt.hist(x, bins1, alpha=0.5, label='x')
+    # plt.hist(y, bins2, alpha=0.5, label='y')
+    # plt.legend(loc='upper right')
+    # plt.show()
 
     # d = list({0: 1, 1: 2}.items())
     # print(dict(map(lambda a: (a[0], a[1]+3), d)))
@@ -47,21 +62,24 @@ if __name__ == '__main__':
     # print(random.sample(range(300), 20))
     # exit()
 
-    p = NoOverlapProcessor('data_tor')
-    p.process_dataset('classes_tor')
-    print('\n==========\n')
+    # p = NoOverlapProcessor('data_tor')
+    # p.process_dataset('classes_tor')
+    # print('\n==========\n')
+    #
+    # p = NoOverlapProcessor('data_vpn')
+    # p.process_dataset('classes_vpn')
+    # print('\n==========\n')
+    #
+    # p = NoOverlapProcessor('data_reg')
+    # p.process_dataset('classes_reg')
+    # print('\n==========\n')
 
-    p = NoOverlapProcessor('data_vpn')
-    p.process_dataset('classes_vpn')
-    print('\n==========\n')
-
-    p = NoOverlapProcessor('data_reg')
-    p.process_dataset('classes_reg')
-    print('\n==========\n')
-
-    FlowPicDataLoader('./data_reg', testing=False).load_dataset()
-    FlowPicDataLoader('./data_tor', testing=False).load_dataset()
-    FlowPicDataLoader('./data_vpn', testing=False).load_dataset()
+    # p = SplitProcessor('data_overlap', 'delete_me')
+    # p.process_dataset('classes_csvs')
+    # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
+    # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
+    # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
+    # FlowPicDataLoader('./data_vpn', testing=True).load_dataset()
 
     # l = FlowPicDataLoader('./data_tor', testing=False)
     # ds = l.load_dataset()
@@ -92,7 +110,7 @@ if __name__ == '__main__':
     # l.load_dataset()
     # print('\n==========\n')
     #
-    # l = FlowPicDataLoader('./overlapped_data', testing=True)
+    # l = FlowPicDataLoader('./data_overlap', testing=True)
     # l.load_dataset()
     # print('\n==========\n')
     # #
@@ -110,7 +128,7 @@ if __name__ == '__main__':
     # print(test)
     # print(train)
 
-# d = FlowsDataSet('./overlapped_data/voip/reg/iscx_voip_vpn.raw.csv')
+# d = FlowsDataSet('./data_overlap/voip/reg/iscx_voip_vpn.raw.csv')
 # x, y = d[0]
 # print(y)
 
