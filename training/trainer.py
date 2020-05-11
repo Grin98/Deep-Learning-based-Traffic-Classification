@@ -64,7 +64,8 @@ class Trainer(abc.ABC):
 
         best_acc = None
         epochs_without_improvement = 0
-        if checkpoints is not None and load_checkpoint == True:
+        print(checkpoints is not None, load_checkpoint)
+        if checkpoints is not None and load_checkpoint:
             checkpoint_filename = f'{checkpoints}.pt'
             Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
             if os.path.isfile(checkpoint_filename):

@@ -60,7 +60,10 @@ class FlowPicExperiment(Experiment):
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 
-        fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints, early_stopping, print_every=5,
+        fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints,
+                              load_checkpoint=load_checkpoint,
+                              early_stopping=early_stopping,
+                              print_every=5,
                               num_batches=batches, **kw)
 
         return fit_res

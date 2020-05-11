@@ -24,7 +24,8 @@ class Experiment(abc.ABC):
         self.output_dir = out_dir
         self.config = locals()
         self.result = self.__run__(**kw)
-#        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
+
+    #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 
     @staticmethod
     def parse_cli():
@@ -54,9 +55,9 @@ class Experiment(abc.ABC):
         p.add_argument('--checkpoints', type=str,
                        help='Save model checkpoints to this file when test '
                             'accuracy improves', default=None)
-        p.add_argument('--load-checkpoint', help='whether to start training using '
-                                                 'the file provided in --checkpoints as starting point',
-                       default=False)
+        p.add_argument('--load-checkpoint', type=bool, default=False,
+                       help='whether to start training using '
+                            'the file provided in --checkpoints as starting point')
         p.add_argument('--lr', type=float,
                        help='Learning rate', default=1e-3)
         p.add_argument('--reg', type=float,
