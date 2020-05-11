@@ -3,12 +3,18 @@ from os.path import isfile, join, splitext, isdir
 from os import listdir
 import os
 import csv
-from typing import List, Tuple, Sequence
+from typing import List, Tuple, Sequence, NamedTuple
 import numpy as np
 from abc import ABC, abstractmethod
 from pathlib import Path, Path
 from math import floor
 import matplotlib.pyplot as plt
+
+
+class Flow(NamedTuple):
+    sizes: np.ndarray
+    times: np.ndarray
+    app: str
 
 
 class BaseProcessor(ABC):
@@ -38,14 +44,14 @@ class BaseProcessor(ABC):
     def _process_dir_files(self, input_dir_path: Path):
         pass
 
-    def _process_flows(self, flows):
+    def _split_multiple_flows_to_blocks(self, flows: Sequence[Flow]):
         blocks = []
-        for app, sizes, times in flows:
-            blocks += self._split_flow_to_blocks(times, sizes)
+        for f in flows:
+            blocks += self._split_flow_to_blocks(f)
 
         return blocks
 
-    def _transform_row_to_flow(self, row: List[str]) -> Tuple:
+    def _transform_row_to_flow(self, row: List[str]) -> Flow:
         app = row[0]
         num_packets = int(row[7])
         off_set = 8  # meta data occupies first 8 indices
@@ -60,10 +66,13 @@ class BaseProcessor(ABC):
         times = times[mask]
         sizes = sizes[mask] - 1
 
-        return app, sizes, times
+        return Flow(sizes, times, app)
 
-    def _split_flow_to_blocks(self, times, sizes):
+    def _split_flow_to_blocks(self, flow: Flow):
+        times = flow.times
+        sizes = flow.sizes
         num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
+
         blocks = []
         for b in range(num_blocks):
             start = b * self.block_delta
@@ -131,8 +140,8 @@ class SplitPreProcessor(BaseProcessor):
                     flows += self._process_file(file)
 
                 train_flows, test_flows = self._split_train_test(flows, self.test_percent)
-                train_blocks = self._process_flows(train_flows)
-                test_blocks = self._process_flows(test_flows)
+                train_blocks = self._split_multiple_flows_to_blocks(train_flows)
+                test_blocks = self._split_multiple_flows_to_blocks(test_flows)
 
                 train_blocks = self._sample_blocks(train_blocks, target_amount=4000)
                 test_blocks = self._sample_blocks(test_blocks, target_amount=300)
@@ -208,8 +217,8 @@ class NoOverlapPreProcessor(BaseProcessor):
             data = csv.reader(f_in, delimiter=',')
 
             for row in data:
-                app, sizes, times = self._transform_row_to_flow(row)
-                blocks = self._split_flow_to_blocks(times, sizes)
+                flow = self._transform_row_to_flow(row)
+                blocks = self._split_flow_to_blocks(flow)
                 for b in blocks:
                     writer.writerow(b)
 
@@ -264,8 +273,8 @@ class StatisticsProcessor(BaseProcessor):
             blocks = []
             for row in data:
                 if self.is_raw_data:
-                    app, sizes, times = self._transform_row_to_flow(row)
-                    blocks += self._split_flow_to_blocks(times, sizes)
+                    flow = self._transform_row_to_flow(row)
+                    blocks += self._split_flow_to_blocks(flow)
                 else:
                     blocks += row
 

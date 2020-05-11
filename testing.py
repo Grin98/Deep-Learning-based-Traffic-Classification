@@ -30,8 +30,8 @@ class C:
 
 if __name__ == '__main__':
 
-    p = StatisticsProcessor('classes_csvs_statistics')
-    p.process_dataset('classes_csvs')
+    # p = StatisticsProcessor('classes_statistics')
+    # p.process_dataset('classes_csvs')
 
     # x = [random.gauss(3, 1) for _ in range(10000)]
     # y = [random.gauss(4, 2) for _ in range(5000)] + [200]
@@ -74,8 +74,9 @@ if __name__ == '__main__':
     # p.process_dataset('classes_reg')
     # print('\n==========\n')
 
-    # p = SplitProcessor('data_overlap', 'delete_me')
-    # p.process_dataset('classes_csvs')
+    SplitPreProcessor('data_overlap_train', 'data_overlap_test').process_dataset('classes_csvs')
+    FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
+    FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
     # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
     # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
@@ -88,11 +89,11 @@ if __name__ == '__main__':
     # print(ds)
     # print('\n==========\n')
 
-    # l = FlowPicDataLoader('./data_overlap_train', testing=False)
+    # l = FlowPicDataLoader('./data_overlap', testing=True)
     # l.load_dataset()
     # print('\n==========\n')
-    #
-    # l = FlowPicDataLoader('./data_overlap_test', testing=False)
+    # exit()
+    # l = FlowPicDataLoader('./data_overlap_test', testing=True)
     # l.load_dataset()
     # print('\n==========\n')
 
