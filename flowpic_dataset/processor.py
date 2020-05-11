@@ -125,7 +125,7 @@ class SplitPreProcessor(BaseProcessor):
 
     def __init__(self, out_root_dir,
                  test_percent: float = 0.1,
-                 train_size_cap: int = 3000,
+                 train_size_cap: int = 2700,
                  test_size_cap: int = 300,
                  block_duration_in_seconds: int = 60,
                  block_delta_in_seconds: int = 15, packet_size_limit: int = 1500):

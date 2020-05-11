@@ -8,7 +8,7 @@ from time import time
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
-from flowpic_dataset.loader import FlowPicDataLoader
+from flowpic_dataset.loader import FlowPicDataLoader, Label
 from flowpic_dataset.processor import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
@@ -74,13 +74,16 @@ if __name__ == '__main__':
     # p.process_dataset('classes_reg')
     # print('\n==========\n')
 
-    SplitPreProcessor('data_overlap_split').process_dataset('classes_csvs')
+    # SplitPreProcessor('data_reg_overlap_split').process_dataset('classes_reg')
+    # SplitPreProcessor('data_tor_overlap_split').process_dataset('classes_tor')
+    # SplitPreProcessor('data_vpn_overlap_split').process_dataset('classes_vpn')
     # FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
     # FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
     # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
     # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
-    # FlowPicDataLoader('./data_vpn', testing=True).load_dataset()
+    p = FlowPicDataLoader('./data_vpn_overlap_split', testing=False)
+    tr, te = p.load_dataset(is_split=True)
 
     # l = FlowPicDataLoader('./data_tor', testing=False)
     # ds = l.load_dataset()
