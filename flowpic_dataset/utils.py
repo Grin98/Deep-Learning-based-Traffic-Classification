@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 import matplotlib as plt
@@ -15,3 +16,27 @@ def show_flow_pic(pic):
     plt.imshow(x, cmap='binary')
     plt.gca().invert_yaxis()
     plt.show()
+
+
+def create_output_dir(out_root_dir: Path, input_dir_path: Path):
+    sub_path = Path(*input_dir_path.parts[1:])
+    out_path_dir = out_root_dir / sub_path
+    create_dir(out_path_dir)
+    return out_path_dir
+
+
+def get_dir_directories(dir_path: Path):
+    return [d for d in get_dir_items(dir_path) if d.is_dir()]
+
+
+def get_dir_items(dir_path: Path):
+    return list(dir_path.glob('*'))
+
+
+def get_dir_csvs(dir_path: Path):
+    return list(dir_path.glob('*.csv'))
+
+
+def create_dir(dir_: Path):
+    if not dir_.exists():
+        dir_.mkdir(parents=True, exist_ok=True)

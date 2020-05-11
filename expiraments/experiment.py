@@ -51,7 +51,7 @@ class Experiment(abc.ABC):
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
                             'improvement', default=3)
-        p.add_argument('--checkpoints', type=int,
+        p.add_argument('--checkpoints', type=str,
                        help='Save model checkpoints to this file when test '
                             'accuracy improves', default=None)
         p.add_argument('--load-checkpoint', help='whether to start training using '

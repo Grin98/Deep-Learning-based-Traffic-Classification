@@ -10,10 +10,7 @@ from flowpic_dataset.flowpic_builder import FlowPicBuilder
 import numpy as np
 import torch
 
-
-class Label(Enum):
-    Encryption = 0
-    Class = 1
+from flowpic_dataset.utils import get_dir_directories, get_dir_csvs
 
 
 class FlowPicDataLoader:
@@ -31,7 +28,10 @@ class FlowPicDataLoader:
         self.labels = {}
         print("=== Loading dataset from %s ===" % self.root_dir)
         if is_split:
+            print('train')
             train_datasets = self._gather_datasets(self.root_dir/'train')
+
+            print('test')
             test_dataset = self._gather_datasets(self.root_dir/'test')
             res = FlowsDataSet.concatenate(train_datasets), FlowsDataSet.concatenate(test_dataset)
         else:
@@ -42,9 +42,9 @@ class FlowPicDataLoader:
         return res
 
     def _gather_datasets(self, path: Path, label_level: bool = True, label: int = None):
-        dirs = self._get_dir_directories(path)
+        dirs = get_dir_directories(path)
         if not dirs:
-            dss = [FlowsDataSet(file, label, testing=self.testing) for file in self._get_dir_csvs(path)]
+            dss = [FlowsDataSet(file, label, testing=self.testing) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
             print("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 
@@ -60,17 +60,6 @@ class FlowPicDataLoader:
             datasets += self._gather_datasets(d, False, label)
 
         return datasets
-
-    @staticmethod
-    def _get_dir_items(dir_path: Path):
-        return list(dir_path.glob('*'))
-
-    def _get_dir_directories(self, dir_path: Path):
-        return [d for d in self._get_dir_items(dir_path) if d.is_dir()]
-
-    @staticmethod
-    def _get_dir_csvs(dir_path: Path):
-        return list(dir_path.glob('*.csv'))
 
     def _add_directory_label(self, d: str):
         if d not in self.labels:

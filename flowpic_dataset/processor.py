@@ -10,6 +10,8 @@ from pathlib import Path, Path
 from math import floor
 import matplotlib.pyplot as plt
 
+from flowpic_dataset.utils import *
+
 
 class Flow(NamedTuple):
     sizes: np.ndarray
@@ -32,7 +34,7 @@ class BaseProcessor(ABC):
         print('finished processing')
 
     def _process_dirs(self, input_dir_path: Path):
-        dirs = [d for d in self._get_dir_items(input_dir_path) if d.is_dir()]
+        dirs = get_dir_directories(input_dir_path)
         if not dirs:
             self._process_dir_files(input_dir_path)
 
@@ -92,21 +94,6 @@ class BaseProcessor(ABC):
             blocks.append(block)
         return blocks
 
-    def _create_output_dir(self, out_root_dir: Path, input_dir_path: Path):
-        sub_path = Path(*input_dir_path.parts[1:])
-        out_path_dir = out_root_dir / sub_path
-        self._create_dir(out_path_dir)
-        return out_path_dir
-
-    @staticmethod
-    def _create_dir(dir: Path):
-        if not dir.exists():
-            dir.mkdir(parents=True, exist_ok=True)
-
-    @staticmethod
-    def _get_dir_items(dir_path: Path):
-        return dir_path.glob('*')
-
     @staticmethod
     def _write_blocks(blocks, writer, tag=None):
         if tag is None:
@@ -139,8 +126,8 @@ class SplitPreProcessor(BaseProcessor):
 
     def _process_dir_files(self, input_dir_path: Path):
         out_file = 'data.csv'
-        test_file_path = self._create_output_dir(self.test_path, input_dir_path) / out_file
-        train_file_path = self._create_output_dir(self.train_path, input_dir_path) / out_file
+        test_file_path = create_output_dir(self.test_path, input_dir_path) / out_file
+        train_file_path = create_output_dir(self.train_path, input_dir_path) / out_file
 
         print('processing %s' % input_dir_path)
         with test_file_path.open('w+', newline='') as test_out:
@@ -150,7 +137,7 @@ class SplitPreProcessor(BaseProcessor):
                 train_writer = csv.writer(train_out, delimiter=',')
 
                 flows = []
-                for file in self._get_dir_items(input_dir_path):
+                for file in get_dir_csvs(input_dir_path):
                     flows += self._process_file(file)
 
                 train_flows, test_flows = self._split_train_test(flows, self.test_percent)
@@ -208,13 +195,13 @@ class NoOverlapPreProcessor(BaseProcessor):
 
     def _process_dir_files(self, input_dir_path: Path):
         out_file = 'data.csv'
-        out_file_path = self._create_output_dir(self.out_root_dir, input_dir_path) / out_file
+        out_file_path = create_output_dir(self.out_root_dir, input_dir_path) / out_file
 
         with out_file_path.open('w+', newline='') as out_f:
             writer = csv.writer(out_f, delimiter=',')
 
             flows = []
-            for file in self._get_dir_items(input_dir_path):
+            for file in get_dir_csvs(input_dir_path):
                 flows += self._process_file(file)
 
             blocks = self._split_multiple_flows_to_blocks(flows)
@@ -230,8 +217,8 @@ class NoOverlapPreProcessor(BaseProcessor):
             data = csv.reader(f_in, delimiter=',')
             return [self._transform_row_to_flow(row) for row in data]
 
-class StatisticsProcessor(BaseProcessor):
 
+class StatisticsProcessor(BaseProcessor):
     def __init__(self, out_root_dir_path: str,
                  is_raw_data: bool = True,
                  block_duration_in_seconds: int = 60,
@@ -243,14 +230,14 @@ class StatisticsProcessor(BaseProcessor):
         self.is_raw_data = is_raw_data
 
     def _process_dir_files(self, input_dir_path: Path):
-        out_dir_path = self._create_output_dir(self.out_root_dir, input_dir_path)
+        out_dir_path = create_output_dir(self.out_root_dir, input_dir_path)
         num_packets_hist_file_path = out_dir_path / 'num_packets_hist.png'
         time_intervals_hist_file_path = out_dir_path / 'time_intervals_hist.png'
         num_packets_cumulative_hist_file_path = out_dir_path / 'num_packets_cumulative_hist.txt'
         time_intervals_cumulative_hist_file_path = out_dir_path / 'time_intervals_cumulative_hist.txt'
 
         blocks_meta = []
-        for file in self._get_dir_items(input_dir_path):
+        for file in get_dir_csvs(input_dir_path):
             blocks_meta += self._process_file(file)
 
         num_packets, intervals = zip(*blocks_meta)
