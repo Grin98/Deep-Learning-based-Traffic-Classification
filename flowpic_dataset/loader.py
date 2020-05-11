@@ -1,6 +1,7 @@
 from os import listdir
 from os.path import isdir, join
 from pathlib import Path
+from typing import Tuple, Union
 
 from torch.utils.data.dataset import ConcatDataset
 
@@ -19,7 +20,7 @@ class FlowPicDataLoader:
         self.testing = testing
         self.labels = {}
 
-    def load_dataset(self, is_split: bool = False):
+    def load_dataset(self, is_split: bool = False) -> Union[Tuple[FlowsDataSet], FlowsDataSet]:
         """
         creates a FlowDataset from each file at the leaf level of the directory tree
         and returns a ConcatDataset of all of them

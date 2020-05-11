@@ -43,7 +43,7 @@ class BalancedExperiment(Experiment):
         print('ds_train', ds_train)
         print('ds_test', ds_test)
 
-        test_sampler = ds_test.create_sampler(bs_test*batches, replacement=True)
+        test_sampler = ds_test.create_weighted_random_sampler(bs_test * batches, replacement=True)
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_test = DataLoader(ds_test, bs_test, shuffle=False, sampler=test_sampler)
 

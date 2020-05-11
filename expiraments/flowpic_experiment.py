@@ -12,7 +12,6 @@ from flowpic_dataset.loader import FlowPicDataLoader
 from model.FlowPicModel import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
-from flowpic_dataset.utils import create_under_sampling_sampler
 
 
 class FlowPicExperiment(Experiment):
@@ -20,7 +19,7 @@ class FlowPicExperiment(Experiment):
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
                 layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
-                label_level=1, filter_fun=0, train_portion=0.9,
+                label_level=1, filter_fun=0, train_portion=0.9, num_samples_per_class=0,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -34,21 +33,15 @@ class FlowPicExperiment(Experiment):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         dataset_loader = FlowPicDataLoader(self.data_dir)
-        ds = dataset_loader.load_dataset(label_level, filter_fun)
-        label_probabilities = dataset_loader.get_label_weights()
-        out_classes = dataset_loader.get_num_labels()
-
-        ds_train_length = int(len(ds) * train_portion)
-        ds_test_length = len(ds) - ds_train_length
-        ds_train, ds_test = random_split(ds, [ds_train_length, ds_test_length])
+        ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
         print('creating sampler for train')
         s = time()
-        sampler_train = create_under_sampling_sampler(ds_train, bs_train, batches, label_probabilities)
+        sampler_train = ds_train.create_weighted_random_sampler(num_to_sample=bs_train * batches, replacement=True)
         print(time() - s)
         print('creating sampler for test')
         s = time()
-        sampler_test = create_under_sampling_sampler(ds_test, bs_test, batches, label_probabilities)
+        sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
         print(time() - s)
         print('done creating sampler')
 

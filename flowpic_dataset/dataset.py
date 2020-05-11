@@ -29,7 +29,6 @@ class FlowsDataSet(Dataset):
 
         if csv_file_path is not None:
             with open(csv_file_path, newline='') as f:
-                # self.__transform_row_to_flow__(row)
                 if testing:
                     self.data = [row for row in csv.reader(f, delimiter=',')]
                 else:
@@ -79,7 +78,7 @@ class FlowsDataSet(Dataset):
         self.data = self.data[indices]
         self.labels = self.labels[indices]
 
-    def create_sampler(self, num_to_sample: int, replacement: bool = False) -> WeightedRandomSampler:
+    def create_weighted_random_sampler(self, num_to_sample: int, replacement: bool = False) -> WeightedRandomSampler:
         return WeightedRandomSampler(self._create_dataset_weights(),
                                      num_to_sample,
                                      replacement=replacement)
