@@ -92,6 +92,12 @@ class BaseProcessor(ABC):
             blocks.append(block)
         return blocks
 
+    def _create_output_dir(self, out_root_dir: Path, input_dir_path: Path):
+        sub_path = Path(*input_dir_path.parts[1:])
+        out_path_dir = out_root_dir / sub_path
+        self._create_dir(out_path_dir)
+        return out_path_dir
+
     @staticmethod
     def _create_dir(dir: Path):
         if not dir.exists():
@@ -101,11 +107,14 @@ class BaseProcessor(ABC):
     def _get_dir_items(dir_path: Path):
         return dir_path.glob('*')
 
-    def _create_output_dir(self, out_root_dir: Path, input_dir_path: Path):
-        sub_path = Path(*input_dir_path.parts[1:])
-        out_path_dir = out_root_dir / sub_path
-        self._create_dir(out_path_dir)
-        return out_path_dir
+    @staticmethod
+    def _write_blocks(blocks, writer, tag=None):
+        if tag is None:
+            tag = ''
+
+        print('%s saving %d blocks' % (tag, len(blocks)))
+        for b in blocks:
+            writer.writerow(b)
 
 
 class SplitPreProcessor(BaseProcessor):
@@ -114,19 +123,24 @@ class SplitPreProcessor(BaseProcessor):
     and in addition there is an overlap between consecutive blocks depending on the value of [block_delta_in_seconds]
     """
 
-    def __init__(self, train_dir, test_dir,
+    def __init__(self, out_root_dir,
                  test_percent: float = 0.1,
+                 train_size_cap: int = 3000,
+                 test_size_cap: int = 300,
                  block_duration_in_seconds: int = 60,
                  block_delta_in_seconds: int = 15, packet_size_limit: int = 1500):
         super().__init__(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
-        self.trainPath = Path(train_dir)
-        self.testPath = Path(test_dir)
+        self.out_root_dir = Path(out_root_dir)
+        self.train_path = out_root_dir / Path('train')
+        self.test_path = out_root_dir / Path('test')
         self.test_percent = test_percent
+        self.train_size_cap = train_size_cap
+        self.test_size_cap = test_size_cap
 
     def _process_dir_files(self, input_dir_path: Path):
         out_file = 'data.csv'
-        test_file_path = self._create_output_dir(self.testPath, input_dir_path) / out_file
-        train_file_path = self._create_output_dir(self.trainPath, input_dir_path) / out_file
+        test_file_path = self._create_output_dir(self.test_path, input_dir_path) / out_file
+        train_file_path = self._create_output_dir(self.train_path, input_dir_path) / out_file
 
         print('processing %s' % input_dir_path)
         with test_file_path.open('w+', newline='') as test_out:
@@ -143,11 +157,11 @@ class SplitPreProcessor(BaseProcessor):
                 train_blocks = self._split_multiple_flows_to_blocks(train_flows)
                 test_blocks = self._split_multiple_flows_to_blocks(test_flows)
 
-                train_blocks = self._sample_blocks(train_blocks, target_amount=4000)
-                test_blocks = self._sample_blocks(test_blocks, target_amount=300)
+                train_blocks = self._sample_blocks(train_blocks, target_amount=self.train_size_cap)
+                test_blocks = self._sample_blocks(test_blocks, target_amount=self.test_size_cap)
 
-                self._write_blocks(train_blocks, train_writer)
-                self._write_blocks(test_blocks, test_writer)
+                self._write_blocks(train_blocks, train_writer, tag='train')
+                self._write_blocks(test_blocks, test_writer, tag='test')
 
     def _process_file(self, input_file_path: Path):
         file_extension = input_file_path.suffix
@@ -182,11 +196,6 @@ class SplitPreProcessor(BaseProcessor):
 
         return blocks
 
-    @staticmethod
-    def _write_blocks(blocks, writer):
-        for b in blocks:
-            writer.writerow(b)
-
 
 class NoOverlapPreProcessor(BaseProcessor):
     def __init__(self,
@@ -204,10 +213,14 @@ class NoOverlapPreProcessor(BaseProcessor):
         with out_file_path.open('w+', newline='') as out_f:
             writer = csv.writer(out_f, delimiter=',')
 
+            flows = []
             for file in self._get_dir_items(input_dir_path):
-                self._process_file(file, writer)
+                flows += self._process_file(file)
 
-    def _process_file(self, input_file_path: Path, writer):
+            blocks = self._split_multiple_flows_to_blocks(flows)
+            self._write_blocks(blocks, writer)
+
+    def _process_file(self, input_file_path: Path):
         file_extension = input_file_path.suffix
         if file_extension != '.csv':
             return
@@ -215,13 +228,7 @@ class NoOverlapPreProcessor(BaseProcessor):
         print('processing ' + str(input_file_path))
         with input_file_path.open(newline='') as f_in:
             data = csv.reader(f_in, delimiter=',')
-
-            for row in data:
-                flow = self._transform_row_to_flow(row)
-                blocks = self._split_flow_to_blocks(flow)
-                for b in blocks:
-                    writer.writerow(b)
-
+            return [self._transform_row_to_flow(row) for row in data]
 
 class StatisticsProcessor(BaseProcessor):
 

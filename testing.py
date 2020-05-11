@@ -74,9 +74,9 @@ if __name__ == '__main__':
     # p.process_dataset('classes_reg')
     # print('\n==========\n')
 
-    SplitPreProcessor('data_overlap_train', 'data_overlap_test').process_dataset('classes_csvs')
-    FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
-    FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
+    SplitPreProcessor('data_overlap_split').process_dataset('classes_csvs')
+    # FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
+    # FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
     # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
     # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
