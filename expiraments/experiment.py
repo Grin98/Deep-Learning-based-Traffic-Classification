@@ -58,10 +58,14 @@ class Experiment(abc.ABC):
         p.add_argument('--load-checkpoint', type=bool, default=False,
                        help='whether to start training using '
                             'the file provided in --checkpoints as starting point')
+        p.add_argument('--checkpoint-every', type=int, default=40,
+                       help='once in how many epochs to save the model')
         p.add_argument('--lr', type=float,
                        help='Learning rate', default=1e-3)
         p.add_argument('--reg', type=float,
                        help='L2 regularization', default=0)
+
+        #checkpoint_every
 
         # # Model
         p.add_argument('--filters-per-layer', '-K', type=int, nargs='+',
@@ -91,7 +95,7 @@ class Experiment(abc.ABC):
     def __run__(self,
                 # Training params
                 bs_train=128, bs_test=None, batches=100, epochs=100,
-                early_stopping=3, checkpoints=None, load_checkpoint=False, lr=1e-3, reg=0,
+                early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params
                 filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
                 drop_every=2, hidden_dims=None, ycn=False,
