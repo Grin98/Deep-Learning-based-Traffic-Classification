@@ -51,7 +51,7 @@ class Experiment(abc.ABC):
                        help='Maximal number of epochs', default=40)
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
-                            'improvement', default=3)
+                            'improvement', default=None)
         p.add_argument('--checkpoints', type=str,
                        help='Save model checkpoints to this file when test '
                             'accuracy improves', default=None)
