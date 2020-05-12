@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 # print("writing " + str(packet_sampling) + "to new flow " + str(flow_five_tuple))
                 flows[flow_five_tuple] = [packet_sampling]
         capture.close()
-        f = open('parsed-flows/' + filename + '.data', 'w')
+        f = open('parsed-flows/' + filename + '.data', 'w+')
         max_five_tuple = max(flows, key=lambda x: len(set(flows[x])))
         max_flow_samples = flows[max_five_tuple]
 
