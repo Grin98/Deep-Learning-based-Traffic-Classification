@@ -80,7 +80,7 @@ if __name__ == '__main__':
             start = times[0]
             times = [t - start for t in times]
 
-            row = ['app_place_holder'] + list(max_five_tuple) + ['%E' % start] + [len(times)] + \
+            row = ['app_place_holder'] + list(max_five_tuple) + [start] + [len(times)] + \
                   times + [' '] + list(sizes)
             writer.writerow(row)
         # app|src_ip|src_port|dst_ip|dst_port|transport_protocol|start_time|length|[timestamps]|[sizes]|
