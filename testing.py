@@ -30,6 +30,18 @@ class C:
 
 if __name__ == '__main__':
 
+    x = 1654.234565467
+    x = float('%.2f' % x)
+    s = '%E' % x
+    print(s)
+    exit()
+    l = [(1, 2), (3, 4), (5, 6)]
+    x, y = zip(*l)
+    print(x + l)
+    print(x)
+    print(y)
+    exit()
+
     # p = StatisticsProcessor('classes_statistics')
     # p.process_dataset('classes_csvs')
 
