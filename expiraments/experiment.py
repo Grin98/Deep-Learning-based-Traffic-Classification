@@ -27,10 +27,7 @@ class Experiment(abc.ABC):
 
     #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 
-    @staticmethod
-    def parse_cli():
-        p = argparse.ArgumentParser(description='Experiments')
-
+    def add_parser_args(self, p: argparse.ArgumentParser):
         # Experiment config
         p.add_argument('--run-name', '-n', type=str,
                        help='Name of run and output file', required=True)
@@ -39,7 +36,6 @@ class Experiment(abc.ABC):
                        default='./results', required=False)
         p.add_argument('--seed', '-s', type=int, help='Random seed',
                        default=None, required=False)
-
         # # Training
         p.add_argument('--bs-train', type=int, help='Train batch size',
                        default=128, metavar='BATCH_SIZE')
@@ -64,9 +60,7 @@ class Experiment(abc.ABC):
                        help='Learning rate', default=1e-3)
         p.add_argument('--reg', type=float,
                        help='L2 regularization', default=0)
-
-        #checkpoint_every
-
+        # checkpoint_every
         # # Model
         p.add_argument('--filters-per-layer', '-K', type=int, nargs='+',
                        help='Number of filters per conv layer in a block',
@@ -82,14 +76,13 @@ class Experiment(abc.ABC):
         p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
                        help='Output size of hidden linear layers',
                        metavar='H')
-        # Dataset
-        p.add_argument('--label-level', '-LL', type=int, default=1, metavar='LL')
-        p.add_argument('--filter-fun', '-FF', type=int, default=0, metavar='FF')
-        p.add_argument('--train-portion', type=float, default=0.8)
-        p.add_argument('--num-samples-per-class', '-nspc', type=int, default=0)
 
+        return p
+
+    def parse_cli(self):
+        p = argparse.ArgumentParser(description=type(self).__name__)
+        p = self.add_parser_args(p)
         parsed = p.parse_args()
-
         return parsed
 
     def __run__(self,
@@ -98,9 +91,7 @@ class Experiment(abc.ABC):
                 early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params
                 filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
-                drop_every=2, hidden_dims=None, ycn=False,
-                # Dataset Loader params
-                label_level=1, filter_fun=0,
+                drop_every=2, hidden_dims=None,
                 **kw):
         """
             Execute a single run of experiment with given configuration

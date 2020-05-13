@@ -1,3 +1,4 @@
+import argparse
 import sys
 from time import time
 
@@ -14,12 +15,11 @@ from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
 
 
-class FlowPicExperiment(Experiment):
-    # TODO: Implement the training loop
+class SplitExperiment(Experiment):
+
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
-                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
-                label_level=1, filter_fun=0, train_portion=0.9, num_samples_per_class=0,
+                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -36,14 +36,9 @@ class FlowPicExperiment(Experiment):
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
         print('creating sampler for train')
-        s = time()
         sampler_train = ds_train.create_weighted_random_sampler(num_to_sample=bs_train * batches, replacement=True)
-        print(time() - s)
         print('creating sampler for test')
-        s = time()
         sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
-        print(time() - s)
-        print('done creating sampler')
 
         dl_train = DataLoader(ds_train, bs_train, shuffle=False, sampler=sampler_train)
         dl_test = DataLoader(ds_test, bs_test, shuffle=False, sampler=sampler_test)
@@ -71,6 +66,6 @@ class FlowPicExperiment(Experiment):
 
 
 if __name__ == '__main__':
-    parsed_args = FlowPicExperiment.parse_cli()
-    print(f'*** Starting {FlowPicExperiment.__name__} with config:\n{parsed_args}')
-    exp = FlowPicExperiment(**vars(parsed_args))
+    parsed_args = SplitExperiment.parse_cli()
+    print(f'*** Starting {SplitExperiment.__name__} with config:\n{parsed_args}')
+    exp = SplitExperiment(**vars(parsed_args))

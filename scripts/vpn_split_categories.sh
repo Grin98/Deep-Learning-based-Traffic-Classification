@@ -8,3 +8,5 @@ python expiraments/split_experiment.py \
 --load-checkpoint False \
 --checkpoint-every 30
 
+
+

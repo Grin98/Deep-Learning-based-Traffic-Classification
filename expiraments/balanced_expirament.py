@@ -1,3 +1,4 @@
+import argparse
 import sys
 from collections import Counter
 
@@ -14,11 +15,18 @@ from training.flowpic_trainer import FlowPicTrainer
 
 
 class BalancedExperiment(Experiment):
+    def add_parser_args(self, p: argparse.ArgumentParser):
+        # Dataset
+        p.add_argument('--train-portion', type=float, default=0.8)
+        p.add_argument('--num-samples-per-class', '-nspc', type=int, default=0)
+
+        return super().add_parser_args(p)
+
     # TODO: Implement the training loop
     def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
                 load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
-                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None, ycn=False,
-                label_level=1, filter_fun=0, train_portion=0.8, num_samples_per_class=0,
+                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
+                train_portion=0.8, num_samples_per_class=0,
                 **kw):
         if hidden_dims is None:
             hidden_dims = [64]
@@ -32,7 +40,7 @@ class BalancedExperiment(Experiment):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         dataset_loader = FlowPicDataLoader(self.data_dir)
-        ds = dataset_loader.load_dataset(label_level, filter_fun)
+        ds = dataset_loader.load_dataset()
         ds_train, ds_test = ds.split_set(train_percent=train_portion)
 
         if num_samples_per_class == 0:
