@@ -1,3 +1,4 @@
+import csv
 import multiprocessing
 from collections import Counter
 
@@ -9,7 +10,7 @@ from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
 from flowpic_dataset.loader import FlowPicDataLoader
-from flowpic_dataset.processor import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
+from flowpic_dataset.processors import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 import random
@@ -30,6 +31,13 @@ class C:
 
 if __name__ == '__main__':
 
+    # p = SplitPreProcessor('.')
+    # flows = p._process_file(pathlib.Path('netflix_1_half.csv'))
+    # blocks = p._split_multiple_flows_to_blocks(flows)
+    # with pathlib.Path('netflix_1_half_blocks.csv').open('w+', newline='') as f:
+    #     writer = csv.writer(f, delimiter=',')
+    #     p._write_blocks(blocks, writer, ' ')
+    # exit()
     # p = StatisticsProcessor('classes_statistics')
     # p.process_dataset('classes_csvs')
 
@@ -82,8 +90,8 @@ if __name__ == '__main__':
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
     # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
     # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
-    p = FlowPicDataLoader('./data_vpn_overlap_split', testing=False)
-    tr, te = p.load_dataset(is_split=True)
+    # p = FlowPicDataLoader('./data_vpn_overlap_split', testing=False)
+    # tr, te = p.load_dataset(is_split=True)
 
     # l = FlowPicDataLoader('./data_tor', testing=False)
     # ds = l.load_dataset()

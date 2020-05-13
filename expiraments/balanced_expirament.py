@@ -23,11 +23,13 @@ class BalancedExperiment(Experiment):
         return super().add_parser_args(p)
 
     # TODO: Implement the training loop
-    def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
-                load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
-                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
-                train_portion=0.8, num_samples_per_class=0,
-                **kw):
+    def run(self, data_dir=None, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3,
+            checkpoints=None,
+            load_checkpoint=False, lr=1e-3, reg=0, filters_per_layer=None,
+            layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
+            train_portion=0.8, num_samples_per_class=0,
+            **kw):
+
         if hidden_dims is None:
             hidden_dims = [64]
         if filters_per_layer is None:
@@ -39,7 +41,7 @@ class BalancedExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset_loader = FlowPicDataLoader(self.data_dir)
+        dataset_loader = FlowPicDataLoader(data_dir)
         ds = dataset_loader.load_dataset()
         ds_train, ds_test = ds.split_set(train_percent=train_portion)
 
@@ -74,6 +76,7 @@ class BalancedExperiment(Experiment):
 
 
 if __name__ == '__main__':
-    parsed_args = BalancedExperiment.parse_cli()
+    exp = BalancedExperiment()
+    parsed_args = exp.parse_cli()
     print(f'*** Starting {BalancedExperiment.__name__} with config:\n{parsed_args}')
-    exp = BalancedExperiment(**vars(parsed_args))
+    exp = BalancedExperiment.run(**vars(parsed_args))

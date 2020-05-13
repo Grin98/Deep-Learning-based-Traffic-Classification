@@ -30,7 +30,6 @@ class FlowPicTrainer(Trainer):
         weighted_s = f1_score(y, pred, average='weighted')
         pre_class_s = f1_score(y, pred, average=None)
 
-
         return BatchResult(loss, num_correct, weighted_s, pre_class_s)
 
     def test_batch(self, batch) -> BatchResult:

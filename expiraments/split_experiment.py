@@ -17,10 +17,12 @@ from training.flowpic_trainer import FlowPicTrainer
 
 class SplitExperiment(Experiment):
 
-    def __run__(self, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3, checkpoints=None,
-                load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
-                layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
-                **kw):
+    def run(self, data_dir=None, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3,
+            checkpoints=None,
+            load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
+            layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
+            **kw):
+
         if hidden_dims is None:
             hidden_dims = [64]
         if filters_per_layer is None:
@@ -32,7 +34,7 @@ class SplitExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset_loader = FlowPicDataLoader(self.data_dir)
+        dataset_loader = FlowPicDataLoader(data_dir)
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
         print('creating sampler for train')
@@ -55,6 +57,7 @@ class SplitExperiment(Experiment):
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 
+        print('load_checkpoint_exp =', load_checkpoint)
         fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints,
                               checkpoint_every=checkpoint_every,
                               load_checkpoint=load_checkpoint,
@@ -66,6 +69,8 @@ class SplitExperiment(Experiment):
 
 
 if __name__ == '__main__':
-    parsed_args = SplitExperiment.parse_cli()
+    exp = SplitExperiment()
+    parsed_args = exp.parse_cli()
+    print(parsed_args)
     print(f'*** Starting {SplitExperiment.__name__} with config:\n{parsed_args}')
-    exp = SplitExperiment(**vars(parsed_args))
+    res = exp.run(**vars(parsed_args))

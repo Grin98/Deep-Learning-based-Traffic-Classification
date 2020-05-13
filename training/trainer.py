@@ -6,8 +6,12 @@ from operator import add
 import tqdm
 import torch
 from pathlib import Path
+
+from torch import nn
 from torch.utils.data import DataLoader
 from typing import Callable, Any
+
+from model.FlowPicModel import FlowPicModel
 from training.result_types import EpochResult, FitResult, BatchResult
 
 
@@ -21,7 +25,7 @@ class Trainer(abc.ABC):
     - Single batch (train_batch/test_batch)
     """
 
-    def __init__(self, model, loss_fn, optimizer, device=None):
+    def __init__(self, model: nn.Module, loss_fn, optimizer, device=None):
         """
         Initialize the trainer.
         :param model: Instance of the model to train.
@@ -29,7 +33,7 @@ class Trainer(abc.ABC):
         :param optimizer: The optimizer to train with.
         :param device: torch.device to run training on (CPU or GPU).
         """
-        self.model = model
+        self.model: nn.Module = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.device = device
@@ -64,27 +68,21 @@ class Trainer(abc.ABC):
 
         best_acc = None
         epochs_without_improvement = 0
+        print('load_checkpoint =', load_checkpoint)
         if checkpoints is not None and load_checkpoint:
-            checkpoint_filename = f'{checkpoints}.pt'
-            Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
-            if os.path.isfile(checkpoint_filename):
-                print(f'*** Loading checkpoint file {checkpoint_filename}')
-                saved_state = torch.load(checkpoint_filename,
-                                         map_location=self.device)
-                best_acc = saved_state.get('best_acc', best_acc)
-                epochs_without_improvement = \
-                    saved_state.get('ewi', epochs_without_improvement)
-                self.model.load_state_dict(saved_state['model_state'])
+            best_acc, epochs_without_improvement = self._load_model(checkpoints)
 
-        for epoch in range(1, num_epochs+1):
+        for epoch in range(1, num_epochs + 1):
             verbose = False  # pass this to train/test_epoch.
             if epoch % print_every == 0 or epoch == num_epochs or epoch == 1:
                 verbose = True
+
             self._print(f'--- EPOCH {epoch}/{num_epochs} ---', verbose)
 
             loss, acc = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_loss.append(sum(loss).item() / float(len(loss)))
             train_acc.append(acc.item())
+
             loss, acc = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_loss.append(sum(loss).item() / float(len(loss)))
             test_acc.append(acc.item())
@@ -92,21 +90,14 @@ class Trainer(abc.ABC):
             epochs_without_improvement = epochs_without_improvement + 1
 
             if checkpoints is not None and epoch % checkpoint_every == 0:
-                checkpoint_filename = f'{checkpoints}.pt'
-                saved_state = dict(best_acc=best_acc,
-                                   ewi=epochs_without_improvement,
-                                   model_state=self.model.state_dict())
-                torch.save(saved_state, checkpoint_filename)
-                print(f'*** Saved checkpoint {checkpoint_filename} '
-                      f'at epoch {epoch}')
+                self._save_model(checkpoints, epoch, best_acc, epochs_without_improvement)
 
             if best_acc is None or acc > best_acc:
                 best_acc = acc
                 epochs_without_improvement = 0
 
             if early_stopping is not None and epochs_without_improvement == early_stopping:
-                return FitResult(actual_num_epochs,
-                                 train_loss, train_acc, test_loss, test_acc)
+                break
 
         return FitResult(actual_num_epochs,
                          train_loss, train_acc, test_loss, test_acc)
@@ -155,6 +146,35 @@ class Trainer(abc.ABC):
             the number of correctly classified samples in the batch.
         """
         raise NotImplementedError()
+
+    def _load_model(self, checkpoints):
+        checkpoint_filename = f'{checkpoints}.pt'
+        best_acc, epochs_without_improvement = None, 0
+
+        Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
+        if os.path.isfile(checkpoint_filename):
+            print(f'*** Loading checkpoint file {checkpoint_filename}')
+            saved_state = torch.load(checkpoint_filename, map_location=self.device)
+
+            best_acc = saved_state.get('best_acc', best_acc)
+            epochs_without_improvement = saved_state.get('ewi', epochs_without_improvement)
+
+            self.model = FlowPicModel.create_pre_trained_model(saved_state['model_state'],
+                                                               saved_state['model_init_params'],
+                                                               self.device)
+
+        return best_acc, epochs_without_improvement
+
+    def _save_model(self, checkpoints, epoch, best_acc, epochs_without_improvement):
+        checkpoint_filename = f'{checkpoints}.pt'
+        saved_state = dict(best_acc=best_acc,
+                           ewi=epochs_without_improvement,
+                           model_state=self.model.state_dict(),
+                           model_init_params=self.model.model_init_params)
+
+        torch.save(saved_state, checkpoint_filename)
+        print(f'*** Saved checkpoint {checkpoint_filename} '
+              f'at epoch {epoch}')
 
     @staticmethod
     def _print(message, verbose=True):

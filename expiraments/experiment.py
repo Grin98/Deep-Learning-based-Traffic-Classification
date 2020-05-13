@@ -15,27 +15,21 @@ class Experiment(abc.ABC):
         Use parse_cli to parse the flags needed to conduct the experiment
         """
 
-    def __init__(self, run_name, data_dir: str, out_dir='./results', seed=None, **kw):
-        self.experiment_name = run_name
-        self.data_dir = data_dir
+    def __init__(self, seed=None):
+
         if not seed:
             seed = random.randint(0, 2 ** 31)
         self.torch_seed = seed
-        self.output_dir = out_dir
-        self.config = locals()
-        self.result = self.__run__(**kw)
 
     #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 
     def add_parser_args(self, p: argparse.ArgumentParser):
         # Experiment config
-        p.add_argument('--run-name', '-n', type=str,
-                       help='Name of run and output file', required=True)
         p.add_argument('--data-dir', '-d', type=str, help='data folder', required=True)
-        p.add_argument('--out-dir', '-o', type=str, help='Output folder',
-                       default='./results', required=False)
-        p.add_argument('--seed', '-s', type=int, help='Random seed',
-                       default=None, required=False)
+        # p.add_argument('--out-dir', '-o', type=str, help='Output folder',
+        #                default='./results', required=False)
+        # p.add_argument('--seed', '-s', type=int, help='Random seed',
+        #                default=None, required=False)
         # # Training
         p.add_argument('--bs-train', type=int, help='Train batch size',
                        default=128, metavar='BATCH_SIZE')
@@ -51,7 +45,7 @@ class Experiment(abc.ABC):
         p.add_argument('--checkpoints', type=str,
                        help='Save model checkpoints to this file when test '
                             'accuracy improves', default=None)
-        p.add_argument('--load-checkpoint', type=bool, default=False,
+        p.add_argument('--load-checkpoint', type=int, default=0,
                        help='whether to start training using '
                             'the file provided in --checkpoints as starting point')
         p.add_argument('--checkpoint-every', type=int, default=40,
@@ -85,8 +79,10 @@ class Experiment(abc.ABC):
         parsed = p.parse_args()
         return parsed
 
-    def __run__(self,
+    @abc.abstractmethod
+    def run(self,
                 # Training params
+                data_dir=None,
                 bs_train=128, bs_test=None, batches=100, epochs=100,
                 early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params

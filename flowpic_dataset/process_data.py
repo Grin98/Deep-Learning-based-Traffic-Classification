@@ -4,7 +4,7 @@ sys.path.append("../")
 sys.path.append("./")
 
 from flowpic_dataset.loader import FlowPicDataLoader
-from flowpic_dataset.processor import NoOverlapPreProcessor
+from flowpic_dataset.processors import NoOverlapPreProcessor
 
 if __name__ == '__main__':
     p = NoOverlapPreProcessor('data_tor')

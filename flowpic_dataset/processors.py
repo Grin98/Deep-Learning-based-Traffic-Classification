@@ -310,4 +310,3 @@ class StatisticsProcessor(BaseProcessor):
         with file.open('w+') as file:
             file.write(str(d))
 
-

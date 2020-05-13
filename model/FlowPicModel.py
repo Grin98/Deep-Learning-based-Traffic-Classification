@@ -12,6 +12,9 @@ class FlowPicModel(nn.Module):
         :param hidden_dims: List of of length M containing hidden dimensions of
             each Linear layer (not including the output layer).
         """
+
+        print(in_size, out_classes, filters, hidden_dims, drop_every)
+
         super().__init__()
         self.in_size = in_size
         self.out_classes = out_classes
@@ -22,6 +25,12 @@ class FlowPicModel(nn.Module):
         self.feature_extractor = self._make_feature_extractor()
         self.classifier = self._make_classifier()
 
+        self.model_init_params = dict(in_size=in_size,
+                                      out_classes=out_classes,
+                                      filters=filters,
+                                      hidden_dims=hidden_dims,
+                                      drop_every=drop_every)
+
     def _make_feature_extractor(self):
         in_channels, in_h, in_w = tuple(self.in_size)
         layers = []
@@ -29,7 +38,7 @@ class FlowPicModel(nn.Module):
         N = len(self.filters)
         for i in range(N):
             layers.append(nn.Conv2d(in_channels, self.filters[i], 10, stride=5, padding=3))
-            if (i+1) % self.drop_every == 0:
+            if (i + 1) % self.drop_every == 0:
                 layers.append(nn.Dropout(0.25))
             in_h = (in_h - 10 + 6) // 5 + 1
             in_w = (in_w - 10 + 6) // 5 + 1
@@ -37,8 +46,8 @@ class FlowPicModel(nn.Module):
             layers.append(nn.ReLU())
             in_channels = self.filters[i]
             layers.append(nn.MaxPool2d(2, stride=2))
-            in_h = (in_h-2)//2 + 1
-            in_w = (in_w-2)//2 + 1
+            in_h = (in_h - 2) // 2 + 1
+            in_w = (in_w - 2) // 2 + 1
             print("maxpool %dx%d" % (in_w, in_h))
 
         self.features = in_channels * in_h * in_w
@@ -73,3 +82,13 @@ class FlowPicModel(nn.Module):
         out = self.classifier(features.view(features.shape[0], -1))
 
         return out
+
+    @staticmethod
+    def create_pre_trained_model(model_state: dict, model_init_params: dict, device):
+        m: nn.Module = FlowPicModel(**model_init_params)
+        if device:
+            m.to(device)
+
+        m.load_state_dict(model_state)
+        return m
+
