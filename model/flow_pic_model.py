@@ -82,13 +82,3 @@ class FlowPicModel(nn.Module):
         out = self.classifier(features.view(features.shape[0], -1))
 
         return out
-
-    @staticmethod
-    def create_pre_trained_model(model_state: dict, model_init_params: dict, device):
-        m: nn.Module = FlowPicModel(**model_init_params)
-        if device:
-            m.to(device)
-
-        m.load_state_dict(model_state)
-        return m
-

@@ -21,7 +21,7 @@ class FlowsDataSet(Dataset):
     parameter label will be the label of all the data entries in the file
     """
 
-    def __init__(self, csv_file_path=None, global_label=None, transform=FlowPicBuilder().build_pic,
+    def __init__(self, csv_file_path=None, global_label=0, transform=FlowPicBuilder().build_pic,
                  testing: bool = False, data=None,
                  labels=None):
         self.labels = []

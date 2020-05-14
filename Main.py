@@ -6,7 +6,8 @@ from os.path import isfile, join, splitext
 def print_type(obj):
     print(type(obj))
 
-# python expiraments/split_experiment.py --run-name vc --data-dir data_vpn_overlap_split --epochs 60 --checkpoints vpn_overlap_split --load-checkpoint False --checkpoint-every 30
+
+# python expiraments/split_experiment.py --data-dir data_reg_overlap_split --epochs 60 --checkpoints reg_overlap_split --load-checkpoint 1 --checkpoint-every 30
 
 if __name__ == '__main__':
 

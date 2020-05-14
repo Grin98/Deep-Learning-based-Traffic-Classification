@@ -9,6 +9,7 @@ from time import time
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
+from clasification import Classifier
 from flowpic_dataset.loader import FlowPicDataLoader
 from flowpic_dataset.processors import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
 from flowpic_dataset.dataset import FlowsDataSet
@@ -30,7 +31,16 @@ class C:
 
 
 if __name__ == '__main__':
+    m = Classifier(1, 2)
+    x = Classifier
+    y = type(m)
+    y = y(1, 2)
+    x = x(3, 4)
+    print(m.model, m.device)
+    print(y.model, y.device, x.model, x.device)
+    print(type(m), Classifier)
 
+    exit()
     # p = SplitPreProcessor('.')
     # flows = p._process_file(pathlib.Path('netflix_1_half.csv'))
     # blocks = p._split_multiple_flows_to_blocks(flows)

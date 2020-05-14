@@ -1,17 +1,9 @@
-from os import listdir
-from os.path import isdir, join
 from pathlib import Path
 from typing import Tuple, Union
 
-from torch.utils.data.dataset import ConcatDataset
-
-from enum import Enum
 from flowpic_dataset.dataset import FlowsDataSet
-from flowpic_dataset.flowpic_builder import FlowPicBuilder
-import numpy as np
-import torch
 
-from flowpic_dataset.utils import get_dir_directories, get_dir_csvs
+from utils import get_dir_directories, get_dir_csvs
 
 
 class FlowPicDataLoader:

@@ -11,8 +11,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 from typing import Callable, Any
 
-from model.FlowPicModel import FlowPicModel
+from model.flow_pic_model import FlowPicModel
 from training.result_types import EpochResult, FitResult, BatchResult
+from utils import save_model, load_model
 
 
 class Trainer(abc.ABC):
@@ -70,7 +71,7 @@ class Trainer(abc.ABC):
         epochs_without_improvement = 0
         print('load_checkpoint =', load_checkpoint)
         if checkpoints is not None and load_checkpoint:
-            best_acc, epochs_without_improvement = self._load_model(checkpoints)
+            self.model, best_acc, epochs_without_improvement = load_model(checkpoints, type(self.model), self.device)
 
         for epoch in range(1, num_epochs + 1):
             verbose = False  # pass this to train/test_epoch.
@@ -90,7 +91,7 @@ class Trainer(abc.ABC):
             epochs_without_improvement = epochs_without_improvement + 1
 
             if checkpoints is not None and epoch % checkpoint_every == 0:
-                self._save_model(checkpoints, epoch, best_acc, epochs_without_improvement)
+                save_model(checkpoints, self.model, epoch, best_acc, epochs_without_improvement)
 
             if best_acc is None or acc > best_acc:
                 best_acc = acc
@@ -146,35 +147,6 @@ class Trainer(abc.ABC):
             the number of correctly classified samples in the batch.
         """
         raise NotImplementedError()
-
-    def _load_model(self, checkpoints):
-        checkpoint_filename = f'{checkpoints}.pt'
-        best_acc, epochs_without_improvement = None, 0
-
-        Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
-        if os.path.isfile(checkpoint_filename):
-            print(f'*** Loading checkpoint file {checkpoint_filename}')
-            saved_state = torch.load(checkpoint_filename, map_location=self.device)
-
-            best_acc = saved_state.get('best_acc', best_acc)
-            epochs_without_improvement = saved_state.get('ewi', epochs_without_improvement)
-
-            self.model = FlowPicModel.create_pre_trained_model(saved_state['model_state'],
-                                                               saved_state['model_init_params'],
-                                                               self.device)
-
-        return best_acc, epochs_without_improvement
-
-    def _save_model(self, checkpoints, epoch, best_acc, epochs_without_improvement):
-        checkpoint_filename = f'{checkpoints}.pt'
-        saved_state = dict(best_acc=best_acc,
-                           ewi=epochs_without_improvement,
-                           model_state=self.model.state_dict(),
-                           model_init_params=self.model.model_init_params)
-
-        torch.save(saved_state, checkpoint_filename)
-        print(f'*** Saved checkpoint {checkpoint_filename} '
-              f'at epoch {epoch}')
 
     @staticmethod
     def _print(message, verbose=True):

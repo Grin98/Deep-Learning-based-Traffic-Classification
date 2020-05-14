@@ -9,7 +9,7 @@ import torch
 import torch.optim
 from torch.utils.data import DataLoader, RandomSampler
 from flowpic_dataset.loader import FlowPicDataLoader
-from model.FlowPicModel import FlowPicModel
+from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
 

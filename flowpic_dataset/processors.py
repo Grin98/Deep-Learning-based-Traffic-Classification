@@ -1,16 +1,10 @@
 import random
-from os.path import isfile, join, splitext, isdir
-from os import listdir
-import os
 import csv
-from typing import List, Tuple, Sequence, NamedTuple
+from typing import Sequence, NamedTuple
 import numpy as np
 from abc import ABC, abstractmethod
-from pathlib import Path, Path
-from math import floor
-import matplotlib.pyplot as plt
 
-from flowpic_dataset.utils import *
+from utils import *
 
 
 class Flow(NamedTuple):
