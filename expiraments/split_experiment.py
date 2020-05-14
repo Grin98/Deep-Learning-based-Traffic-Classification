@@ -57,7 +57,6 @@ class SplitExperiment(Experiment):
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
 
-        print('load_checkpoint_exp =', load_checkpoint)
         fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints,
                               checkpoint_every=checkpoint_every,
                               load_checkpoint=load_checkpoint,

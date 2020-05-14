@@ -43,12 +43,15 @@ class FlowPicDataLoader:
 
             return dss
 
+        labels = None
+        if label_level:
+            labels = sorted(list(map(lambda dir_: dir_.parts[-1], dirs)))
+
         datasets = []
         for d in dirs:
             if label_level:
                 dir_name = d.parts[-1]
-                self._add_directory_label(dir_name)
-                label = self._get_directory_label(dir_name)
+                label = labels.index(dir_name)
 
             datasets += self._gather_datasets(d, False, label)
 

@@ -69,7 +69,6 @@ class Trainer(abc.ABC):
 
         best_acc = None
         epochs_without_improvement = 0
-        print('load_checkpoint =', load_checkpoint)
         if checkpoints is not None and load_checkpoint:
             self.model, best_acc, epochs_without_improvement = load_model(checkpoints, type(self.model), self.device)
 

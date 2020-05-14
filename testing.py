@@ -31,16 +31,7 @@ class C:
 
 
 if __name__ == '__main__':
-    m = Classifier(1, 2)
-    x = Classifier
-    y = type(m)
-    y = y(1, 2)
-    x = x(3, 4)
-    print(m.model, m.device)
-    print(y.model, y.device, x.model, x.device)
-    print(type(m), Classifier)
 
-    exit()
     # p = SplitPreProcessor('.')
     # flows = p._process_file(pathlib.Path('netflix_1_half.csv'))
     # blocks = p._split_multiple_flows_to_blocks(flows)
@@ -94,12 +85,12 @@ if __name__ == '__main__':
 
     # SplitPreProcessor('data_reg_overlap_split').process_dataset('classes_reg')
     # SplitPreProcessor('data_tor_overlap_split').process_dataset('classes_tor')
-    SplitPreProcessor('data_vpn_overlap_split').process_dataset('classes_vpn')
+    # SplitPreProcessor('data_vpn_overlap_split').process_dataset('classes_vpn')
     # FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
     # FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
-    # FlowPicDataLoader('./data_reg', testing=True).load_dataset()
-    # FlowPicDataLoader('./data_tor', testing=True).load_dataset()
+    # FlowPicDataLoader('./data_reg_overlap_split', testing=True).load_dataset()
+    FlowPicDataLoader('./data_tor_overlap_split', testing=True).load_dataset(is_split=True)
     # p = FlowPicDataLoader('./data_vpn_overlap_split', testing=False)
     # tr, te = p.load_dataset(is_split=True)
 
