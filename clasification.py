@@ -20,23 +20,23 @@ class Classifier:
         out = self.model(X)
         values, pred = torch.max(out, dim=1)
 
-        print('out', out)
-        print('vals', values)
+        # print('out', out)
+        # print('vals', values)
         print('pred', pred)
 
 
 if __name__ == '__main__':
     device = 'cuda'
     file_samples = Path('netflix_1_half_blocks.csv')
-    file_checkpoint = 'reg_overlap_split'
+    file_checkpoint = 'pre_trained_models/bi_vid'
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     ds = FlowsDataSet(file_samples)
-    dl = DataLoader(ds, batch_size=1, shuffle=False)
+    dl = DataLoader(ds, batch_size=len(ds), shuffle=False)
     c = Classifier(model, device)
 
     dl_iter = iter(dl)
-    for batch_idx in range(len(ds)):
+    for batch_idx in range(1):
         x, _ = next(dl_iter)
         c.classify(x)
 

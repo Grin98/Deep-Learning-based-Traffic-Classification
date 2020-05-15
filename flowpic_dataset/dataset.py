@@ -32,7 +32,7 @@ class FlowsDataSet(Dataset):
                 if testing:
                     self.data = [row for row in csv.reader(f, delimiter=',')]
                 else:
-                    self.data = [self.__transform_row_to_flow__(row) for row in csv.reader(f, delimiter=',')]
+                    self.data = [self.__transform_row_to_block__(row) for row in csv.reader(f, delimiter=',')]
 
             self.data = np.array(self.data)
             self.labels = np.array([global_label] * len(self.data))
@@ -98,7 +98,7 @@ class FlowsDataSet(Dataset):
         return sum(datasets[1:], datasets[0])
 
     @staticmethod
-    def __transform_row_to_flow__(row: List[str]):
+    def __transform_row_to_block__(row: List[str]):
         num_packets = int(row[0])
         off_set = 1  # meta data occupies first inced
         times = row[off_set:(num_packets + off_set)]

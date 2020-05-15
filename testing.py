@@ -83,14 +83,14 @@ if __name__ == '__main__':
     # p.process_dataset('classes_reg')
     # print('\n==========\n')
 
-    # SplitPreProcessor('data_reg_overlap_split').process_dataset('classes_reg')
+    # SplitPreProcessor('data_bi').process_dataset('classes_bi_reg')
     # SplitPreProcessor('data_tor_overlap_split').process_dataset('classes_tor')
     # SplitPreProcessor('data_vpn_overlap_split').process_dataset('classes_vpn')
-    # FlowPicDataLoader('./data_overlap_train', testing=True).load_dataset()
+    FlowPicDataLoader('./data_bi', testing=False).load_dataset(is_split=True)
     # FlowPicDataLoader('./data_overlap_test', testing=True).load_dataset()
     # FlowPicDataLoader('./classes_csvs', testing=True).load_dataset()
     # FlowPicDataLoader('./data_reg_overlap_split', testing=True).load_dataset()
-    FlowPicDataLoader('./data_tor_overlap_split', testing=True).load_dataset(is_split=True)
+    # FlowPicDataLoader('./data_tor_overlap_split', testing=True).load_dataset(is_split=True)
     # p = FlowPicDataLoader('./data_vpn_overlap_split', testing=False)
     # tr, te = p.load_dataset(is_split=True)
 

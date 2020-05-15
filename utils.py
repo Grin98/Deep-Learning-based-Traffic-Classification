@@ -45,8 +45,11 @@ def create_dir(dir_: Path):
         dir_.mkdir(parents=True, exist_ok=True)
 
 
-def load_model(checkpoints, model_type, device):
-    checkpoint_filename = f'{checkpoints}.pt'
+def load_model(checkpoint: str, model_type, device):
+    if not checkpoint.endswith('.pt'):
+        checkpoint_filename = f'{checkpoint}.pt'
+    else:
+        checkpoint_filename = checkpoint
     model, best_acc, epochs_without_improvement = None, None, 0
     Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
 

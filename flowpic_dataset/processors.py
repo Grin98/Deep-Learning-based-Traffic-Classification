@@ -227,27 +227,35 @@ class StatisticsProcessor(BaseProcessor):
         out_dir_path = create_output_dir(self.out_root_dir, input_dir_path)
         num_packets_hist_file_path = out_dir_path / 'num_packets_hist.png'
         time_intervals_hist_file_path = out_dir_path / 'time_intervals_hist.png'
+        avg_size_dist_file_path = out_dir_path / 'avg_size_dist.png'
         num_packets_cumulative_hist_file_path = out_dir_path / 'num_packets_cumulative_hist.txt'
         time_intervals_cumulative_hist_file_path = out_dir_path / 'time_intervals_cumulative_hist.txt'
+        avg_size_distcumulative_hist_file_path = out_dir_path / 'avg_size_dist_cumulative_hist.txt'
 
         blocks_meta = []
         for file in get_dir_csvs(input_dir_path):
             blocks_meta += self._process_file(file)
 
-        num_packets, intervals = zip(*blocks_meta)
+        num_packets, intervals, sizes = zip(*blocks_meta)
+        sizes = [s for sublist in sizes for s in sublist]
 
         self._save_cumulative_hist_as_txt(num_packets, num_packets_cumulative_hist_file_path)
         self._save_cumulative_hist_as_txt(intervals, time_intervals_cumulative_hist_file_path)
+        self._save_cumulative_hist_as_txt(sizes, avg_size_distcumulative_hist_file_path)
 
         cap = self._get_numerical_cap(num_packets, percent=0.9)
         packet_amount_bins = np.linspace(0, cap, 100)
         time_interval_bins = np.linspace(0, 60, 100)
+        size_bins = np.linspace(0, 1500, 100)
 
         self._save_hist_as_image(num_packets_hist_file_path, num_packets,
                                  packet_amount_bins, label='num packets')
 
         self._save_hist_as_image(time_intervals_hist_file_path, intervals,
                                  time_interval_bins, label='time intervals')
+
+        self._save_hist_as_image(avg_size_dist_file_path, sizes,
+                                 size_bins, label='avg sizes')
 
     def _process_file(self, input_file_path: Path):
         file_extension = input_file_path.suffix
@@ -272,11 +280,13 @@ class StatisticsProcessor(BaseProcessor):
     def _get_block_meta(block: List):
         num_packets = block[0]
         if num_packets != 0:
-            time_interval = int(round(block[num_packets])) - int(round(block[1]))
+            time_interval = int(round(block[num_packets+1])) - int(round(block[1]))
         else:
             time_interval = 0
 
-        return num_packets, time_interval
+        sizes = block[num_packets+1:]
+
+        return num_packets, time_interval, sizes
 
     @staticmethod
     def _save_hist_as_image(file: Path, vals, bins, label: str):
