@@ -195,7 +195,7 @@ class Trainer(abc.ABC):
             avg_loss = sum(losses) / num_batches
             accuracy = 100. * num_correct / num_samples
             avg_f1 = sum(f1_scores) / len(f1_scores)
-            avg_f1_per_class = [round(f / num_batches, 2) for f in f1_per_class]
+            avg_f1_per_class = [round(f / num_batches, ndigits=2) for f in f1_per_class]
             pbar.set_description(f'{pbar_name} '
                                  f'(Loss {avg_loss:.3f}, '
                                  f'Accuracy {accuracy:.1f}, '

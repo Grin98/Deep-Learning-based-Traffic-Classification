@@ -4,6 +4,11 @@ import json
 import os
 import sys
 import random
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+from typing import List
+
 from training.result_types import FitResult
 
 
@@ -15,7 +20,7 @@ class Experiment(abc.ABC):
         Use parse_cli to parse the flags needed to conduct the experiment
         """
 
-    def __init__(self, seed=None):
+    def __init__(self, seed=42):
 
         if not seed:
             seed = random.randint(0, 2 ** 31)
@@ -26,8 +31,8 @@ class Experiment(abc.ABC):
     def add_parser_args(self, p: argparse.ArgumentParser):
         # Experiment config
         p.add_argument('--data-dir', '-d', type=str, help='data folder', required=True)
-        # p.add_argument('--out-dir', '-o', type=str, help='Output folder',
-        #                default='./results', required=False)
+        p.add_argument('--out-dir', '-o', type=str, help='Output folder',
+                       default=None, required=False)
         # p.add_argument('--seed', '-s', type=int, help='Random seed',
         #                default=None, required=False)
         # # Training
@@ -82,7 +87,7 @@ class Experiment(abc.ABC):
     @abc.abstractmethod
     def run(self,
                 # Training params
-                data_dir=None,
+                data_dir=None, out_dir=None,
                 bs_train=128, bs_test=None, batches=100, epochs=100,
                 early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params
@@ -95,24 +100,14 @@ class Experiment(abc.ABC):
         raise NotImplementedError()
 
     @staticmethod
-    def save_experiment(run_name, out_dir, config, fit_res):
-        output = dict(
-            config=config,
-            results=fit_res._asdict()
-        )
-        output_filename = f'{os.path.join(out_dir, run_name)}.json'
-        os.makedirs(out_dir, exist_ok=True)
-        with open(output_filename, 'w') as f:
-            json.dump(output, f, indent=2)
-
-        print(f'*** Output file {output_filename} written')
-
-    @staticmethod
-    def load_experiment(filename):
-        with open(filename, 'r') as f:
-            output = json.load(f)
-
-        config = output['config']
-        fit_res = FitResult(**output['results'])
-
-        return config, fit_res
+    def save_loss_graph(file: Path, train_loss: List[float], test_loss: List[float]):
+        if file is not None:
+            epochs = range(1, len(train_loss) + 1)
+            plt.plot(epochs, train_loss, 'g', label='Training loss')
+            plt.plot(epochs, test_loss, 'b', label='validation loss')
+            plt.title('Training and Validation loss')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss')
+            plt.legend()
+            plt.savefig(str(file))
+            plt.clf()

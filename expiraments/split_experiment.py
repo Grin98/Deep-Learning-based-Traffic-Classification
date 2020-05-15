@@ -1,12 +1,13 @@
 import argparse
 import sys
-from time import time
-
 sys.path.append("../")
 sys.path.append("./")
-
+from pathlib import Path
+from time import time
+from utils import create_dir
 import torch
 import torch.optim
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from flowpic_dataset.loader import FlowPicDataLoader
@@ -17,16 +18,25 @@ from training.flowpic_trainer import FlowPicTrainer
 
 class SplitExperiment(Experiment):
 
-    def run(self, data_dir=None, bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3,
+    def run(self, data_dir=None, out_dir=None,
+            bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3,
             checkpoints=None,
             load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
             **kw):
 
+        if out_dir is not None:
+            out_dir = Path(out_dir)
+            create_dir(out_dir)
+            if checkpoints is not None:
+                checkpoints = str(out_dir/checkpoints)
+
         if hidden_dims is None:
             hidden_dims = [64]
+
         if filters_per_layer is None:
             filters_per_layer = [10, 20]
+
         torch.manual_seed(self.torch_seed)
 
         if not bs_test:
@@ -43,11 +53,11 @@ class SplitExperiment(Experiment):
         sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
 
         dl_train = DataLoader(ds_train, bs_train, shuffle=False, sampler=sampler_train)
-        dl_test = DataLoader(ds_test, bs_test, shuffle=False, sampler=sampler_test)
+        dl_test = DataLoader(ds_test, bs_test, shuffle=True)  # , sampler=sampler_test)
 
         filters = []
-        for filter in filters_per_layer:
-            temp = [filter] * layers_per_block
+        for filter_ in filters_per_layer:
+            temp = [filter_] * layers_per_block
             filters += temp
 
         x0, _ = ds_train[0]
@@ -63,6 +73,9 @@ class SplitExperiment(Experiment):
                               early_stopping=early_stopping,
                               print_every=5,
                               num_batches=batches, **kw)
+
+        if out_dir is not None:
+            self.save_loss_graph(out_dir/'loss.png', fit_res.train_loss, fit_res.test_loss)
 
         return fit_res
 
