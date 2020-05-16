@@ -41,6 +41,10 @@ class Trainer(abc.ABC):
         self.device = device
 
         if self.device:
+            print(torch.cuda.device_count())
+            if torch.cuda.device_count() > 1:
+                print('parallel')
+                model = nn.DataParallel(model)
             model.to(self.device)
 
     def fit(self, dl_train: DataLoader, dl_test: DataLoader,
@@ -182,8 +186,8 @@ class Trainer(abc.ABC):
                        file=pbar_file) as pbar:
             dl_iter = iter(dl)
             for batch_idx in range(num_batches):
-                data = next(dl_iter)
-                batch_res = forward_fn(data)
+                batch = next(dl_iter)
+                batch_res = forward_fn(batch)
 
                 pbar.set_description(f'{pbar_name} ({batch_res.loss:.3f})')
                 pbar.update()

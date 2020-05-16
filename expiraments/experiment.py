@@ -40,8 +40,6 @@ class Experiment(abc.ABC):
                        default=128, metavar='BATCH_SIZE')
         p.add_argument('--bs-test', type=int, help='Test batch size',
                        metavar='BATCH_SIZE')
-        # p.add_argument('--batches', type=int,
-        #                help='Number of batches per epoch', default=None)
         p.add_argument('--epochs', type=int,
                        help='Maximal number of epochs', default=40)
         p.add_argument('--early-stopping', type=int,
@@ -88,12 +86,11 @@ class Experiment(abc.ABC):
     def run(self,
                 # Training params
                 data_dir=None, out_dir=None,
-                bs_train=128, bs_test=None, batches=100, epochs=100,
+                bs_train=128, bs_test=None, epochs=100,
                 early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params
                 filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
-                drop_every=2, hidden_dims=None,
-                **kw):
+                drop_every=2, hidden_dims=None, **kw):
         """
             Execute a single run of experiment with given configuration
         """

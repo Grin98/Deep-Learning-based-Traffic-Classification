@@ -1,5 +1,8 @@
 import argparse
 import sys
+
+from torch import nn
+
 sys.path.append("../")
 sys.path.append("./")
 from pathlib import Path
@@ -66,7 +69,6 @@ class SplitExperiment(Experiment):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
-
         fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints,
                               checkpoint_every=checkpoint_every,
                               load_checkpoint=load_checkpoint,
