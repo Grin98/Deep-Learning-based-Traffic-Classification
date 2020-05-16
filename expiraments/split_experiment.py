@@ -75,7 +75,9 @@ class SplitExperiment(Experiment):
                               num_batches=batches, **kw)
 
         if out_dir is not None:
-            self.save_loss_graph(out_dir/'loss.png', fit_res.train_loss, fit_res.test_loss)
+            self.save_graph(out_dir / 'loss.png', fit_res.train_loss, fit_res.test_loss, data='loss')
+            self.save_graph(out_dir / 'acc.png', fit_res.train_acc, fit_res.test_acc, data='acc')
+            self.save_graph(out_dir / 'f1.png', fit_res.train_f1, fit_res.test_f1, data='f1')
 
         return fit_res
 

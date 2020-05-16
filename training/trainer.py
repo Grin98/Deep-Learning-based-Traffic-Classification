@@ -65,7 +65,7 @@ class Trainer(abc.ABC):
         :return: A FitResult object containing train and test losses per epoch.
         """
         actual_num_epochs = 0
-        train_loss, train_acc, test_loss, test_acc = [], [], [], []
+        train_loss, train_acc, train_f1, test_loss, test_acc, test_f1 = [], [], [], [], [], []
 
         best_acc = None
         epochs_without_improvement = 0
@@ -79,13 +79,15 @@ class Trainer(abc.ABC):
 
             self._print(f'--- EPOCH {epoch}/{num_epochs} ---', verbose)
 
-            loss, acc = self.train_epoch(dl_train, verbose=verbose, **kw)
+            loss, acc, f1 = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_loss.append(sum(loss).item() / float(len(loss)))
             train_acc.append(acc.item())
+            train_f1.append(f1)
 
-            loss, acc = self.test_epoch(dl_test, verbose=verbose, **kw)
+            loss, acc, f1 = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_loss.append(sum(loss).item() / float(len(loss)))
             test_acc.append(acc.item())
+            test_f1.append(f1)
 
             epochs_without_improvement = epochs_without_improvement + 1
 
@@ -100,7 +102,8 @@ class Trainer(abc.ABC):
                 break
 
         return FitResult(actual_num_epochs,
-                         train_loss, train_acc, test_loss, test_acc)
+                         train_loss, train_acc, train_f1,
+                         test_loss, test_acc, train_f1)
 
     def train_epoch(self, dl_train: DataLoader, **kw) -> EpochResult:
         """
@@ -202,4 +205,4 @@ class Trainer(abc.ABC):
                                  f'F1 {avg_f1:.3f}), '
                                  f'F1 Classes {avg_f1_per_class}')
 
-        return EpochResult(losses=losses, accuracy=accuracy)
+        return EpochResult(losses=losses, accuracy=accuracy, f1=avg_f1)

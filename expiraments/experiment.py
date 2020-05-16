@@ -100,14 +100,16 @@ class Experiment(abc.ABC):
         raise NotImplementedError()
 
     @staticmethod
-    def save_loss_graph(file: Path, train_loss: List[float], test_loss: List[float]):
+    def save_graph(file: Path, train: List[float], test: List[float], data: str = ''):
+        title = 'Training and Validation' + ' ' + data
+        y = data
         if file is not None:
-            epochs = range(1, len(train_loss) + 1)
-            plt.plot(epochs, train_loss, 'g', label='Training loss')
-            plt.plot(epochs, test_loss, 'b', label='validation loss')
-            plt.title('Training and Validation loss')
+            epochs = range(1, len(train) + 1)
+            plt.plot(epochs, train, 'g', label='Training')
+            plt.plot(epochs, test, 'b', label='validation')
+            plt.title(title)
             plt.xlabel('Epochs')
-            plt.ylabel('Loss')
+            plt.ylabel(y)
             plt.legend()
             plt.savefig(str(file))
             plt.clf()

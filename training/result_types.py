@@ -18,6 +18,7 @@ class EpochResult(NamedTuple):
     """
     losses: List[float]
     accuracy: float
+    f1: float
 
 
 class FitResult(NamedTuple):
@@ -29,5 +30,7 @@ class FitResult(NamedTuple):
     num_epochs: int
     train_loss: List[float]
     train_acc: List[float]
+    train_f1: List[float]
     test_loss: List[float]
     test_acc: List[float]
+    test_f1: List[float]
