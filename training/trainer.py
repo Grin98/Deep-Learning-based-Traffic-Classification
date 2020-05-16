@@ -47,7 +47,7 @@ class Trainer(abc.ABC):
                 model = nn.DataParallel(model)
             model.to(self.device)
 
-    def fit(self, dl_train: DataLoader, dl_test: DataLoader,
+    def fit(self, dl_train, dl_test: DataLoader,
             num_epochs, checkpoints: str = None,
             checkpoint_every: int = 1,
             load_checkpoint: bool = False,
@@ -110,25 +110,25 @@ class Trainer(abc.ABC):
                          train_loss, train_acc, train_f1,
                          test_loss, test_acc, train_f1)
 
-    def train_epoch(self, dl_train: DataLoader, **kw) -> EpochResult:
+    def train_epoch(self, data_loader_train, **kw) -> EpochResult:
         """
         Train once over a training set (single epoch).
-        :param dl_train: DataLoader for the training set.
+        :param data_loader_train: DataLoader for the training set.
         :param kw: Keyword args supported by _foreach_batch.
         :return: An EpochResult for the epoch.
         """
         self.model.train(True)  # set train mode
-        return self._foreach_batch(dl_train, self.train_batch, **kw)
+        return self._foreach_batch(data_loader_train, self.train_batch, **kw)
 
-    def test_epoch(self, dl_test: DataLoader, **kw) -> EpochResult:
+    def test_epoch(self, data_loader_test, **kw) -> EpochResult:
         """
         Evaluate model once over a test set (single epoch).
-        :param dl_test: DataLoader for the test set.
+        :param data_loader_test: DataLoader for the test set.
         :param kw: Keyword args supported by _foreach_batch.
         :return: An EpochResult for the epoch.
         """
         self.model.train(False)  # set evaluation (test) mode
-        return self._foreach_batch(dl_test, self.test_batch, **kw)
+        return self._foreach_batch(data_loader_test, self.test_batch, **kw)
 
     @abc.abstractmethod
     def train_batch(self, batch) -> BatchResult:
@@ -162,7 +162,7 @@ class Trainer(abc.ABC):
             print(message)
 
     @staticmethod
-    def _foreach_batch(dl: DataLoader,
+    def _foreach_batch(data_loader,
                        forward_fn: Callable[[Any], BatchResult],
                        verbose=True) -> EpochResult:
         """
@@ -174,7 +174,7 @@ class Trainer(abc.ABC):
         num_total = 0
         f1_scores = []
         f1_per_class = None
-        num_batches = len(dl)
+        num_batches = len(data_loader)
 
         if verbose:
             pbar_file = sys.stdout
@@ -184,7 +184,7 @@ class Trainer(abc.ABC):
         pbar_name = forward_fn.__name__
         with tqdm.tqdm(desc=pbar_name, total=num_batches,
                        file=pbar_file) as pbar:
-            dl_iter = iter(dl)
+            dl_iter = iter(data_loader)
             for batch_idx in range(num_batches):
                 batch = next(dl_iter)
                 batch_res = forward_fn(batch)

@@ -13,7 +13,7 @@ import torch.optim
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
-from flowpic_dataset.loader import FlowCSVDataLoader
+from flowpic_dataset.loader import FlowCSVDataLoader, PreFetchDataLoader
 from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
@@ -56,6 +56,7 @@ class SplitExperiment(Experiment):
         # sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
 
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)  # , sampler=sampler_train)
+        dl_train = PreFetchDataLoader(dl_train)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)  # , sampler=sampler_test)
 
         filters = []
