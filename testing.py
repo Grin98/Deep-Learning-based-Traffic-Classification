@@ -10,7 +10,7 @@ from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import random_split
 
 from clasification import Classifier
-from flowpic_dataset.loader import FlowPicDataLoader
+from flowpic_dataset.loader import FlowCSVDataLoader
 from flowpic_dataset.processors import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score

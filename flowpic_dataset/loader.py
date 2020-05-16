@@ -1,12 +1,16 @@
 from pathlib import Path
+from queue import Queue
+from threading import Thread
 from typing import Tuple, Union
+
+from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import FlowsDataSet
 
 from utils import get_dir_directories, get_dir_csvs
 
 
-class FlowPicDataLoader:
+class FlowCSVDataLoader:
     def __init__(self, dataset_root_dir, testing=False):
         self.root_dir = Path(dataset_root_dir)
         self.testing = testing
@@ -63,3 +67,38 @@ class FlowPicDataLoader:
 
     def _get_directory_label(self, d):
         return self.labels[d]
+
+
+class PreFetchDataLoader:
+
+    def __init__(self, dataloader: DataLoader):
+        self.dl = dataloader
+        self.q = Queue(maxsize=1)
+
+    def __len__(self):
+        return len(self.dl)
+
+    def __iter__(self):
+        fetcher = PreFetchDataLoader.Fetcher(self.dl, self.q)
+        fetcher.start()
+        return self
+
+    def __next__(self):
+        return self.q.get(block=True)
+
+    class Fetcher(Thread):
+
+        def __init__(self, dl: DataLoader, q: Queue):
+            super().__init__()
+            self.dl = dl
+            self.q = q
+
+        def run(self):
+            iter_ = iter(self.dl)
+            for i in range(len(self.dl)):
+                self.q.put(next(iter_), block=True)
+
+
+
+
+

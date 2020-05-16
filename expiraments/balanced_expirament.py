@@ -8,7 +8,7 @@ sys.path.append("./")
 import torch
 import torch.optim
 from torch.utils.data import DataLoader, RandomSampler
-from flowpic_dataset.loader import FlowPicDataLoader
+from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
@@ -41,7 +41,7 @@ class BalancedExperiment(Experiment):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        dataset_loader = FlowPicDataLoader(data_dir)
+        dataset_loader = FlowCSVDataLoader(data_dir)
         ds = dataset_loader.load_dataset()
         ds_train, ds_test = ds.split_set(train_percent=train_portion)
 
