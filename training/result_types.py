@@ -6,6 +6,7 @@ class BatchResult(NamedTuple):
     and number of correct classifications.
     """
     loss: float
+    num_total: int
     num_correct: int
     f1_score: float
     f1_per_class: List[float]

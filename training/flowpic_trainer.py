@@ -21,6 +21,8 @@ class FlowPicTrainer(Trainer):
         loss.backward()
         self.optimizer.step()
         values, pred = torch.max(out, dim=1)
+
+        num_total = len(pred)
         num_correct = values - out[range(out.shape[0]), y]
         num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
         num_correct = sum(num_correct)
@@ -30,7 +32,7 @@ class FlowPicTrainer(Trainer):
         weighted_s = f1_score(y, pred, average='weighted')
         per_class_s = f1_score(y, pred, average=None)
 
-        return BatchResult(loss, num_correct, weighted_s, per_class_s)
+        return BatchResult(loss, num_total, num_correct, weighted_s, per_class_s)
 
     def test_batch(self, batch) -> BatchResult:
         X, y = batch
@@ -42,6 +44,7 @@ class FlowPicTrainer(Trainer):
             out = self.model(X)
             loss = self.loss_fn(out, y)
             values, pred = torch.max(out, dim=1)
+            num_total = len(pred)
             num_correct = values - out[range(out.shape[0]), y]
             num_correct = torch.where(num_correct == 0, torch.ones_like(num_correct), torch.zeros_like(num_correct))
             num_correct = sum(num_correct)
@@ -52,4 +55,4 @@ class FlowPicTrainer(Trainer):
             weighted_s = f1_score(y, pred, average='weighted')
             per_class_s = f1_score(y, pred, average=None)
 
-        return BatchResult(loss, num_correct, weighted_s, per_class_s)
+        return BatchResult(loss, num_total, num_correct, weighted_s, per_class_s)

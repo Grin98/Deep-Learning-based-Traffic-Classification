@@ -1,6 +1,7 @@
 import abc
 import os
 import sys
+from math import ceil
 from operator import add
 
 import tqdm
@@ -159,7 +160,6 @@ class Trainer(abc.ABC):
     @staticmethod
     def _foreach_batch(dl: DataLoader,
                        forward_fn: Callable[[Any], BatchResult],
-                       num_batches,
                        verbose=True) -> EpochResult:
         """
         Evaluates the given forward-function on batches from the given
@@ -167,9 +167,10 @@ class Trainer(abc.ABC):
         """
         losses = []
         num_correct = 0
+        num_total = 0
         f1_scores = []
         f1_per_class = None
-        num_samples = num_batches * dl.batch_size
+        num_batches = len(dl)
 
         if verbose:
             pbar_file = sys.stdout
@@ -188,6 +189,7 @@ class Trainer(abc.ABC):
                 pbar.update()
 
                 losses.append(batch_res.loss)
+                num_total += batch_res.num_total
                 num_correct += batch_res.num_correct
                 f1_scores.append(batch_res.f1_score)
                 if f1_per_class is None:
@@ -196,13 +198,13 @@ class Trainer(abc.ABC):
                     f1_per_class = list(map(add, f1_per_class, batch_res.f1_per_class))
 
             avg_loss = sum(losses) / num_batches
-            accuracy = 100. * num_correct / num_samples
+            accuracy = 100. * num_correct / num_total
             avg_f1 = sum(f1_scores) / len(f1_scores)
             avg_f1_per_class = [round(f / num_batches, ndigits=2) for f in f1_per_class]
             pbar.set_description(f'{pbar_name} '
                                  f'(Loss {avg_loss:.3f}, '
                                  f'Accuracy {accuracy:.1f}, '
-                                 f'F1 {avg_f1:.3f}), '
-                                 f'F1 Classes {avg_f1_per_class}')
+                                 f'F1 {avg_f1:.3f}), ')
+                                 # f'F1 Classes {avg_f1_per_class}')
 
         return EpochResult(losses=losses, accuracy=accuracy, f1=avg_f1)

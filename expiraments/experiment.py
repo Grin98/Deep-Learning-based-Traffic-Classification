@@ -40,8 +40,8 @@ class Experiment(abc.ABC):
                        default=128, metavar='BATCH_SIZE')
         p.add_argument('--bs-test', type=int, help='Test batch size',
                        metavar='BATCH_SIZE')
-        p.add_argument('--batches', type=int,
-                       help='Number of batches per epoch', default=10)
+        # p.add_argument('--batches', type=int,
+        #                help='Number of batches per epoch', default=None)
         p.add_argument('--epochs', type=int,
                        help='Maximal number of epochs', default=40)
         p.add_argument('--early-stopping', type=int,

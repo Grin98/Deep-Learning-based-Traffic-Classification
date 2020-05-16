@@ -32,7 +32,10 @@ class C:
 
 if __name__ == '__main__':
 
-    y = [1, 2, 3, 4, 5]
-    pred = [1, 2, 3, 4, 2]
+    y = [1, 2, 3, 2, 1]
+    pred = [1, 2, 3, 1, 1]
 
-    print(f1_score(y, pred, average=None))
+    pr = set(y+pred)
+    ls = range(5)
+    fs = list(f1_score(y, pred, average=None))
+    print([fs[i] if i in pr else None for i in ls])

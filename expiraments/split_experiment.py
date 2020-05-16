@@ -19,7 +19,7 @@ from training.flowpic_trainer import FlowPicTrainer
 class SplitExperiment(Experiment):
 
     def run(self, data_dir=None, out_dir=None,
-            bs_train=128, bs_test=None, batches=100, epochs=100, early_stopping=3,
+            bs_train=128, bs_test=None, epochs=100, early_stopping=3,
             checkpoints=None,
             load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
@@ -40,19 +40,19 @@ class SplitExperiment(Experiment):
         torch.manual_seed(self.torch_seed)
 
         if not bs_test:
-            bs_test = max([bs_train // 4, 1])
+            bs_test = max([bs_train * 2, 1])
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         dataset_loader = FlowPicDataLoader(data_dir)
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
-        print('creating sampler for train')
-        sampler_train = ds_train.create_weighted_random_sampler(num_to_sample=bs_train * batches, replacement=True)
-        print('creating sampler for test')
-        sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
+        # print('creating sampler for train')
+        # sampler_train = ds_train.create_weighted_random_sampler(num_to_sample=bs_train * batches, replacement=True)
+        # print('creating sampler for test')
+        # sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
 
-        dl_train = DataLoader(ds_train, bs_train, shuffle=False, sampler=sampler_train)
+        dl_train = DataLoader(ds_train, bs_train, shuffle=True)  # , sampler=sampler_train)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)  # , sampler=sampler_test)
 
         filters = []
@@ -71,8 +71,7 @@ class SplitExperiment(Experiment):
                               checkpoint_every=checkpoint_every,
                               load_checkpoint=load_checkpoint,
                               early_stopping=early_stopping,
-                              print_every=5,
-                              num_batches=batches, **kw)
+                              print_every=5, **kw)
 
         if out_dir is not None:
             self.save_graph(out_dir / 'loss.png', fit_res.train_loss, fit_res.test_loss, data='loss')
