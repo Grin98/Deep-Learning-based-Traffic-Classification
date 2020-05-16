@@ -31,6 +31,6 @@ class FlowPicBuilder:
                 print('x,y = ', x_position, y_position)
             self.hist[x_position][y_position] += 1
 
-        pic = self.hist.clamp_max(self.hist_cap) / self.hist_cap
+        pic = self.hist.clone()  # self.hist.clamp_max(self.hist_cap) / self.hist_cap
         return pic
 
