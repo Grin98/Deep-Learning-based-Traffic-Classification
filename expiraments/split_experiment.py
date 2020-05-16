@@ -46,7 +46,7 @@ class SplitExperiment(Experiment):
             bs_test = max([bs_train * 2, 1])
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        print("DEVICE: ", torch.cuda.device_count())
         dataset_loader = FlowCSVDataLoader(data_dir)
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
