@@ -50,14 +50,9 @@ class SplitExperiment(Experiment):
         dataset_loader = FlowCSVDataLoader(data_dir)
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
-        # print('creating sampler for train')
-        # sampler_train = ds_train.create_weighted_random_sampler(num_to_sample=bs_train * batches, replacement=True)
-        # print('creating sampler for test')
-        # sampler_test = ds_test.create_weighted_random_sampler(num_to_sample=bs_test * batches, replacement=True)
-
-        dl_train = DataLoader(ds_train, bs_train, shuffle=True)  # , sampler=sampler_train)
+        dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_train = PreFetchDataLoader(dl_train)
-        dl_test = DataLoader(ds_test, bs_test, shuffle=True)  # , sampler=sampler_test)
+        dl_test = DataLoader(ds_test, bs_test, shuffle=True)
 
         filters = []
         for filter_ in filters_per_layer:
