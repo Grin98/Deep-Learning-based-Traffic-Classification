@@ -12,9 +12,10 @@ from utils import get_dir_directories, get_dir_csvs
 
 
 class FlowCSVDataLoader:
-    def __init__(self, dataset_root_dir, testing=False):
+    def __init__(self, dataset_root_dir, testing=False, verbose: bool = True):
         self.root_dir = Path(dataset_root_dir)
         self.testing = testing
+        self.verbose = verbose
         self.labels = {}
 
     def load_dataset(self, is_split: bool = False) -> Union[Tuple[FlowsDataSet], FlowsDataSet]:
@@ -24,27 +25,27 @@ class FlowCSVDataLoader:
         """
 
         self.labels = {}
-        print("=== Loading dataset from %s ===" % self.root_dir)
+        self._print_verbose("=== Loading dataset from %s ===" % self.root_dir)
         if is_split:
-            print('train')
+            self._print_verbose('train')
             train_datasets = self._gather_datasets(self.root_dir/'train')
 
-            print('test')
+            self._print_verbose('test')
             test_dataset = self._gather_datasets(self.root_dir/'test')
             res = FlowsDataSet.concatenate(train_datasets), FlowsDataSet.concatenate(test_dataset)
         else:
             datasets = self._gather_datasets(self.root_dir)
             res = FlowsDataSet.concatenate(datasets)
-        print("=== Dataset loading completed :D ===\n")
+        self._print_verbose("=== Dataset loading completed :D ===\n")
 
         return res
 
-    def _gather_datasets(self, path: Path, label_level: bool = True, label: int = None):
+    def _gather_datasets(self, path: Path, label_level: bool = True, label: int = 0):
         dirs = get_dir_directories(path)
         if not dirs:
-            dss = [FlowsDataSet(file, label, testing=self.testing) for file in get_dir_csvs(path)]
+            dss = [FlowsDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
-            print("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
+            self._print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 
             return dss
 
@@ -68,6 +69,10 @@ class FlowCSVDataLoader:
 
     def _get_directory_label(self, d):
         return self.labels[d]
+
+    def _print_verbose(self, s: str):
+        if self.verbose:
+            print(s)
 
 
 class PreFetchDataLoader:

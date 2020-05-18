@@ -15,31 +15,39 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 import random
 
+from flowpic_dataset.processors import QuickFileProcessor
+
 
 class FlowsDataSet(Dataset):
     """
     parameter label will be the label of all the data entries in the file
     """
 
-    def __init__(self, csv_file_path=None, global_label=0, transform=FlowPicBuilder().build_pic,
-                 testing: bool = False, data=None,
-                 labels=None):
-        self.labels = []
+    def __init__(self, data: Sequence[Sequence[Tuple[int, float]]], labels: Sequence[int],
+                 transform=FlowPicBuilder().build_pic):
+        self.data = np.array(data)
+        self.labels = np.array(labels)
         self.transform = transform
 
-        if csv_file_path is not None:
-            with open(csv_file_path, newline='') as f:
-                if testing:
-                    self.data = [row for row in csv.reader(f, delimiter=',')]
-                else:
-                    self.data = [self.__transform_row_to_block__(row) for row in csv.reader(f, delimiter=',')]
+    @classmethod
+    def from_blocks_file(cls, csv_file_path, global_label=0):
+        with open(csv_file_path, newline='') as f:
+            data = [cls.transform_row_to_block(row) for row in csv.reader(f, delimiter=',')]
+            labels = np.array([global_label] * len(data))
 
-            self.data = np.array(self.data)
-            self.labels = np.array([global_label] * len(self.data))
+            return FlowsDataSet(data, labels)
 
-        elif data is not None and labels is not None:
-            self.data = np.array(data)
-            self.labels = np.array(labels)
+    @classmethod
+    def from_flows_file(cls, csv_file_path, global_label=0,
+                        block_duration_in_seconds: int = 60,
+                        block_delta_in_seconds: int = 15,
+                        packet_size_limit: int = 1500):
+        p = QuickFileProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
+        raw_blocks = p.transform_file_to_raw_blocks(csv_file_path)
+        data = [cls.transform_row_to_block(row) for row in raw_blocks]
+        labels = np.array([global_label] * len(data))
+
+        return FlowsDataSet(data, labels)
 
     def split_set(self, train_percent: float) -> Tuple[FlowsDataSet, FlowsDataSet]:
         test_size = int(self.__len__() * (1 - train_percent))
@@ -98,7 +106,7 @@ class FlowsDataSet(Dataset):
         return sum(datasets[1:], datasets[0])
 
     @staticmethod
-    def __transform_row_to_block__(row: List[str]):
+    def transform_row_to_block(row: List[str]):
         num_packets = int(row[0])
         off_set = 1  # meta data occupies first inced
         times = row[off_set:(num_packets + off_set)]
