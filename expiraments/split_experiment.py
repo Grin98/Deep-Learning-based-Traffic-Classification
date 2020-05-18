@@ -51,7 +51,6 @@ class SplitExperiment(Experiment):
         ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
 
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
-        dl_train = PreFetchDataLoader(dl_train)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)
 
         filters = []

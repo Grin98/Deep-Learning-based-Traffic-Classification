@@ -8,7 +8,7 @@ mkdir -p $out_dir
 python expiraments/split_experiment.py \
 --data-dir data_reg_overlap_split \
 --out-dir $out_dir \
---epochs 30 \
+--epochs 40 \
 --checkpoints reg_overlap_split \
 --load-checkpoint 0 \
---checkpoint-every 15 | tee $log_path
+--checkpoint-every 20 | tee $log_path
