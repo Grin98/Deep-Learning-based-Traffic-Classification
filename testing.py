@@ -46,25 +46,27 @@ class C:
 
 if __name__ == '__main__':
 
-    # c = C(1)
-    # for x in c:
-    #     print(x)
-    ds = FlowsDataSet('netflix_1_half_blocks.csv',)
-    ds.labels = range(len(ds))
-    d = DataLoader(ds, 64, shuffle=False)
-    dl = PreFetchDataLoader(d)
-    it = iter(dl)
-    start = time()
-    for i in range(len(dl)):
-        x, y = next(it)
-        # print(i, 'read', y)
-        sleep(2)
-    print(time() - start)
+    a = Counter([1, 2, 2, 2])
+    b = Counter([1,1,2, 0])
+    print(a+b)
 
-    start = time()
-    it = iter(d)
-    for i in range(len(d)):
-        x, y = next(it)
-        sleep(2)
-        # print(i, 'read', y)
-    print(time() - start)
+    exit()
+    # ds = FlowsDataSet('netflix_1_half_blocks.csv',)
+    # ds.labels = range(len(ds))
+    # d = DataLoader(ds, 64, shuffle=False)
+    # dl = PreFetchDataLoader(d)
+    # it = iter(dl)
+    # start = time()
+    # for i in range(len(dl)):
+    #     x, y = next(it)
+    #     # print(i, 'read', y)
+    #     sleep(2)
+    # print(time() - start)
+    #
+    # start = time()
+    # it = iter(d)
+    # for i in range(len(d)):
+    #     x, y = next(it)
+    #     sleep(2)
+    #     # print(i, 'read', y)
+    # print(time() - start)
