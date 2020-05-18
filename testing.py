@@ -11,13 +11,13 @@ from torch.utils.data import random_split
 
 from clasification import Classifier
 from flowpic_dataset.loader import FlowCSVDataLoader, PreFetchDataLoader
-from flowpic_dataset.processors import SplitPreProcessor, NoOverlapPreProcessor, StatisticsProcessor
+from flowpic_dataset.processors import SplitPreProcessor, StatisticsProcessor, BasicProcessor
 from flowpic_dataset.dataset import FlowsDataSet
 from sklearn.metrics import confusion_matrix, f1_score
 import random
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-import pathlib
+from pathlib import Path
 import os
 import matplotlib.pyplot as plt
 
@@ -46,25 +46,8 @@ class C:
 
 if __name__ == '__main__':
 
-    # c = C(1)
-    # for x in c:
-    #     print(x)
-    ds = FlowsDataSet('netflix_1_half_blocks.csv',)
-    ds.labels = range(len(ds))
-    d = DataLoader(ds, 64, shuffle=False)
-    dl = PreFetchDataLoader(d)
-    it = iter(dl)
-    start = time()
-    for i in range(len(dl)):
-        x, y = next(it)
-        # print(i, 'read', y)
-        sleep(2)
-    print(time() - start)
-
-    start = time()
-    it = iter(d)
-    for i in range(len(d)):
-        x, y = next(it)
-        sleep(2)
-        # print(i, 'read', y)
-    print(time() - start)
+    p = 'data_reg_overlap_split/train/video/reg/data.csv'
+    FlowCSVDataLoader('data_reg_overlap_split', verbose=True).load_dataset(is_split=True)
+    # ds = FlowsDataSet.from_blocks_file(p)
+    # print(len(ds))
+    exit()

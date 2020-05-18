@@ -8,6 +8,8 @@ def print_type(obj):
 
 
 # python expiraments/split_experiment.py --data-dir data_vpn_overlap_split --out-dir vpn_del --epochs 1 --checkpoints vpn_overlap_split --load-checkpoint 0 --checkpoint-every 1
+
+
 if __name__ == '__main__':
     pass
 

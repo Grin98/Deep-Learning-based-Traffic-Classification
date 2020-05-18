@@ -13,7 +13,7 @@ class Flow(NamedTuple):
     app: str
 
 
-class BaseProcessor(ABC):
+class BasicProcessor:
     def __init__(self,
                  block_duration_in_seconds: int,
                  block_delta_in_seconds: int,
@@ -23,24 +23,16 @@ class BaseProcessor(ABC):
         self.block_delta = block_delta_in_seconds
         self.packet_size_limit = packet_size_limit
 
-    def process_dataset(self, dataset_dir: str):
-        self._process_dirs(Path(dataset_dir))
-        print('finished processing')
+    def process_file_to_flows(self, input_file_path: Path):
+        file_extension = input_file_path.suffix
+        if file_extension != '.csv':
+            return []
 
-    def _process_dirs(self, input_dir_path: Path):
-        dirs = get_dir_directories(input_dir_path)
-        if not dirs:
-            self._process_dir_files(input_dir_path)
+        with input_file_path.open(newline='') as f_in:
+            data = csv.reader(f_in, delimiter=',')
+            return [self._transform_row_to_flow(row) for row in data]
 
-        else:
-            for d in dirs:
-                self._process_dirs(d)
-
-    @abstractmethod
-    def _process_dir_files(self, input_dir_path: Path):
-        pass
-
-    def _split_multiple_flows_to_blocks(self, flows: Sequence[Flow]):
+    def split_multiple_flows_to_raw_blocks(self, flows: Sequence[Flow]):
         blocks = []
         for f in flows:
             blocks += self._split_flow_to_blocks(f)
@@ -98,7 +90,27 @@ class BaseProcessor(ABC):
             writer.writerow(b)
 
 
-class SplitPreProcessor(BaseProcessor):
+class BaseDirectoriesProcessor(BasicProcessor, ABC):
+
+    def process_dataset(self, dataset_dir: str):
+        self._process_dirs(Path(dataset_dir))
+        print('finished processing')
+
+    def _process_dirs(self, input_dir_path: Path):
+        dirs = get_dir_directories(input_dir_path)
+        if not dirs:
+            self._process_dir_files(input_dir_path)
+
+        else:
+            for d in dirs:
+                self._process_dirs(d)
+
+    @abstractmethod
+    def _process_dir_files(self, input_dir_path: Path):
+        pass
+
+
+class SplitPreProcessor(BaseDirectoriesProcessor):
     """
     statically splits dataset of flows to Train and Test sets before splitting each flow to blocks
     and in addition there is an overlap between consecutive blocks depending on the value of [block_delta_in_seconds]
@@ -132,26 +144,17 @@ class SplitPreProcessor(BaseProcessor):
 
                 flows = []
                 for file in get_dir_csvs(input_dir_path):
-                    flows += self._process_file(file)
+                    flows += self.process_file_to_flows(file)
 
                 train_flows, test_flows = self._split_train_test(flows, self.test_percent)
-                train_blocks = self._split_multiple_flows_to_blocks(train_flows)
-                test_blocks = self._split_multiple_flows_to_blocks(test_flows)
+                train_blocks = self.split_multiple_flows_to_raw_blocks(train_flows)
+                test_blocks = self.split_multiple_flows_to_raw_blocks(test_flows)
 
                 train_blocks = self._sample_blocks(train_blocks, target_amount=self.train_size_cap)
                 test_blocks = self._sample_blocks(test_blocks, target_amount=self.test_size_cap)
 
                 self._write_blocks(train_blocks, train_writer, tag='train')
                 self._write_blocks(test_blocks, test_writer, tag='test')
-
-    def _process_file(self, input_file_path: Path):
-        file_extension = input_file_path.suffix
-        if file_extension != '.csv':
-            return []
-
-        with input_file_path.open(newline='') as f_in:
-            data = csv.reader(f_in, delimiter=',')
-            return [self._transform_row_to_flow(row) for row in data]
 
     @staticmethod
     def _split_train_test(flows, test_percent):
@@ -178,41 +181,60 @@ class SplitPreProcessor(BaseProcessor):
         return blocks
 
 
-class NoOverlapPreProcessor(BaseProcessor):
-    def __init__(self,
-                 out_root_dir_path: str,
-                 block_duration_in_seconds: int = 60,
+class QuickFileProcessor:
+    """
+    splits file flows to raw blocks but doesn't write them out to a file,
+    instead it returns them.
+    """
+
+    def __init__(self, block_duration_in_seconds: int = 60,
+                 block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500):
+        self.p: BasicProcessor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-        super().__init__(block_duration_in_seconds, block_duration_in_seconds, packet_size_limit)
-        self.out_root_dir = Path(out_root_dir_path)
-
-    def _process_dir_files(self, input_dir_path: Path):
-        out_file = 'data.csv'
-        out_file_path = create_output_dir(self.out_root_dir, input_dir_path) / out_file
-
-        with out_file_path.open('w+', newline='') as out_f:
-            writer = csv.writer(out_f, delimiter=',')
-
-            flows = []
-            for file in get_dir_csvs(input_dir_path):
-                flows += self._process_file(file)
-
-            blocks = self._split_multiple_flows_to_blocks(flows)
-            self._write_blocks(blocks, writer)
-
-    def _process_file(self, input_file_path: Path):
-        file_extension = input_file_path.suffix
-        if file_extension != '.csv':
-            return
-
-        print('processing ' + str(input_file_path))
-        with input_file_path.open(newline='') as f_in:
-            data = csv.reader(f_in, delimiter=',')
-            return [self._transform_row_to_flow(row) for row in data]
+    def transform_file_to_raw_blocks(self, file: Path):
+        flows = self.p.process_file_to_flows(file)
+        return self.p.split_multiple_flows_to_raw_blocks(flows)
 
 
-class StatisticsProcessor(BaseProcessor):
+
+
+
+# class NoOverlapPreProcessor(BaseProcessor):
+#     def __init__(self,
+#                  out_root_dir_path: str,
+#                  block_duration_in_seconds: int = 60,
+#                  packet_size_limit: int = 1500):
+#
+#         super().__init__(block_duration_in_seconds, block_duration_in_seconds, packet_size_limit)
+#         self.out_root_dir = Path(out_root_dir_path)
+#
+#     def _process_dir_files(self, input_dir_path: Path):
+#         out_file = 'data.csv'
+#         out_file_path = create_output_dir(self.out_root_dir, input_dir_path) / out_file
+#
+#         with out_file_path.open('w+', newline='') as out_f:
+#             writer = csv.writer(out_f, delimiter=',')
+#
+#             flows = []
+#             for file in get_dir_csvs(input_dir_path):
+#                 flows += self._process_file_to_flows(file)
+#
+#             blocks = self._split_multiple_flows_to_raw_blocks(flows)
+#             self._write_blocks(blocks, writer)
+#
+#     def _process_file_to_flows(self, input_file_path: Path):
+#         file_extension = input_file_path.suffix
+#         if file_extension != '.csv':
+#             return
+#
+#         print('processing ' + str(input_file_path))
+#         with input_file_path.open(newline='') as f_in:
+#             data = csv.reader(f_in, delimiter=',')
+#             return [self._transform_row_to_flow(row) for row in data]
+
+
+class StatisticsProcessor(BaseDirectoriesProcessor):
     def __init__(self, out_root_dir_path: str,
                  is_raw_data: bool = True,
                  block_duration_in_seconds: int = 60,
@@ -234,7 +256,7 @@ class StatisticsProcessor(BaseProcessor):
 
         blocks_meta = []
         for file in get_dir_csvs(input_dir_path):
-            blocks_meta += self._process_file(file)
+            blocks_meta += self.process_file_to_flows(file)
 
         num_packets, intervals, sizes = zip(*blocks_meta)
         sizes = [s for sublist in sizes for s in sublist]
@@ -257,7 +279,7 @@ class StatisticsProcessor(BaseProcessor):
         self._save_hist_as_image(avg_size_dist_file_path, sizes,
                                  size_bins, label='avg sizes')
 
-    def _process_file(self, input_file_path: Path):
+    def process_file_to_flows(self, input_file_path: Path):
         file_extension = input_file_path.suffix
         if file_extension != '.csv':
             return []
