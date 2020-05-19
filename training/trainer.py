@@ -108,7 +108,7 @@ class Trainer(abc.ABC):
 
         return FitResult(actual_num_epochs,
                          train_loss, train_acc, train_f1,
-                         test_loss, test_acc, train_f1)
+                         test_loss, test_acc, test_f1)
 
     def train_epoch(self, data_loader_train, **kw) -> EpochResult:
         """
