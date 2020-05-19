@@ -83,6 +83,7 @@ class PcapClassificationPage(ttk.Frame):
         title_label.grid(column=2, row=0, columnspan=2)
 
     def upload_pcap_file(self):
+        self.figure.clear()
         # Open pcap file and save its location and name
         self.pcap_file_path = filedialog.askopenfilename()
         self.pcap_file_name = self.pcap_file_path.split("/")[-1]
