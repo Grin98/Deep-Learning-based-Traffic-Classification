@@ -37,7 +37,7 @@ class FlowsDataSet(Dataset):
     @classmethod
     def from_blocks_file(cls, csv_file_path, global_label=0):
         with open(csv_file_path, newline='') as f:
-            start_times, data = zip(*[cls.transform_row_to_block(row) for row in csv.reader(f, delimiter=',')])
+            data, start_times = zip(*[cls.transform_row_to_block(row) for row in csv.reader(f, delimiter=',')])
             labels = np.array([global_label] * len(data))
 
             return FlowsDataSet(data, labels, start_times)
@@ -53,7 +53,7 @@ class FlowsDataSet(Dataset):
 
     @classmethod
     def from_block_rows(cls, block_rows, global_label=0):
-        start_times, data = zip(*[cls.transform_row_to_block(row) for row in block_rows])
+        data, start_times = zip(*[cls.transform_row_to_block(row) for row in block_rows])
         labels = np.array([global_label] * len(data))
 
         return FlowsDataSet(data, labels, start_times)
