@@ -46,8 +46,10 @@ class C:
 
 if __name__ == '__main__':
 
-    p = 'data_reg_overlap_split/train/video/reg/data.csv'
-    FlowCSVDataLoader('data_reg_overlap_split', verbose=True).load_dataset(is_split=True)
-    # ds = FlowsDataSet.from_blocks_file(p)
-    # print(len(ds))
+    SplitPreProcessor('delete').process_dataset('classes_reg')
     exit()
+    # p = 'data_reg_overlap_split/train/video/reg/data.csv'
+    # FlowCSVDataLoader('data_reg_overlap_split', verbose=True).load_dataset(is_split=True)
+    # # ds = FlowsDataSet.from_blocks_file(p)
+    # # print(len(ds))
+    # exit()

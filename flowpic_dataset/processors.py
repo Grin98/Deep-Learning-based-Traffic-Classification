@@ -14,6 +14,9 @@ class Flow(NamedTuple):
 
 
 class BasicProcessor:
+    """
+    provides the basic processing functions of flows
+    """
     def __init__(self,
                  block_duration_in_seconds: int,
                  block_delta_in_seconds: int,
@@ -32,10 +35,10 @@ class BasicProcessor:
             data = csv.reader(f_in, delimiter=',')
             return [self._transform_row_to_flow(row) for row in data]
 
-    def split_multiple_flows_to_raw_blocks(self, flows: Sequence[Flow]):
+    def split_multiple_flows_to_block_rows(self, flows: Sequence[Flow]):
         blocks = []
         for f in flows:
-            blocks += self._split_flow_to_blocks(f)
+            blocks += self.split_flow_to_block_rows(f)
 
         return blocks
 
@@ -56,7 +59,7 @@ class BasicProcessor:
 
         return Flow(sizes, times, app)
 
-    def _split_flow_to_blocks(self, flow: Flow):
+    def split_flow_to_block_rows(self, flow: Flow):
         times = flow.times
         sizes = flow.sizes
         num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
@@ -74,14 +77,15 @@ class BasicProcessor:
             block_sizes = sizes[mask]
 
             # normalize times to start from 0
-            block_times = block_times - b * self.block_delta
+            block_start_time = b * self.block_delta
+            block_times = block_times - block_start_time
 
-            block = [len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
+            block = [block_start_time, len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
             blocks.append(block)
         return blocks
 
     @staticmethod
-    def _write_blocks(blocks, writer, tag=None):
+    def _write_block_rows(blocks, writer, tag=None):
         if tag is None:
             tag = ''
 
@@ -90,8 +94,7 @@ class BasicProcessor:
             writer.writerow(b)
 
 
-class BaseDirectoriesProcessor(BasicProcessor, ABC):
-
+class DirectoriesProcessor(BasicProcessor, ABC):
     def process_dataset(self, dataset_dir: str):
         self._process_dirs(Path(dataset_dir))
         print('finished processing')
@@ -110,7 +113,7 @@ class BaseDirectoriesProcessor(BasicProcessor, ABC):
         pass
 
 
-class SplitPreProcessor(BaseDirectoriesProcessor):
+class SplitPreProcessor(DirectoriesProcessor):
     """
     statically splits dataset of flows to Train and Test sets before splitting each flow to blocks
     and in addition there is an overlap between consecutive blocks depending on the value of [block_delta_in_seconds]
@@ -147,14 +150,14 @@ class SplitPreProcessor(BaseDirectoriesProcessor):
                     flows += self.process_file_to_flows(file)
 
                 train_flows, test_flows = self._split_train_test(flows, self.test_percent)
-                train_blocks = self.split_multiple_flows_to_raw_blocks(train_flows)
-                test_blocks = self.split_multiple_flows_to_raw_blocks(test_flows)
+                train_blocks = self.split_multiple_flows_to_block_rows(train_flows)
+                test_blocks = self.split_multiple_flows_to_block_rows(test_flows)
 
                 train_blocks = self._sample_blocks(train_blocks, target_amount=self.train_size_cap)
                 test_blocks = self._sample_blocks(test_blocks, target_amount=self.test_size_cap)
 
-                self._write_blocks(train_blocks, train_writer, tag='train')
-                self._write_blocks(test_blocks, test_writer, tag='test')
+                self._write_block_rows(train_blocks, train_writer, tag='train')
+                self._write_block_rows(test_blocks, test_writer, tag='test')
 
     @staticmethod
     def _split_train_test(flows, test_percent):
@@ -181,7 +184,7 @@ class SplitPreProcessor(BaseDirectoriesProcessor):
         return blocks
 
 
-class QuickFileProcessor:
+class QuickFlowFileProcessor:
     """
     splits file flows to raw blocks but doesn't write them out to a file,
     instead it returns them.
@@ -190,12 +193,24 @@ class QuickFileProcessor:
     def __init__(self, block_duration_in_seconds: int = 60,
                  block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500):
+
         self.p: BasicProcessor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-    def transform_file_to_raw_blocks(self, file: Path):
+    def transform_file_to_block_rows(self, file: Path):
         flows = self.p.process_file_to_flows(file)
-        return self.p.split_multiple_flows_to_raw_blocks(flows)
+        return self.p.split_multiple_flows_to_block_rows(flows)
 
+
+class QuickPcapFileProcessor:
+    def __init__(self, block_duration_in_seconds: int = 60,
+                 block_delta_in_seconds: int = 15,
+                 packet_size_limit: int = 1500):
+        self.p: BasicProcessor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
+        # TODO add PcapParser (composition)
+
+    def transform_pcap_to_groups_of_blocks(self, file: Path):
+        flows: Sequence[Flow]  # TODO add call for PcapParser to parse file and return flows
+        return [self.p.split_flow_to_block_rows(flow) for flow in flows]
 
 
 
@@ -234,7 +249,7 @@ class QuickFileProcessor:
 #             return [self._transform_row_to_flow(row) for row in data]
 
 
-class StatisticsProcessor(BaseDirectoriesProcessor):
+class StatisticsProcessor(DirectoriesProcessor):
     def __init__(self, out_root_dir_path: str,
                  is_raw_data: bool = True,
                  block_duration_in_seconds: int = 60,
@@ -292,7 +307,7 @@ class StatisticsProcessor(BaseDirectoriesProcessor):
             for row in data:
                 if self.is_raw_data:
                     flow = self._transform_row_to_flow(row)
-                    blocks += self._split_flow_to_blocks(flow)
+                    blocks += self.split_flow_to_block_rows(flow)
                 else:
                     blocks += row
 
