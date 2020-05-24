@@ -40,8 +40,6 @@ class SplitExperiment(Experiment):
         if filters_per_layer is None:
             filters_per_layer = [10, 20]
 
-        torch.manual_seed(self.torch_seed)
-
         if not bs_test:
             bs_test = max([bs_train * 2, 1])
 
@@ -81,6 +79,5 @@ class SplitExperiment(Experiment):
 if __name__ == '__main__':
     exp = SplitExperiment()
     parsed_args = exp.parse_cli()
-    print(parsed_args)
     print(f'*** Starting {SplitExperiment.__name__} with config:\n{parsed_args}')
     res = exp.run(**vars(parsed_args))
