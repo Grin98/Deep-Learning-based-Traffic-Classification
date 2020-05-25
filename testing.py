@@ -44,6 +44,7 @@ class C:
         return next(self.it)
 
 
+
 if __name__ == '__main__':
 
     SplitPreProcessor('delete').process_dataset('classes_reg')
