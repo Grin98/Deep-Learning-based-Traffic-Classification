@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import List
 
-import matplotlib as plt
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torch

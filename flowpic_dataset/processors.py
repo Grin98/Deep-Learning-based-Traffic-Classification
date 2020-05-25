@@ -33,16 +33,16 @@ class BasicProcessor:
 
         with input_file_path.open(newline='') as f_in:
             data = csv.reader(f_in, delimiter=',')
-            return [self._transform_row_to_flow(row) for row in data]
+            return [self.transform_row_to_flow(row) for row in data]
 
     def split_multiple_flows_to_block_rows(self, flows: Sequence[Flow]):
-        blocks = []
+        block_rows = []
         for f in flows:
-            blocks += self.split_flow_to_block_rows(f)
+            block_rows += self.split_flow_to_block_rows(f)
 
-        return blocks
+        return block_rows
 
-    def _transform_row_to_flow(self, row: List[str]) -> Flow:
+    def transform_row_to_flow(self, row: List[str]) -> Flow:
         app = row[0]
         num_packets = int(row[7])
         off_set = 8  # meta data occupies first 8 indices
@@ -306,7 +306,7 @@ class StatisticsProcessor(DirectoriesProcessor):
             blocks = []
             for row in data:
                 if self.is_raw_data:
-                    flow = self._transform_row_to_flow(row)
+                    flow = self.transform_row_to_flow(row)
                     blocks += self.split_flow_to_block_rows(flow)
                 else:
                     blocks += row

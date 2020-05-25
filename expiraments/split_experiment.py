@@ -1,8 +1,5 @@
 import argparse
 import sys
-
-from torch import nn
-
 sys.path.append("../")
 sys.path.append("./")
 from pathlib import Path

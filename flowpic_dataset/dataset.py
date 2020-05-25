@@ -7,7 +7,7 @@ import csv
 from typing import List, Sequence, Tuple, NamedTuple
 import numpy as np
 from flowpic_dataset.flowpic_builder import FlowPicBuilder
-from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor
+from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
 
 
 class Block(NamedTuple):
@@ -27,7 +27,7 @@ class FlowsDataSet(Dataset):
         :param transform: applied on the block when calling __getitem__, by default creates the FlowPic
         """
         if start_times is None:
-            start_times = [0.0]*len(data)
+            start_times = [0.0] * len(data)
 
         self.data = np.array(data)
         self.labels = np.array(labels)
@@ -49,6 +49,16 @@ class FlowsDataSet(Dataset):
                         packet_size_limit: int = 1500):
         p = QuickFlowFileProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
         block_rows = p.transform_file_to_block_rows(csv_file_path)
+        return cls.from_block_rows(block_rows, global_label)
+
+    @classmethod
+    def from_flow_rows(cls, flow_rows, global_label=0,
+                       block_duration_in_seconds: int = 60,
+                       block_delta_in_seconds: int = 15,
+                       packet_size_limit: int = 1500):
+        p = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
+        flows = [p.transform_row_to_flow(row) for row in flow_rows]
+        block_rows = p.split_multiple_flows_to_block_rows(flows)
         return cls.from_block_rows(block_rows, global_label)
 
     @classmethod
