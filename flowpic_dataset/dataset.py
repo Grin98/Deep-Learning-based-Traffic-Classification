@@ -56,6 +56,7 @@ class FlowsDataSet(Dataset):
                        block_duration_in_seconds: int = 60,
                        block_delta_in_seconds: int = 15,
                        packet_size_limit: int = 1500):
+
         p = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
         flows = [p.transform_row_to_flow(row) for row in flow_rows]
         block_rows = p.split_multiple_flows_to_block_rows(flows)

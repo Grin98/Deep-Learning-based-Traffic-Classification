@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 from training.result_types import FitResult
+from utils import fix_seed
 
 
 class Experiment(abc.ABC):
@@ -26,10 +27,7 @@ class Experiment(abc.ABC):
     def __init__(self, seed=42):
 
         self.torch_seed = seed
-        torch.manual_seed(self.torch_seed)
-        np.random.seed(self.torch_seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+        fix_seed(seed)
 
     #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 

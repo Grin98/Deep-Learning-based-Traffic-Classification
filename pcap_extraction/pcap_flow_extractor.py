@@ -10,16 +10,22 @@ import csv
 from pyshark.packet.packet import Packet
 from heapq import nlargest
 
+from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.processors import BasicProcessor
+
 
 class PcapParser:
 
-    def parse_file(self, file: Path, num_flows_to_return=1) -> Sequence:
+    def __init__(self, num_flows_to_return: int = 1):
+        self.num_flows_to_return = num_flows_to_return
+
+    def parse_file(self, file: Path) -> Sequence:
         file_extension = file.suffix
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
 
         packet_streams = {}
-        capture = pyshark.FileCapture(str(file))
+        capture = pyshark.FileCapture(str(file), keep_packets=False)
         for packet in capture:
             if self.is_undesired_packet(packet):
                 continue
@@ -40,7 +46,7 @@ class PcapParser:
                 packet_streams[five_tuple] = [packet_meta]
         capture.close()
 
-        max_five_tuples = nlargest(num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
+        max_five_tuples = nlargest(self.num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
         print(max_five_tuples)
         return [self.transform_stream_to_flow_row(five_tuple, packet_streams[five_tuple])
                 for five_tuple in max_five_tuples]
@@ -90,4 +96,11 @@ class PcapParser:
 
 
 if __name__ == '__main__':
-    pass
+    file = Path('../pcaps/facebook-chat.pcapng')
+    parser = PcapParser(num_flows_to_return=2)
+    flow_rows = parser.parse_file(file)
+    dss = [FlowsDataSet.from_flow_rows([row]) for row in flow_rows]
+    for ds in dss:
+        print(len(ds))
+        print(ds.data)
+        print(ds.start_times)

@@ -10,17 +10,17 @@ from torch.utils.data import DataLoader, Dataset
 from flowpic_dataset.dataset import FlowsDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
-from utils import load_model
+from utils import load_model, fix_seed
 
 
 class Classifier:
-    def __init__(self, model, device, seed: int=42):
+    def __init__(self, model, device, seed: int = 42):
         self.model = model
         self.device = device
-        torch.manual_seed(seed)
+        fix_seed(seed)
 
     def classify(self, X):
-        if self.device:
+        if self.device == 'cuda':
             X = X.to(self.device)
 
         out = self.model(X)
@@ -35,7 +35,7 @@ class Classifier:
         ds = FlowCSVDataLoader(path, verbose=False).load_dataset()
         self.classify_dataset(ds, label, tag)
 
-    def classify_dataset(self, ds: Dataset, label: int, tag: str = ''):
+    def classify_dataset(self, ds: Dataset, label: int = 0, tag: str = ''):
         dl = DataLoader(ds, batch_size=128, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
@@ -46,9 +46,7 @@ class Classifier:
             pred = pred.tolist()
             cnt += Counter(pred)
 
-        total = len(ds)
-        print(tag, ' acc = ', round(cnt[label] / total, 2))
-        print(cnt, 'total =', total)
+        return cnt
 
     def classify_folders(self, p1:Path, folders: Sequence[str], p2: Path):
         for i, folder in enumerate(folders):
@@ -63,8 +61,8 @@ if __name__ == '__main__':
     folders = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
     p1 = Path('data_reg_overlap_split/test')
     p2 = Path('reg')
-    file_checkpoint = 'reg_overlap_split'
-    f = Path('parsed_flows/facebook-chat.csv')
+    file_checkpoint = '../reg_overlap_split'
+    f = Path('../parsed_flows/facebook-chat.csv')
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = Classifier(model, device)

@@ -1,26 +1,5 @@
-import csv
-import multiprocessing
 from collections import Counter
-from heapq import nlargest
-
-import torch
-import numpy as np
-from time import time, sleep
-
-from torch.utils.data import WeightedRandomSampler, DataLoader
-from torch.utils.data import random_split
-
-from clasification import Classifier
-from flowpic_dataset.loader import FlowCSVDataLoader, PreFetchDataLoader
-from flowpic_dataset.processors import SplitPreProcessor, StatisticsProcessor, BasicProcessor
-from flowpic_dataset.dataset import FlowsDataSet
-from sklearn.metrics import confusion_matrix, f1_score
-import random
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
 from pathlib import Path
-import os
-import matplotlib.pyplot as plt
 
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
@@ -48,13 +27,18 @@ class C:
 
 
 if __name__ == '__main__':
-    file = Path('pcaps')/'netflix_1.pcapng'
-    print(file.is_file())
 
-    p = PcapParser()
-    f = p.parse_file(file, num_flows_to_return=4)
-    a = list(map(lambda x: x[7], f))
-    print(a)
+    c = Counter([1, 1, 1, 2, 2, 2, 2, 2, 3])
+    print(c)
+    print(c.most_common(1)[0][0])
+
+    # file = Path('pcaps')/'netflix_1.pcapng'
+    # print(file.is_file())
+    #
+    # p = PcapParser(4)
+    # f = p.parse_file(file)
+    # a = list(map(lambda x: x[7], f))
+    # print(a)
 
     # a = {1: [100, 2, 300, 1, 0],
     #      2: [8, 5, 6, 1],

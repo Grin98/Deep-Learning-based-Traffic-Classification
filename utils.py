@@ -4,6 +4,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data.dataset import Dataset
@@ -44,6 +45,13 @@ def create_dir(dir_: Path):
         dir_.mkdir(parents=True, exist_ok=True)
 
 
+def fix_seed(seed: int):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def load_model(checkpoint: str, model_type, device):
     if not checkpoint.endswith('.pt'):
         checkpoint_filename = f'{checkpoint}.pt'
@@ -52,7 +60,10 @@ def load_model(checkpoint: str, model_type, device):
     model, best_acc, epochs_without_improvement = None, None, 0
     Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
 
-    if os.path.isfile(checkpoint_filename):
+    if not os.path.isfile(checkpoint_filename):
+        raise FileNotFoundError
+
+    else:
         print(f'*** Loading checkpoint file {checkpoint_filename}')
         saved_state = torch.load(checkpoint_filename, map_location=device)
         best_acc = saved_state.get('best_acc', best_acc)
@@ -79,7 +90,7 @@ def save_model(checkpoints, model, epoch, best_acc, epochs_without_improvement):
 
 def _create_pre_trained_model(model_class, model_state: dict, model_init_params: dict, device):
     m: nn.Module = model_class(**model_init_params)
-    if device:
+    if device == 'cuda':
         m.to(device)
     m.load_state_dict(model_state)
     return m
