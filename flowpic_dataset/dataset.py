@@ -29,7 +29,7 @@ class FlowsDataSet(Dataset):
         if start_times is None:
             start_times = [0.0] * len(data)
 
-        self.data = np.array(data)
+        self.data = np.array(data, dtype=list)
         self.labels = np.array(labels)
         self.start_times = np.array(start_times)
         self.transform = transform

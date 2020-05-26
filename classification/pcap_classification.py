@@ -40,14 +40,16 @@ class PcapClassifier:
 
         return flow_preds, categories_distributions
 
+
 if __name__ == '__main__':
     device = 'cuda'
     categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
     file_checkpoint = '../reg_overlap_split'
-    f = Path('../pcaps/facebook-chat.pcapng')
+    f = Path('../pcaps/youtube2.pcap')
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = PcapClassifier(model, device, num_categories=len(categories), num_flows_to_classify=4)
     pred, dist = c.classify(f)
-    print(pred)
-    print(dist)
+    print('preds', pred)
+    print(categories)
+    print('dist by category', dist)

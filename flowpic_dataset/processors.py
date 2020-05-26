@@ -62,7 +62,7 @@ class BasicProcessor:
     def split_flow_to_block_rows(self, flow: Flow):
         times = flow.times
         sizes = flow.sizes
-        num_blocks = int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1
+        num_blocks = max(int(times[-1] / self.block_delta - self.block_duration / self.block_delta) + 1, 1)
 
         blocks = []
         for b in range(num_blocks):
@@ -82,6 +82,7 @@ class BasicProcessor:
 
             block = [block_start_time, len(block_sizes)] + block_times.tolist() + block_sizes.tolist()
             blocks.append(block)
+
         return blocks
 
     @staticmethod

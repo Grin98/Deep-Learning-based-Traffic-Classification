@@ -1,6 +1,8 @@
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
+
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
@@ -28,9 +30,10 @@ class C:
 
 if __name__ == '__main__':
 
-    c = Counter([1, 1, 1, 2, 2, 2, 2, 2, 3])
-    print(c)
-    print(c.most_common(1)[0][0])
+    a = ([(1, 0.2), (1, 0.2), (1, 0.2), (1, 0.2)],)
+    b = np.array(a)
+    print(a)
+    print(b)
 
     # file = Path('pcaps')/'netflix_1.pcapng'
     # print(file.is_file())
