@@ -1,14 +1,13 @@
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from time import time
 from typing import Tuple, Union
 
 from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import FlowsDataSet
 
-from utils import get_dir_directories, get_dir_csvs
+from misc.utils import get_dir_directories, get_dir_csvs
 
 
 class FlowCSVDataLoader:

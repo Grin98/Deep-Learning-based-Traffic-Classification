@@ -1,16 +1,12 @@
-import argparse
 import sys
 sys.path.append("../")
 sys.path.append("./")
 from pathlib import Path
-from time import time
-from utils import create_dir
+from misc.utils import create_dir
 import torch
 import torch.optim
-import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
-from torch.utils.data import random_split
-from flowpic_dataset.loader import FlowCSVDataLoader, PreFetchDataLoader
+from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer

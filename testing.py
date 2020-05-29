@@ -2,7 +2,9 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+from pyshark.packet.packet import Packet
 
+from flowpic_dataset.processors import SplitPreProcessor, BlockRow
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
@@ -30,10 +32,17 @@ class C:
 
 if __name__ == '__main__':
 
-    a = ([(1, 0.2), (1, 0.2), (1, 0.2), (1, 0.2)],)
-    b = np.array(a)
-    print(a)
-    print(b)
+    # a = BlockRow(1.0, [1.0], [2])
+    # for i in iter(a):
+    #     print(i)
+    # exit()
+
+    # print(dir(Packet))
+
+    # a = ([(1, 0.2), (1, 0.2), (1, 0.2), (1, 0.2)],)
+    # b = np.array(a)
+    # print(a)
+    # print(b)
 
     # file = Path('pcaps')/'netflix_1.pcapng'
     # print(file.is_file())
@@ -49,8 +58,8 @@ if __name__ == '__main__':
     # b = nlargest(4, a, key=lambda x: len(a.get(x)))
     # print(a, b)
     #
-    # SplitPreProcessor('delete').process_dataset('classes_reg')
-    # exit()
+    SplitPreProcessor('delete').process_dataset('classes_reg')
+    exit()
     # p = 'data_reg_overlap_split/train/video/reg/data.csv'
     # FlowCSVDataLoader('data_reg_overlap_split', verbose=True).load_dataset(is_split=True)
     # # ds = FlowsDataSet.from_blocks_file(p)

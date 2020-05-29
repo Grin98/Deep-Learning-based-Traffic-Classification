@@ -1,13 +1,12 @@
 from collections import Counter
 from pathlib import Path
-from typing import Sequence
 
 from classification.clasification import Classifier
 from flowpic_dataset.dataset import FlowsDataSet
 from flowpic_dataset.processors import BasicProcessor
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
-from utils import load_model
+from misc.utils import load_model
 
 
 class PcapClassifier:

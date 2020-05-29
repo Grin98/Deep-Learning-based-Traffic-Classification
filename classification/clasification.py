@@ -3,14 +3,12 @@ from pathlib import Path
 from typing import Sequence
 
 import torch
-from sklearn.metrics import f1_score
-from torch import random
 from torch.utils.data import DataLoader, Dataset
 
 from flowpic_dataset.dataset import FlowsDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
-from utils import load_model, fix_seed
+from misc.utils import load_model, fix_seed
 
 
 class Classifier:
