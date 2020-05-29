@@ -1,16 +1,21 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Tuple
 
 import numpy as np
 
 
 class Flow(NamedTuple):
-    sizes: np.ndarray
-    times: np.ndarray
     app: str
+    five_tuple: List[str]
+    start_time: float
+    num_packets: int
+    times: np.ndarray
+    sizes: np.ndarray
 
     @classmethod
     def create(cls, row: List[str], packet_size_limit: int):
         app = row[0]
+        five_tuple = row[1:5]
+        start_time = float(row[6])
         num_packets = int(row[7])
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
@@ -24,14 +29,18 @@ class Flow(NamedTuple):
         times = times[mask]
         sizes = sizes[mask] - 1
 
-        return Flow(sizes, times, app)
+        return Flow(app, five_tuple, start_time, num_packets, times, sizes)
+
+    def __iter__(self):
+        row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] +\
+              list(self.times) + [''] + list(self.sizes)
+        return iter(row)
 
 
-class BlockRow(NamedTuple):
+class Block(NamedTuple):
     start_time: float
     num_packets: int
-    times: List[float]
-    sizes: List[int]
+    data: List[Tuple[float, int]]
 
     @classmethod
     def create(cls, row: List[str]):
@@ -45,17 +54,10 @@ class BlockRow(NamedTuple):
         times = np.array(times, dtype=np.float)
         sizes = np.array(sizes, dtype=np.int)
 
-        return BlockRow(start_time, num_packets, list(times), list(sizes))
+        return Block(start_time, num_packets, list(zip(times, sizes)))
 
-    def __iter__(self):
-        row = [self.start_time, self.num_packets] + self.times + self.sizes
-        return iter(row)
+    def convert_to_row(self):
+        sizes, times = zip(*self.data)
+        row = [self.start_time, self.num_packets] + list(times) + list(sizes)
+        return row
 
-
-class Block(NamedTuple):
-    start_time: float
-    data: np.ndarray
-
-    @classmethod
-    def create(cls, br: BlockRow):
-        return Block(br.start_time, np.array(zip(br.sizes, br.times)))

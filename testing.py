@@ -4,7 +4,8 @@ from pathlib import Path
 import numpy as np
 from pyshark.packet.packet import Packet
 
-from flowpic_dataset.processors import SplitPreProcessor, BlockRow
+from flowpic_dataset.loader import FlowCSVDataLoader
+from flowpic_dataset.processors import SplitPreProcessor
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
@@ -32,9 +33,8 @@ class C:
 
 if __name__ == '__main__':
 
-    # a = BlockRow(1.0, [1.0], [2])
-    # for i in iter(a):
-    #     print(i)
+    # a = [(1, 2, (3, 4)), (5, 6, (7, 8))]
+    # print(list(zip(*a)))
     # exit()
 
     # print(dir(Packet))
@@ -58,6 +58,13 @@ if __name__ == '__main__':
     # b = nlargest(4, a, key=lambda x: len(a.get(x)))
     # print(a, b)
     #
+    a, b = FlowCSVDataLoader('delete').load_dataset(is_split=True)
+    print(a[0])
+    print('start', a.start_times)
+    print('labels', a.labels)
+    print('data', a.data)
+    exit()
+
     SplitPreProcessor('delete').process_dataset('classes_reg')
     exit()
     # p = 'data_reg_overlap_split/train/video/reg/data.csv'

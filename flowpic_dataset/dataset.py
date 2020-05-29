@@ -8,7 +8,7 @@ from typing import List, Sequence, Tuple, NamedTuple
 import numpy as np
 from flowpic_dataset.flowpic_builder import FlowPicBuilder
 from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
-from misc.data_classes import BlockRow, Flow, Block
+from misc.data_classes import Flow, Block
 
 
 class FlowsDataSet(Dataset):
@@ -33,7 +33,7 @@ class FlowsDataSet(Dataset):
     @classmethod
     def from_blocks_file(cls, csv_file_path, global_label=0):
         with open(csv_file_path, newline='') as f:
-            start_times, data = zip(*[cls.transform_row_to_block(row) for row in csv.reader(f, delimiter=',')])
+            start_times, _, data = zip(*[Block.create(row) for row in csv.reader(f, delimiter=',')])
             labels = np.array([global_label] * len(data))
 
             return FlowsDataSet(data, labels, start_times)
@@ -42,33 +42,28 @@ class FlowsDataSet(Dataset):
     def from_flows_file(cls, csv_file_path, global_label=0,
                         block_duration_in_seconds: int = 60,
                         block_delta_in_seconds: int = 15,
-                        packet_size_limit: int = 1500):
+                        packet_size_limit: int = 1500
+                        ):
         p = QuickFlowFileProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
-        block_rows = p.transform_file_to_block_rows(csv_file_path)
-        return cls.from_block_rows(block_rows, global_label)
+        blocks = p.transform_file_to_blocks(csv_file_path)
+        return cls.from_blocks(blocks, global_label)
 
     @classmethod
-    def from_flow_rows(cls, flow_rows, global_label=0,
-                       block_duration_in_seconds: int = 60,
-                       block_delta_in_seconds: int = 15,
-                       packet_size_limit: int = 1500
-                       ):
+    def from_flows(cls, flows: Sequence[Flow], global_label=0,
+                   block_duration_in_seconds: int = 60,
+                   block_delta_in_seconds: int = 15,
+                   packet_size_limit: int = 1500
+                   ):
         p = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
-        flows = [Flow.create(row, packet_size_limit) for row in flow_rows]
-        block_rows = p.split_multiple_flows_to_block_rows(flows)
-        return cls.from_block_rows(block_rows, global_label)
+        blocks = p.split_multiple_flows_to_blocks(flows)
+        return cls.from_blocks(blocks, global_label)
 
     @classmethod
-    def from_block_rows(cls, block_rows: Sequence[BlockRow], global_label=0):
-        start_times, data = zip(*[Block.create(br) for br in block_rows])
+    def from_blocks(cls, blocks: Sequence[Block], global_label=0):
+        start_times, _, data = zip(*blocks)
         labels = np.array([global_label] * len(data))
 
         return FlowsDataSet(data, labels, start_times)
-
-    @staticmethod
-    def transform_row_to_block(row: List[str]) -> Block:
-        br = BlockRow.create(row)
-        return Block.create(br)
 
     @staticmethod
     def concatenate(datasets: Sequence[FlowsDataSet]) -> FlowsDataSet:

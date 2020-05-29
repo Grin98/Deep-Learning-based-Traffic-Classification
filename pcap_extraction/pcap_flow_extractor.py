@@ -99,7 +99,7 @@ if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
     parser = PcapParser(num_flows_to_return=2)
     flow_rows = parser.parse_file(file)
-    dss = [FlowsDataSet.from_flow_rows([row]) for row in flow_rows]
+    dss = [FlowsDataSet.from_flows([row]) for row in flow_rows]
     for ds in dss:
         print(len(ds))
         print(ds.data)

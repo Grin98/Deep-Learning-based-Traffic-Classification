@@ -25,7 +25,7 @@ class PcapClassifier:
 
     def classify(self, file: Path):
         flow_rows = self.parser.parse_file(file)
-        dss = [FlowsDataSet.from_flow_rows([row]) for row in flow_rows]
+        dss = [FlowsDataSet.from_flows([row]) for row in flow_rows]
         flow_preds = []
         categories_distributions = []
         for i in range(self.num_categories):
