@@ -5,7 +5,7 @@ from typing import Sequence
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
 from misc.utils import load_model, fix_seed
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = Classifier(model, device)
-    ds = FlowsDataSet.from_flows_file(f, 1)
+    ds = FlowDataSet.from_flows_file(f, 1)
     c.classify_dataset(ds, 1, tag='fb-chat')
 
     # ds = FlowsDataSet(file_samples, global_label=3)

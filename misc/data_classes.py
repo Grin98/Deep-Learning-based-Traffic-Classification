@@ -57,7 +57,7 @@ class Block(NamedTuple):
         return Block(start_time, num_packets, list(zip(times, sizes)))
 
     def convert_to_row(self):
-        sizes, times = zip(*self.data)
+        times, sizes = zip(*self.data)
         row = [self.start_time, self.num_packets] + list(times) + list(sizes)
         return row
 

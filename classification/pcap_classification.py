@@ -2,7 +2,7 @@ from collections import Counter
 from pathlib import Path
 
 from classification.clasification import Classifier
-from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.processors import BasicProcessor
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
@@ -25,7 +25,7 @@ class PcapClassifier:
 
     def classify(self, file: Path):
         flow_rows = self.parser.parse_file(file)
-        dss = [FlowsDataSet.from_flows([row]) for row in flow_rows]
+        dss = [FlowDataSet.from_flows([row]) for row in flow_rows]
         flow_preds = []
         categories_distributions = []
         for i in range(self.num_categories):

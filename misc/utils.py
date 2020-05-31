@@ -1,6 +1,7 @@
 import os
+from math import floor
 from pathlib import Path
-from typing import List
+from typing import List, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -11,6 +12,26 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
 
+def build_pic(stream: Sequence[Tuple[float, int]],
+              stream_duration_in_seconds: int = 60,
+              pic_width: int = 1500,
+              pic_height: int = 1500,
+              ):
+    # scaling stream_duration to pic's width
+    x_axis_to_second_ratio = pic_width * 1.0 / stream_duration_in_seconds
+
+    hist = torch.zeros(pic_width, pic_height, dtype=torch.int16)
+    for packet in stream:
+        # packet is (time, size)
+        x_position = int(floor(float(packet[0]) * x_axis_to_second_ratio))
+        y_position = packet[1]
+        if x_position >= pic_width or y_position >= pic_height:
+            raise Exception(f'packet position exceeded pic size of %dx%d, packet position is (%d, %d)' %
+                            (pic_width, pic_height, x_position, y_position))
+        hist[x_position][y_position] += 1
+    return hist
+
+
 def show_flow_pic(pic):
     x = pic.numpy()
     x = x.transpose()
@@ -19,6 +40,12 @@ def show_flow_pic(pic):
     plt.imshow(x, cmap='binary')
     plt.gca().invert_yaxis()
     plt.show()
+
+
+def create_array_of_objects(x):
+    a = np.empty(len(x), dtype=object)
+    a[:] = x
+    return a
 
 
 def create_output_dir(out_root_dir: Path, input_dir_path: Path):

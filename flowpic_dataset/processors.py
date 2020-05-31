@@ -141,10 +141,7 @@ class SplitPreProcessor(DirectoriesProcessor):
     @staticmethod
     def _split_train_test(flows, test_percent):
         num_flows = len(flows)
-
-        # create ndarray of tuples
-        train_flows = np.empty(num_flows, dtype=object)
-        train_flows[:] = flows
+        train_flows = create_array_of_objects(flows)
 
         # split
         test_indices = random.sample(range(num_flows), max(1, int(num_flows * test_percent)))
@@ -154,11 +151,12 @@ class SplitPreProcessor(DirectoriesProcessor):
         return train_flows, test_flows
 
     @staticmethod
-    def _sample_blocks(blocks, target_amount: int):
+    def _sample_blocks(blocks: Sequence[Block], target_amount: int):
         current_amount = len(blocks)
         if current_amount > target_amount:
             indices = random.sample(range(current_amount), target_amount)
-            blocks = np.array(blocks)[indices]
+            blocks = create_array_of_objects(blocks)
+            blocks = blocks[indices]
 
         return blocks
 

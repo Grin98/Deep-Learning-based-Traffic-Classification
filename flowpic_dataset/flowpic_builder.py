@@ -7,12 +7,10 @@ from typing import List, Tuple, Sequence
 
 class FlowPicBuilder:
 
-    def __init__(self, stream_duration_in_seconds: int = 60, pic_width: int = 1500, pic_height: int = 1500,
-                 hist_cap: int = 255):
+    def __init__(self, stream_duration_in_seconds: int = 60, pic_width: int = 1500, pic_height: int = 1500):
         self.stream_duration = stream_duration_in_seconds
         self.pic_width = pic_width
         self.pic_height = pic_height
-        self.hist_cap = hist_cap
         self.hist = torch.zeros((pic_width, pic_height), dtype=torch.int16)
 
     def build_pic(self, stream: Sequence[Tuple[float, int]]):

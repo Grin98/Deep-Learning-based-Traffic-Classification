@@ -10,7 +10,7 @@ import csv
 from pyshark.packet.packet import Packet
 from heapq import nlargest
 
-from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.processors import BasicProcessor
 
 
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
     parser = PcapParser(num_flows_to_return=2)
     flow_rows = parser.parse_file(file)
-    dss = [FlowsDataSet.from_flows([row]) for row in flow_rows]
+    dss = [FlowDataSet.from_flows([row]) for row in flow_rows]
     for ds in dss:
         print(len(ds))
         print(ds.data)

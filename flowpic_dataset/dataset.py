@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from collections import Counter
+from math import floor
 from pathlib import Path
+
+import torch
 from torch.utils.data.dataset import Dataset
 import csv
 from typing import List, Sequence, Tuple, NamedTuple
@@ -9,12 +12,13 @@ import numpy as np
 from flowpic_dataset.flowpic_builder import FlowPicBuilder
 from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
 from misc.data_classes import Flow, Block
+from misc.utils import build_pic
 
 
-class FlowsDataSet(Dataset):
-    def __init__(self, data: Sequence[Sequence[Tuple[int, float]]], labels: Sequence[int],
+class FlowDataSet(Dataset):
+    def __init__(self, data: Sequence[Sequence[Tuple[float, int]]], labels: Sequence[int],
                  start_times: Sequence[float] = None,
-                 transform=FlowPicBuilder().build_pic):
+                 transform=build_pic):
         """
 
         :param data: a sequence of blocks where each block contains a sequence of packets ([size, arrival_time])
@@ -36,7 +40,7 @@ class FlowsDataSet(Dataset):
             start_times, _, data = zip(*[Block.create(row) for row in csv.reader(f, delimiter=',')])
             labels = np.array([global_label] * len(data))
 
-            return FlowsDataSet(data, labels, start_times)
+            return FlowDataSet(data, labels, start_times)
 
     @classmethod
     def from_flows_file(cls, csv_file_path, global_label=0,
@@ -63,10 +67,10 @@ class FlowsDataSet(Dataset):
         start_times, _, data = zip(*blocks)
         labels = np.array([global_label] * len(data))
 
-        return FlowsDataSet(data, labels, start_times)
+        return FlowDataSet(data, labels, start_times)
 
     @staticmethod
-    def concatenate(datasets: Sequence[FlowsDataSet]) -> FlowsDataSet:
+    def concatenate(datasets: Sequence[FlowDataSet]) -> FlowDataSet:
         return sum(datasets[1:], datasets[0])
 
     def __len__(self):
@@ -80,7 +84,7 @@ class FlowsDataSet(Dataset):
         return x, np.long(self.labels[idx])
 
     def __add__(self, other):
-        if not isinstance(other, FlowsDataSet):
+        if not isinstance(other, FlowDataSet):
             raise Exception("other is not of type FlowsDataSet")
 
         self.data = np.concatenate([self.data, other.data])
