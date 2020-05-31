@@ -9,7 +9,6 @@ from torch.utils.data.dataset import Dataset
 import csv
 from typing import List, Sequence, Tuple, NamedTuple
 import numpy as np
-from flowpic_dataset.flowpic_builder import FlowPicBuilder
 from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
 from misc.data_classes import Flow, Block
 from misc.utils import build_pic
