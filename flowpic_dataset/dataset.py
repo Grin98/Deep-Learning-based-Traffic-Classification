@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 from torch.utils.data.dataset import Dataset
 import csv
-from typing import List, Sequence, Tuple, NamedTuple
+from typing import List, Sequence, Tuple, NamedTuple, overload
 import numpy as np
 from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
 from misc.data_classes import Flow, Block
@@ -28,7 +28,7 @@ class FlowDataSet(Dataset):
         if start_times is None:
             start_times = [0.0] * len(data)
 
-        self.data = np.array(data, dtype=list)
+        self._data = np.array(data, dtype=list)
         self.labels = np.array(labels)
         self.start_times = np.array(start_times)
         self.transform = transform
@@ -68,15 +68,23 @@ class FlowDataSet(Dataset):
 
         return FlowDataSet(data, labels, start_times)
 
+    def get_block(self, index: int) -> Block:
+        stream = self._data[index]
+        return Block(self.start_times[index], len(stream), stream)
+
+    def get_blocks(self, indices: Sequence[int]) -> Sequence[Block]:
+        return [self.get_block(i) for i in indices]
+
+
     @staticmethod
     def concatenate(datasets: Sequence[FlowDataSet]) -> FlowDataSet:
         return sum(datasets[1:], datasets[0])
 
     def __len__(self):
-        return len(self.data)
+        return len(self._data)
 
     def __getitem__(self, idx):
-        x = self.data[idx]
+        x = self._data[idx]
         if self.transform:
             x = self.transform(x).unsqueeze(0)
 
@@ -86,14 +94,14 @@ class FlowDataSet(Dataset):
         if not isinstance(other, FlowDataSet):
             raise Exception("other is not of type FlowsDataSet")
 
-        self.data = np.concatenate([self.data, other.data])
+        self._data = np.concatenate([self._data, other._data])
         self.labels = np.concatenate([self.labels, other.labels])
         self.start_times = np.concatenate([self.start_times, other.start_times])
 
         return self
 
     def __str__(self) -> str:
-        return 'FlowDataSet:\n' + '   num samples: ' + str(len(self.data)) + '\n   label count: ' + \
+        return 'FlowDataSet:\n' + '   num samples: ' + str(len(self._data)) + '\n   label count: ' + \
                str(Counter(self.labels))
 
     # def split_set(self, train_percent: float) -> Tuple[FlowsDataSet, FlowsDataSet]:

@@ -17,7 +17,7 @@ from misc.data_classes import Flow
 
 class PcapParser:
 
-    def parse_file(self, file: Path, num_flows_to_return: int, packet_size_limit: int) -> Sequence:
+    def parse_file(self, file: Path, num_flows_to_return: int, packet_size_limit: int) -> Sequence[Flow]:
         file_extension = file.suffix
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
@@ -45,12 +45,11 @@ class PcapParser:
         capture.close()
 
         max_five_tuples = nlargest(num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
-        print(max_five_tuples)
         return [self.transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit)
                 for five_tuple in max_five_tuples]
 
     @staticmethod
-    def write_flow_rows(file: Path, flows: Sequence):
+    def write_flow_rows(file: Path, flows: Sequence[Flow]):
         with file.open(mode='w+', newline='') as out:
             writer = csv.writer(out, delimiter=',')
             for f in flows:

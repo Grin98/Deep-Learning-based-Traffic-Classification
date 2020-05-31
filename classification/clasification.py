@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
+from misc.data_classes import ClassifiedBlock
 from model.flow_pic_model import FlowPicModel
 from misc.utils import load_model, fix_seed
 
@@ -33,18 +34,19 @@ class Classifier:
         ds = FlowCSVDataLoader(path, verbose=False).load_dataset()
         self.classify_dataset(ds, label, tag)
 
-    def classify_dataset(self, ds: Dataset, label: int = 0, tag: str = ''):
-        dl = DataLoader(ds, batch_size=128, shuffle=False)
+    def classify_dataset(self, ds: FlowDataSet, batch_size: int = 256, label: int = 0, tag: str = ''):
+        dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
+        classified_blocks = []
         for j in range(len(dl)):
-            x, y = next(dl_iter)
+            x, _ = next(dl_iter)
             pred = self.classify(x)
-            pred = pred.cpu()
-            pred = pred.tolist()
+            pred = pred.cpu().tolist()
             cnt += Counter(pred)
+            classified_blocks += [ClassifiedBlock(ds.get_block(j * batch_size + i), pred[i]) for i in range(len(pred))]
 
-        return cnt
+        return cnt, classified_blocks
 
     def classify_folders(self, p1:Path, folders: Sequence[str], p2: Path):
         for i, folder in enumerate(folders):

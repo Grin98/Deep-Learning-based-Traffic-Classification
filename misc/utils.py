@@ -73,6 +73,9 @@ def create_dir(dir_: Path):
 
 
 def fix_seed(seed: int):
+    if seed is None:
+        return
+
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True

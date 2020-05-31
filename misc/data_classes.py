@@ -1,5 +1,5 @@
+from __future__ import annotations
 from typing import NamedTuple, List, Tuple, Sequence, Any
-
 import numpy as np
 
 
@@ -30,7 +30,6 @@ class Flow(NamedTuple):
                sizes: Sequence,
                start_time: float = None
                ):
-        print('flow create', five_tuple)
         num_packets = len(times)
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
@@ -40,11 +39,15 @@ class Flow(NamedTuple):
         sizes = sizes[mask] - 1
 
         if start_time is None:
-            print('normalizing time')
             start_time = times[0]
             times -= start_time
 
         return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
+
+    def convert_to_row(self):
+        row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] +\
+              list(self.times) + [' '] + list(self.sizes)
+        return row
 
 
 class Block(NamedTuple):
@@ -70,4 +73,16 @@ class Block(NamedTuple):
         times, sizes = zip(*self.data)
         row = [self.start_time, self.num_packets] + list(times) + list(sizes)
         return row
+
+
+class ClassifiedFlow(NamedTuple):
+    flow: Flow
+    pred: int
+    classified_blocks: Sequence[ClassifiedBlock]
+
+
+class ClassifiedBlock(NamedTuple):
+    block: Block
+    pred: int
+
 
