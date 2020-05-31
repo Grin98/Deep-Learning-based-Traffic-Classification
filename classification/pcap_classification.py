@@ -12,20 +12,20 @@ from misc.utils import load_model
 class PcapClassifier:
 
     def __init__(self, model, device: str, num_categories,
-                 num_flows_to_classify: int = 1,
                  seed: int = 42,
                  block_duration_in_seconds: int = 60,
                  block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500,
                  ):
         self.num_categories = num_categories
+        self.packet_size_limit = packet_size_limit
         self.classifier = Classifier(model, device, seed)
-        self.parser = PcapParser(num_flows_to_return=num_flows_to_classify)
+        self.parser = PcapParser()
         self.processor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-    def classify(self, file: Path):
-        flow_rows = self.parser.parse_file(file)
-        dss = [FlowDataSet.from_flows([row]) for row in flow_rows]
+    def classify(self, file: Path, num_flows_to_classify: int = 1):
+        flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
+        dss = [FlowDataSet.from_flows([f]) for f in flows]
         flow_preds = []
         categories_distributions = []
         for i in range(self.num_categories):
@@ -47,8 +47,8 @@ if __name__ == '__main__':
     f = Path('../pcaps/youtube2.pcap')
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
-    c = PcapClassifier(model, device, num_categories=len(categories), num_flows_to_classify=4)
-    pred, dist = c.classify(f)
+    c = PcapClassifier(model, device, num_categories=len(categories))
+    pred, dist = c.classify(f, num_flows_to_classify=1)
     print('preds', pred)
     print(categories)
     print('dist by category', dist)

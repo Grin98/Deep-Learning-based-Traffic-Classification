@@ -27,7 +27,7 @@ class BasicProcessor:
 
         with input_file_path.open(newline='') as f_in:
             data = csv.reader(f_in, delimiter=',')
-            return [Flow.create(row, self.packet_size_limit) for row in data]
+            return [Flow.create_from_row(row, self.packet_size_limit) for row in data]
 
     def split_multiple_flows_to_blocks(self, flows: Sequence[Flow]) -> Sequence[Block]:
         blocks = []

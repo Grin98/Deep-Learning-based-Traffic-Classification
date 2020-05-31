@@ -12,14 +12,12 @@ from heapq import nlargest
 
 from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.processors import BasicProcessor
+from misc.data_classes import Flow
 
 
 class PcapParser:
 
-    def __init__(self, num_flows_to_return: int = 1):
-        self.num_flows_to_return = num_flows_to_return
-
-    def parse_file(self, file: Path) -> Sequence:
+    def parse_file(self, file: Path, num_flows_to_return: int, packet_size_limit: int) -> Sequence:
         file_extension = file.suffix
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
@@ -46,29 +44,23 @@ class PcapParser:
                 packet_streams[five_tuple] = [packet_meta]
         capture.close()
 
-        max_five_tuples = nlargest(self.num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
+        max_five_tuples = nlargest(num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
         print(max_five_tuples)
-        return [self.transform_stream_to_flow_row(five_tuple, packet_streams[five_tuple])
+        return [self.transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit)
                 for five_tuple in max_five_tuples]
 
     @staticmethod
-    def write_flow_rows(file: Path, flow_rows: Sequence):
+    def write_flow_rows(file: Path, flows: Sequence):
         with file.open(mode='w+', newline='') as out:
             writer = csv.writer(out, delimiter=',')
-            for row in flow_rows:
-                writer.writerow(row)
+            for f in flows:
+                writer.writerow(f.convert_to_row)
 
     @staticmethod
-    def transform_stream_to_flow_row(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
+    def transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]], packet_size_limit: int):
         times, sizes = zip(*stream)
+        return Flow.create('app', five_tuple, packet_size_limit, times, sizes)
 
-        # normalize time to start from 0
-        start = times[0]
-        times = [t - start for t in times]
-
-        # format: app|src_ip|src_port|dst_ip|dst_port|transport_protocol|start_time|length|[timestamps]|' '|[sizes]|
-        return ['app_place_holder'] + list(five_tuple) + [start] + [len(times)] + \
-               times + [' '] + list(sizes)
 
     @staticmethod
     def is_undesired_packet(packet: Packet) -> bool:
@@ -97,8 +89,8 @@ class PcapParser:
 
 if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
-    parser = PcapParser(num_flows_to_return=2)
-    flow_rows = parser.parse_file(file)
+    parser = PcapParser()
+    flow_rows = parser.parse_file(file, num_flows_to_return=1, packet_size_limit=1500)
     dss = [FlowDataSet.from_flows([row]) for row in flow_rows]
     for ds in dss:
         print(len(ds))
