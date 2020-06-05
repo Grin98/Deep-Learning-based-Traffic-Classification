@@ -14,7 +14,7 @@ class Flow(NamedTuple):
     @classmethod
     def create_from_row(cls, row: List[str], packet_size_limit: int):
         app = row[0]
-        five_tuple = row[1:5]
+        five_tuple = row[1:6]
         start_time = float(row[6])
         num_packets = int(row[7])
         off_set = 8  # meta data occupies first 8 indices
@@ -45,8 +45,9 @@ class Flow(NamedTuple):
         return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
 
     def convert_to_row(self):
+        # self.sizes + 1 because when flow is created it subtracts 1 from sizes
         row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] +\
-              list(self.times) + [' '] + list(self.sizes)
+              list(self.times) + [' '] + list(self.sizes + 1)
         return row
 
 

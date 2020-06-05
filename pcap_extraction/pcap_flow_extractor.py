@@ -53,7 +53,7 @@ class PcapParser:
         with file.open(mode='w+', newline='') as out:
             writer = csv.writer(out, delimiter=',')
             for f in flows:
-                writer.writerow(f.convert_to_row)
+                writer.writerow(f.convert_to_row())
 
     @staticmethod
     def transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]], packet_size_limit: int):
