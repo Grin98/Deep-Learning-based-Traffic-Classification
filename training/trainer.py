@@ -45,7 +45,7 @@ class Trainer(abc.ABC):
             model.to(self.device)
 
     def fit(self, dl_train, dl_test: DataLoader,
-            num_epochs, checkpoints: str = None,
+            num_epochs, model_checkpoint: str = None,
             checkpoint_every: int = 1,
             load_checkpoint: bool = False,
             early_stopping: int = None,
@@ -58,7 +58,7 @@ class Trainer(abc.ABC):
         :param dl_train: Dataloader for the training set.
         :param dl_test: Dataloader for the test set.
         :param num_epochs: Number of epochs to train for.
-        :param checkpoints: Whether to save model to file every time the
+        :param model_checkpoint: Whether to save model to file every time the
             test set accuracy improves. Should be a string containing a
             filename without extension.
         :param early_stopping: Whether to stop training early if there is no
@@ -66,15 +66,15 @@ class Trainer(abc.ABC):
         :param print_every: Print progress every this number of epochs.
         :return: A FitResult object containing train and test losses per epoch.
         """
-        actual_num_epochs = 0
         train_loss, train_acc, train_f1, test_loss, test_acc, test_f1 = [], [], [], [], [], []
 
         best_acc = None
         epochs_without_improvement = 0
-        if checkpoints is not None and load_checkpoint:
-            self.model, best_acc, epochs_without_improvement = load_model(checkpoints, type(self.model), self.device)
+        start_epoch = 1
+        if model_checkpoint is not None and load_checkpoint:
+            self.model, best_acc, start_epoch, epochs_without_improvement = load_model(model_checkpoint, type(self.model), self.device)
 
-        for epoch in range(1, num_epochs + 1):
+        for epoch in range(start_epoch, num_epochs + 1):
             verbose = False  # pass this to train/test_epoch.
             if epoch % print_every == 0 or epoch == num_epochs or epoch == 1:
                 verbose = True
@@ -93,8 +93,8 @@ class Trainer(abc.ABC):
 
             epochs_without_improvement = epochs_without_improvement + 1
 
-            if checkpoints is not None and epoch % checkpoint_every == 0:
-                save_model(checkpoints, self.model, epoch, best_acc, epochs_without_improvement)
+            if model_checkpoint is not None and epoch % checkpoint_every == 0:
+                save_model(model_checkpoint, self.model, epoch, best_acc, epochs_without_improvement)
 
             if best_acc is None or acc > best_acc:
                 best_acc = acc
@@ -103,6 +103,7 @@ class Trainer(abc.ABC):
             if early_stopping is not None and epochs_without_improvement == early_stopping:
                 break
 
+        actual_num_epochs = (num_epochs + 1) - start_epoch
         return FitResult(actual_num_epochs,
                          train_loss, train_acc, train_f1,
                          test_loss, test_acc, test_f1)

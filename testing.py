@@ -36,6 +36,11 @@ class C:
 
 
 if __name__ == '__main__':
+
+    a = []
+    print(a[-1])
+
+    exit()
     f = Path('classes_reg/video/reg/netflix_1.csv')
     # f = Path('classes_reg/video/reg/netflix_2.csv')
     # f3 = Path('parsed_flows/netflix_3.csv')

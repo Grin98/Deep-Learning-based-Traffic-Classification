@@ -16,16 +16,16 @@ class SplitExperiment(Experiment):
 
     def run(self, data_dir=None, out_dir=None,
             bs_train=128, bs_test=None, epochs=100, early_stopping=3,
-            checkpoints=None,
-            load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
+            save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
             **kw):
 
+        model_checkpoint = None
         if out_dir is not None:
             out_dir = Path(out_dir)
             create_dir(out_dir)
-            if checkpoints is not None:
-                checkpoints = str(out_dir/checkpoints)
+            if save_checkpoint or load_checkpoint:
+                model_checkpoint = str(out_dir/'model')
 
         if hidden_dims is None:
             hidden_dims = [64]
@@ -37,9 +37,10 @@ class SplitExperiment(Experiment):
             bs_test = max([bs_train * 2, 1])
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print("DEVICE: ", torch.cuda.device_count())
-        dataset_loader = FlowCSVDataLoader(data_dir)
-        ds_train, ds_test = dataset_loader.load_dataset(is_split=True)
+        print("Num GPUs =", torch.cuda.device_count())
+
+        dataset_loader = FlowCSVDataLoader()
+        ds_train, ds_test = dataset_loader.load_dataset(data_dir, is_split=True)
 
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)
@@ -55,7 +56,7 @@ class SplitExperiment(Experiment):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
         trainer = FlowPicTrainer(model, loss_fn, optimizer, device)
-        fit_res = trainer.fit(dl_train, dl_test, epochs, checkpoints,
+        fit_res = trainer.fit(dl_train, dl_test, epochs, model_checkpoint,
                               checkpoint_every=checkpoint_every,
                               load_checkpoint=load_checkpoint,
                               early_stopping=early_stopping,

@@ -75,6 +75,8 @@ class FlowDataSet(Dataset):
     def get_blocks(self, indices: Sequence[int]) -> Sequence[Block]:
         return [self.get_block(i) for i in indices]
 
+    def get_num_classes(self):
+        return len(set(self.labels))
 
     @staticmethod
     def concatenate(datasets: Sequence[FlowDataSet]) -> FlowDataSet:

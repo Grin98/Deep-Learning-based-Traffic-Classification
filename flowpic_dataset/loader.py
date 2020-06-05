@@ -11,29 +11,37 @@ from misc.utils import get_dir_directories, get_dir_csvs
 
 
 class FlowCSVDataLoader:
-    def __init__(self, dataset_root_dir, testing=False, verbose: bool = True):
-        self.root_dir = Path(dataset_root_dir)
+    def __init__(self, testing=False, verbose: bool = True):
         self.testing = testing
         self.verbose = verbose
         self.labels = {}
 
-    def load_dataset(self, is_split: bool = False) -> Union[Tuple[FlowDataSet], FlowDataSet]:
-        """
-        creates a FlowDataset from each file at the leaf level of the directory tree
-        and returns a ConcatDataset of all of them
-        """
+    def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[FlowDataSet, FlowDataSet]:
+        root_dir = Path(dataset_root_dir)
+        dirs = get_dir_directories(root_dir)
 
+        test_dataset = self.load_dataset(dir([test_group_index]), is_split=False)
+        train_datasets = []
+        for i, d in enumerate(dirs):
+            if i != test_group_index:
+                train_datasets += self.load_dataset(d, is_split=False)
+
+        return FlowDataSet.concatenate(train_datasets), test_dataset
+
+    def load_dataset(self, dataset_root_dir, is_split: bool = False) -> Union[Tuple[FlowDataSet], FlowDataSet]:
+        root_dir = Path(dataset_root_dir)
         self.labels = {}
-        self._print_verbose("=== Loading dataset from %s ===" % self.root_dir)
+
+        self._print_verbose("=== Loading dataset from %s ===" % root_dir)
         if is_split:
             self._print_verbose('train')
-            train_datasets = self._gather_datasets(self.root_dir/'train')
+            train_datasets = self._gather_datasets(root_dir/'train')
 
             self._print_verbose('test')
-            test_dataset = self._gather_datasets(self.root_dir/'test')
+            test_dataset = self._gather_datasets(root_dir/'test')
             res = FlowDataSet.concatenate(train_datasets), FlowDataSet.concatenate(test_dataset)
         else:
-            datasets = self._gather_datasets(self.root_dir)
+            datasets = self._gather_datasets(root_dir)
             res = FlowDataSet.concatenate(datasets)
         self._print_verbose("=== Dataset loading completed :D ===\n")
 

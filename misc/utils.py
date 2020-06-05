@@ -87,7 +87,7 @@ def load_model(checkpoint: str, model_type, device):
         checkpoint_filename = f'{checkpoint}.pt'
     else:
         checkpoint_filename = checkpoint
-    model, best_acc, epochs_without_improvement = None, None, 0
+    model, best_acc, last_epoch, epochs_without_improvement = None, None, 0, 0
     Path(os.path.dirname(checkpoint_filename)).mkdir(exist_ok=True)
 
     if not os.path.isfile(checkpoint_filename):
@@ -97,18 +97,20 @@ def load_model(checkpoint: str, model_type, device):
         print(f'*** Loading checkpoint file {checkpoint_filename}')
         saved_state = torch.load(checkpoint_filename, map_location=device)
         best_acc = saved_state.get('best_acc', best_acc)
+        last_epoch = saved_state.get('last_epoch', last_epoch)
         epochs_without_improvement = saved_state.get('ewi', epochs_without_improvement)
         model = _create_pre_trained_model(model_type,
                                           saved_state['model_state'],
                                           saved_state['model_init_params'],
                                           device)
 
-    return model, best_acc, epochs_without_improvement
+    return model, best_acc, last_epoch, epochs_without_improvement
 
 
 def save_model(checkpoints, model, epoch, best_acc, epochs_without_improvement):
     checkpoint_filename = f'{checkpoints}.pt'
     saved_state = dict(best_acc=best_acc,
+                       last_epoch=epoch+1,
                        ewi=epochs_without_improvement,
                        model_state=model.state_dict(),
                        model_init_params=model.model_init_params)

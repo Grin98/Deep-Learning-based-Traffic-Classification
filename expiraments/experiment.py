@@ -5,7 +5,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
 
+import torch
+
 from misc.utils import fix_seed
+from model.flow_pic_model import FlowPicModel
 
 
 class Experiment(abc.ABC):
@@ -21,7 +24,30 @@ class Experiment(abc.ABC):
         self.torch_seed = seed
         fix_seed(seed)
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print("Num GPUs =", torch.cuda.device_count())
+
     #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
+
+    @abc.abstractmethod
+    def run(self,
+                # Training params
+                data_dir=None, out_dir=None,
+                bs_train=128, bs_test=None, epochs=100,
+                early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
+                # Model params
+                filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
+                drop_every=2, hidden_dims=None, **kw):
+        """
+            Execute a single run of experiment with given configuration
+        """
+        raise NotImplementedError()
+
+    def parse_cli(self):
+        p = argparse.ArgumentParser(description=type(self).__name__)
+        p = self.add_parser_args(p)
+        parsed = p.parse_args()
+        return parsed
 
     def add_parser_args(self, p: argparse.ArgumentParser):
         # Experiment config
@@ -40,9 +66,9 @@ class Experiment(abc.ABC):
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
                             'improvement', default=None)
-        p.add_argument('--checkpoints', type=str,
+        p.add_argument('--save-checkpoint', type=int,
                        help='Save model checkpoints to this file when test '
-                            'accuracy improves', default=None)
+                            'accuracy improves', default=0)
         p.add_argument('--load-checkpoint', type=int, default=0,
                        help='whether to start training using '
                             'the file provided in --checkpoints as starting point')
@@ -71,25 +97,21 @@ class Experiment(abc.ABC):
 
         return p
 
-    def parse_cli(self):
-        p = argparse.ArgumentParser(description=type(self).__name__)
-        p = self.add_parser_args(p)
-        parsed = p.parse_args()
-        return parsed
+    @staticmethod
+    def create_model(input_dim, num_classes: int, filters_per_layer, layers_per_block, hidden_dims, drop_every):
 
-    @abc.abstractmethod
-    def run(self,
-                # Training params
-                data_dir=None, out_dir=None,
-                bs_train=128, bs_test=None, epochs=100,
-                early_stopping=3, checkpoints=None, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
-                # Model params
-                filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
-                drop_every=2, hidden_dims=None, **kw):
-        """
-            Execute a single run of experiment with given configuration
-        """
-        raise NotImplementedError()
+        if hidden_dims is None:
+            hidden_dims = [64]
+
+        if filters_per_layer is None:
+            filters_per_layer = [10, 20]
+
+        filters = []
+        for filter_ in filters_per_layer:
+            temp = [filter_] * layers_per_block
+            filters += temp
+
+        return FlowPicModel(input_dim, num_classes, filters, hidden_dims, drop_every)
 
     @staticmethod
     def save_graph(file: Path, train: List[float], test: List[float], data: str = ''):
