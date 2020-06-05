@@ -16,6 +16,7 @@ class Classifier:
     def __init__(self, model, device, seed: int = 42):
         self.model = model
         self.device = device
+        self.model.train(False)
         fix_seed(seed)
 
     def classify(self, X):
@@ -62,12 +63,13 @@ if __name__ == '__main__':
     p1 = Path('data_reg_overlap_split/test')
     p2 = Path('reg')
     file_checkpoint = '../reg_overlap_split'
-    f = Path('../parsed_flows/facebook-chat.csv')
+    f = Path('../parsed_flows/netflix_4.csv')
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = Classifier(model, device)
     ds = FlowDataSet.from_flows_file(f, 1)
-    c.classify_dataset(ds, 1, tag='fb-chat')
+    a, _ = c.classify_dataset(ds, 1, tag='fb-chat')
+    print(a)
 
     # ds = FlowsDataSet(file_samples, global_label=3)
     # dl = DataLoader(ds, batch_size=128, shuffle=True)
