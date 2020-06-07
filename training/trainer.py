@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from typing import Callable, Any
 
-from training.result_types import EpochResult, FitResult, BatchResult
+from misc.data_classes import EpochResult, FitResult, BatchResult
 from misc.utils import save_model, load_model, is_file
 
 

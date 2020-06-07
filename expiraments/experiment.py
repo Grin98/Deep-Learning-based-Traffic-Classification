@@ -7,6 +7,7 @@ from typing import List
 
 import torch
 
+from misc.data_classes import FitResult
 from misc.utils import fix_seed
 from model.flow_pic_model import FlowPicModel
 
@@ -52,10 +53,8 @@ class Experiment(abc.ABC):
     def add_parser_args(self, p: argparse.ArgumentParser):
         # Experiment config
         p.add_argument('--data-dir', '-d', type=str, help='data folder', required=True)
-        p.add_argument('--out-dir', '-o', type=str, help='Output folder',
-                       default=None, required=False)
-        # p.add_argument('--seed', '-s', type=int, help='Random seed',
-        #                default=None, required=False)
+        p.add_argument('--out-dir', '-o', type=str, help='Output folder', required=True)
+
         # # Training
         p.add_argument('--bs-train', type=int, help='Train batch size',
                        default=128, metavar='BATCH_SIZE')
@@ -102,6 +101,11 @@ class Experiment(abc.ABC):
             temp = [filter_] * layers_per_block
             filters += temp
         return filters
+
+    def save_fit_graphs(self, out_dir: Path, fit_res: FitResult, tag: str = ''):
+        self.save_graph(out_dir / f'loss{tag}.png', fit_res.train_loss, fit_res.test_loss, data='loss')
+        self.save_graph(out_dir / f'acc{tag}.png', fit_res.train_acc, fit_res.test_acc, data='acc')
+        self.save_graph(out_dir / f'f1{tag}.png', fit_res.train_f1, fit_res.test_f1, data='f1')
 
     @staticmethod
     def save_graph(file: Path, train: List[float], test: List[float], data: str = ''):

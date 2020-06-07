@@ -11,7 +11,7 @@ from flowpic_dataset.loader import FlowCSVDataLoader
 from misc.utils import create_dir, _create_pre_trained_model, is_file
 from model.flow_pic_model import FlowPicModel
 from training.flowpic_trainer import FlowPicTrainer
-from training.result_types import BatchResult
+from misc.data_classes import BatchResult
 from training.trainer import Trainer
 
 
@@ -27,14 +27,15 @@ class CrossValidation(Experiment):
 
         model_checkpoint = None
         cv_checkpoint = None
+        out_dir = Path(out_dir)
+        create_dir(out_dir)
+
         if save_checkpoint or load_checkpoint:
-            out_dir = Path(out_dir)
-            create_dir(out_dir)
             model_checkpoint = str(out_dir / 'model')
             cv_checkpoint = str(out_dir / 'cv')
 
         start_i, f1, acc, loss = 0, 0, 0, 0
-        if load_checkpoint and is_file(cv_checkpoint):
+        if load_checkpoint:
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
         loader = FlowCSVDataLoader()
@@ -66,6 +67,7 @@ class CrossValidation(Experiment):
 
             if save_checkpoint:
                 self.save_cv(cv_checkpoint, i, k, f1, acc, loss)
+                self.save_fit_graphs(out_dir, res, tag=str(i))
 
         return f1 / k, acc / k, loss / k
 

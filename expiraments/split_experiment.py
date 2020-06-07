@@ -21,11 +21,10 @@ class SplitExperiment(Experiment):
             **kw):
 
         model_checkpoint = None
-        if out_dir is not None:
-            out_dir = Path(out_dir)
-            create_dir(out_dir)
-            if save_checkpoint or load_checkpoint:
-                model_checkpoint = str(out_dir/'model')
+        out_dir = Path(out_dir)
+        create_dir(out_dir)
+        if save_checkpoint or load_checkpoint:
+            model_checkpoint = str(out_dir/'model')
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print("Num GPUs =", torch.cuda.device_count())
@@ -50,10 +49,8 @@ class SplitExperiment(Experiment):
                               early_stopping=early_stopping,
                               print_every=5, **kw)
 
-        if out_dir is not None:
-            self.save_graph(out_dir / 'loss.png', fit_res.train_loss, fit_res.test_loss, data='loss')
-            self.save_graph(out_dir / 'acc.png', fit_res.train_acc, fit_res.test_acc, data='acc')
-            self.save_graph(out_dir / 'f1.png', fit_res.train_f1, fit_res.test_f1, data='f1')
+        if save_checkpoint:
+            self.save_fit_graphs(out_dir, fit_res)
 
         return fit_res
 
