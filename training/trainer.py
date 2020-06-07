@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 
 from training.result_types import EpochResult, FitResult, BatchResult
-from misc.utils import save_model, load_model
+from misc.utils import save_model, load_model, is_file
 
 
 class Trainer(abc.ABC):
@@ -40,13 +40,13 @@ class Trainer(abc.ABC):
         if self.device:
             print(torch.cuda.device_count())
             if torch.cuda.device_count() > 1:
-                print('parallel')
                 model = nn.DataParallel(model)
             model.to(self.device)
 
     def fit(self, dl_train, dl_test: DataLoader,
             num_epochs, model_checkpoint: str = None,
             checkpoint_every: int = 1,
+            save_checkpoint: bool = False,
             load_checkpoint: bool = False,
             early_stopping: int = None,
             print_every=1, **kw) -> FitResult:
@@ -71,7 +71,7 @@ class Trainer(abc.ABC):
         best_acc = None
         epochs_without_improvement = 0
         start_epoch = 1
-        if model_checkpoint is not None and load_checkpoint:
+        if is_file(model_checkpoint) and load_checkpoint:
             self.model, best_acc, start_epoch, epochs_without_improvement = load_model(model_checkpoint, type(self.model), self.device)
 
         for epoch in range(start_epoch, num_epochs + 1):
@@ -93,7 +93,7 @@ class Trainer(abc.ABC):
 
             epochs_without_improvement = epochs_without_improvement + 1
 
-            if model_checkpoint is not None and epoch % checkpoint_every == 0:
+            if model_checkpoint is not None and save_checkpoint and epoch % checkpoint_every == 0:
                 save_model(model_checkpoint, self.model, epoch, best_acc, epochs_without_improvement)
 
             if best_acc is None or acc > best_acc:

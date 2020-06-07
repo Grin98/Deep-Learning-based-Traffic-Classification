@@ -17,7 +17,7 @@ class SplitExperiment(Experiment):
     def run(self, data_dir=None, out_dir=None,
             bs_train=128, bs_test=None, epochs=100, early_stopping=3,
             save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
-            layers_per_block=2, out_classes=5, pool_every=2, drop_every=2, hidden_dims=None,
+            layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
             **kw):
 
         model_checkpoint = None
@@ -27,31 +27,19 @@ class SplitExperiment(Experiment):
             if save_checkpoint or load_checkpoint:
                 model_checkpoint = str(out_dir/'model')
 
-        if hidden_dims is None:
-            hidden_dims = [64]
-
-        if filters_per_layer is None:
-            filters_per_layer = [10, 20]
-
-        if not bs_test:
-            bs_test = max([bs_train * 2, 1])
-
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print("Num GPUs =", torch.cuda.device_count())
 
         dataset_loader = FlowCSVDataLoader()
         ds_train, ds_test = dataset_loader.load_dataset(data_dir, is_split=True)
-
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)
 
-        filters = []
-        for filter_ in filters_per_layer:
-            temp = [filter_] * layers_per_block
-            filters += temp
+        input_shape = ds_train[0][0].shape
+        num_classes = ds_train.get_num_classes()
+        filters = self.get_filters(filters_per_layer, layers_per_block)
 
-        x0, _ = ds_train[0]
-        model = FlowPicModel(x0.shape, out_classes, filters, hidden_dims, drop_every)
+        model = FlowPicModel(input_shape, num_classes, filters, hidden_dims, drop_every)
         loss_fn = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 

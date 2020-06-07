@@ -36,7 +36,7 @@ class Experiment(abc.ABC):
                 bs_train=128, bs_test=None, epochs=100,
                 early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
                 # Model params
-                filters_per_layer=None, layers_per_block=2, out_classes=5, pool_every=2,
+                filters_per_layer=None, layers_per_block=2, pool_every=2,
                 drop_every=2, hidden_dims=None, **kw):
         """
             Execute a single run of experiment with given configuration
@@ -85,8 +85,6 @@ class Experiment(abc.ABC):
                        metavar='K')
         p.add_argument('--layers-per-block', '-L', type=int, metavar='L',
                        help='Number of layers in each block', default=1)
-        p.add_argument('--out-classes', '-O', type=int,
-                       help='Number of output classes', default=5)
         p.add_argument('--pool-every', '-P', type=int, metavar='P',
                        help='Pool after this number of conv layers')
         p.add_argument('--drop-every', '-D', type=int, metavar='P',
@@ -98,20 +96,12 @@ class Experiment(abc.ABC):
         return p
 
     @staticmethod
-    def create_model(input_dim, num_classes: int, filters_per_layer, layers_per_block, hidden_dims, drop_every):
-
-        if hidden_dims is None:
-            hidden_dims = [64]
-
-        if filters_per_layer is None:
-            filters_per_layer = [10, 20]
-
+    def get_filters(filters_per_layer, layers_per_block):
         filters = []
         for filter_ in filters_per_layer:
             temp = [filter_] * layers_per_block
             filters += temp
-
-        return FlowPicModel(input_dim, num_classes, filters, hidden_dims, drop_every)
+        return filters
 
     @staticmethod
     def save_graph(file: Path, train: List[float], test: List[float], data: str = ''):

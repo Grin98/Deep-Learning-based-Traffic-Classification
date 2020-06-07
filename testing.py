@@ -9,7 +9,7 @@ from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from flowpic_dataset.processors import SplitPreProcessor, BasicProcessor
 from misc.data_classes import Flow
-from misc.utils import show_flow_pic
+from misc.utils import show_flow_pic, is_file
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
@@ -36,9 +36,6 @@ class C:
 
 
 if __name__ == '__main__':
-
-    a = []
-    print(a[-1])
 
     exit()
     f = Path('classes_reg/video/reg/netflix_1.csv')
