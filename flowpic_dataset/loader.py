@@ -1,14 +1,13 @@
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from time import time
 from typing import Tuple, Union
 
 from torch.utils.data import DataLoader
 
-from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.dataset import FlowDataSet
 
-from utils import get_dir_directories, get_dir_csvs
+from misc.utils import get_dir_directories, get_dir_csvs
 
 
 class FlowCSVDataLoader:
@@ -18,7 +17,7 @@ class FlowCSVDataLoader:
         self.verbose = verbose
         self.labels = {}
 
-    def load_dataset(self, is_split: bool = False) -> Union[Tuple[FlowsDataSet], FlowsDataSet]:
+    def load_dataset(self, is_split: bool = False) -> Union[Tuple[FlowDataSet], FlowDataSet]:
         """
         creates a FlowDataset from each file at the leaf level of the directory tree
         and returns a ConcatDataset of all of them
@@ -32,10 +31,10 @@ class FlowCSVDataLoader:
 
             self._print_verbose('test')
             test_dataset = self._gather_datasets(self.root_dir/'test')
-            res = FlowsDataSet.concatenate(train_datasets), FlowsDataSet.concatenate(test_dataset)
+            res = FlowDataSet.concatenate(train_datasets), FlowDataSet.concatenate(test_dataset)
         else:
             datasets = self._gather_datasets(self.root_dir)
-            res = FlowsDataSet.concatenate(datasets)
+            res = FlowDataSet.concatenate(datasets)
         self._print_verbose("=== Dataset loading completed :D ===\n")
 
         return res
@@ -43,7 +42,7 @@ class FlowCSVDataLoader:
     def _gather_datasets(self, path: Path, label_level: bool = True, label: int = 0):
         dirs = get_dir_directories(path)
         if not dirs:
-            dss = [FlowsDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
+            dss = [FlowDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
             self._print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 

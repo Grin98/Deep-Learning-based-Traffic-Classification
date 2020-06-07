@@ -3,24 +3,24 @@ from pathlib import Path
 from typing import Sequence
 
 import torch
-from sklearn.metrics import f1_score
-from torch import random
 from torch.utils.data import DataLoader, Dataset
 
-from flowpic_dataset.dataset import FlowsDataSet
+from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
+from misc.data_classes import ClassifiedBlock
 from model.flow_pic_model import FlowPicModel
-from utils import load_model
+from misc.utils import load_model, fix_seed
 
 
 class Classifier:
-    def __init__(self, model, device, seed: int=42):
+    def __init__(self, model, device, seed: int = 42):
         self.model = model
         self.device = device
-        torch.manual_seed(seed)
+        self.model.train(False)
+        fix_seed(seed)
 
     def classify(self, X):
-        if self.device:
+        if self.device == 'cuda':
             X = X.to(self.device)
 
         out = self.model(X)
@@ -35,20 +35,19 @@ class Classifier:
         ds = FlowCSVDataLoader(path, verbose=False).load_dataset()
         self.classify_dataset(ds, label, tag)
 
-    def classify_dataset(self, ds: Dataset, label: int, tag: str = ''):
-        dl = DataLoader(ds, batch_size=128, shuffle=False)
+    def classify_dataset(self, ds: FlowDataSet, batch_size: int = 256, label: int = 0, tag: str = ''):
+        dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
+        classified_blocks = []
         for j in range(len(dl)):
-            x, y = next(dl_iter)
+            x, _ = next(dl_iter)
             pred = self.classify(x)
-            pred = pred.cpu()
-            pred = pred.tolist()
+            pred = pred.cpu().tolist()
             cnt += Counter(pred)
+            classified_blocks += [ClassifiedBlock(ds.get_block(j * batch_size + i), pred[i]) for i in range(len(pred))]
 
-        total = len(ds)
-        print(tag, ' acc = ', round(cnt[label] / total, 2))
-        print(cnt, 'total =', total)
+        return cnt, classified_blocks
 
     def classify_folders(self, p1:Path, folders: Sequence[str], p2: Path):
         for i, folder in enumerate(folders):
@@ -63,13 +62,14 @@ if __name__ == '__main__':
     folders = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
     p1 = Path('data_reg_overlap_split/test')
     p2 = Path('reg')
-    file_checkpoint = 'reg_overlap_split'
-    f = Path('parsed_flows/facebook-chat.csv')
+    file_checkpoint = '../reg_overlap_split'
+    f = Path('../parsed_flows/netflix_4.csv')
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = Classifier(model, device)
-    ds = FlowsDataSet.from_flows_file(f, 1)
-    c.classify_dataset(ds, 1, tag='fb-chat')
+    ds = FlowDataSet.from_flows_file(f, 1)
+    a, _ = c.classify_dataset(ds, 1, tag='fb-chat')
+    print(a)
 
     # ds = FlowsDataSet(file_samples, global_label=3)
     # dl = DataLoader(ds, batch_size=128, shuffle=True)

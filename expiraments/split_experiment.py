@@ -1,19 +1,12 @@
-import argparse
 import sys
-
-from torch import nn
-
 sys.path.append("../")
 sys.path.append("./")
 from pathlib import Path
-from time import time
-from utils import create_dir
+from misc.utils import create_dir
 import torch
 import torch.optim
-import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
-from torch.utils.data import random_split
-from flowpic_dataset.loader import FlowCSVDataLoader, PreFetchDataLoader
+from flowpic_dataset.loader import FlowCSVDataLoader
 from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
@@ -39,8 +32,6 @@ class SplitExperiment(Experiment):
 
         if filters_per_layer is None:
             filters_per_layer = [10, 20]
-
-        torch.manual_seed(self.torch_seed)
 
         if not bs_test:
             bs_test = max([bs_train * 2, 1])
@@ -81,6 +72,5 @@ class SplitExperiment(Experiment):
 if __name__ == '__main__':
     exp = SplitExperiment()
     parsed_args = exp.parse_cli()
-    print(parsed_args)
     print(f'*** Starting {SplitExperiment.__name__} with config:\n{parsed_args}')
     res = exp.run(**vars(parsed_args))

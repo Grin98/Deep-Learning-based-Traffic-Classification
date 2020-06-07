@@ -1,15 +1,11 @@
 import abc
 import argparse
-import json
-import os
-import sys
-import random
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 from typing import List
 
-from training.result_types import FitResult
+from misc.utils import fix_seed
 
 
 class Experiment(abc.ABC):
@@ -22,9 +18,8 @@ class Experiment(abc.ABC):
 
     def __init__(self, seed=42):
 
-        if not seed:
-            seed = random.randint(0, 2 ** 31)
         self.torch_seed = seed
+        fix_seed(seed)
 
     #        self.save_experiment(self.experiment_name, self.output_dir, self.config, self.result)
 
@@ -39,7 +34,7 @@ class Experiment(abc.ABC):
         p.add_argument('--bs-train', type=int, help='Train batch size',
                        default=128, metavar='BATCH_SIZE')
         p.add_argument('--bs-test', type=int, help='Test batch size',
-                       metavar='BATCH_SIZE')
+                       default=256, metavar='BATCH_SIZE')
         p.add_argument('--epochs', type=int,
                        help='Maximal number of epochs', default=40)
         p.add_argument('--early-stopping', type=int,
