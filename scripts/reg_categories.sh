@@ -12,7 +12,6 @@ python expiraments/split_experiment.py \
 --bs-test 256 \
 --epochs 35 \
 --lr 0.001 \
---checkpoints reg \
 --save-checkpoint 1 \
 --load-checkpoint 0 \
 --checkpoint-every 35 \

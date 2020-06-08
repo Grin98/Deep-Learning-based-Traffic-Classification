@@ -1,9 +1,11 @@
 from collections import Counter
 from pathlib import Path
+from time import time
 
 import numpy as np
 import torch
 from pyshark.packet.packet import Packet
+from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
@@ -12,6 +14,7 @@ from misc.data_classes import Flow
 from misc.utils import show_flow_pic, is_file
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
+# python expiraments/split_experiment.py --data-dir data_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 35 --lr 0.001 --save-checkpoint 1 --load-checkpoint 0 --checkpoint-every 1 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1
 
 class C:
     def __init__(self, x):
@@ -36,6 +39,15 @@ class C:
 
 
 if __name__ == '__main__':
+
+    ds = FlowCSVDataLoader().load_dataset('data_reg/train')
+    dl = DataLoader(ds, batch_size=128, shuffle=True, num_workers=2)
+    it = iter(dl)
+    s = time()
+    b, _ = next(it)
+    f = time()
+    print(f - s)
+    print(len(b))
 
     exit()
     f = Path('classes_reg/video/reg/netflix_1.csv')

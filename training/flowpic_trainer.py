@@ -2,7 +2,7 @@ from collections import Counter
 
 import torch
 from training.trainer import Trainer
-from training.result_types import BatchResult
+from misc.data_classes import BatchResult
 from sklearn.metrics import confusion_matrix, f1_score
 
 

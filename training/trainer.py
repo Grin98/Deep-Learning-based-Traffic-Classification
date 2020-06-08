@@ -2,6 +2,7 @@ import abc
 import os
 import sys
 from operator import add
+from time import time
 
 import tqdm
 import torch
@@ -184,7 +185,11 @@ class Trainer(abc.ABC):
                        file=pbar_file) as pbar:
             dl_iter = iter(data_loader)
             for batch_idx in range(num_batches):
+                s = time()
                 batch = next(dl_iter)
+                f = time()
+                print('batch fetch time', f - s)
+                s = time()
                 batch_res = forward_fn(batch)
 
                 pbar.set_description(f'{pbar_name} ({batch_res.loss:.3f})')
@@ -198,6 +203,8 @@ class Trainer(abc.ABC):
                     f1_per_class = batch_res.f1_per_class
                 else:
                     f1_per_class = list(map(add, f1_per_class, batch_res.f1_per_class))
+                f = time()
+                print('batch process time', f - s)
 
             avg_loss = sum(losses) / num_batches
             accuracy = 100. * num_correct / num_total
