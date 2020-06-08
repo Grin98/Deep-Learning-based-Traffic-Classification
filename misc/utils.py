@@ -80,6 +80,7 @@ def fix_seed(seed: int):
     if seed is None:
         return
 
+    print('seed fixed to', seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True
