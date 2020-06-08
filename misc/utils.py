@@ -20,7 +20,7 @@ def build_pic(stream: Sequence[Tuple[float, int]],
     # scaling stream_duration to pic's width
     x_axis_to_second_ratio = pic_width * 1.0 / stream_duration_in_seconds
 
-    hist = torch.zeros(pic_width, pic_height)
+    hist = np.zeros((pic_width, pic_height))
     for packet in stream:
         # packet is (time, size)
         x_position = int(floor(float(packet[0]) * x_axis_to_second_ratio))
@@ -29,7 +29,7 @@ def build_pic(stream: Sequence[Tuple[float, int]],
             raise Exception(f'packet position exceeded pic size of %dx%d, packet position is (%d, %d)' %
                             (pic_width, pic_height, x_position, y_position))
         hist[x_position][y_position] += 1
-    return hist
+    return torch.from_numpy(hist).float()
 
 
 def show_flow_pic(pic):

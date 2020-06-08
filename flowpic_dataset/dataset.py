@@ -89,7 +89,7 @@ class FlowDataSet(Dataset):
         x = self._data[idx]
         if self.transform:
             x = self.transform(x).unsqueeze(0)
-
+            # x = np.expand_dims(self.transform(x), axis=0)
         return x, np.long(self.labels[idx])
 
     def __add__(self, other):

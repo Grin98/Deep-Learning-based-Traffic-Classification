@@ -40,14 +40,16 @@ class C:
 
 if __name__ == '__main__':
 
-    ds = FlowCSVDataLoader().load_dataset('data_reg/train')
-    dl = DataLoader(ds, batch_size=128, shuffle=True, num_workers=2)
+    ds = FlowCSVDataLoader().load_dataset('data_reg/test')
+    # x, _ = ds[0]
+    # print(x.shape)
+    dl = DataLoader(ds, batch_size=128, shuffle=True)
     it = iter(dl)
     s = time()
     b, _ = next(it)
     f = time()
     print(f - s)
-    print(len(b))
+    print(b.shape)
 
     exit()
     f = Path('classes_reg/video/reg/netflix_1.csv')
