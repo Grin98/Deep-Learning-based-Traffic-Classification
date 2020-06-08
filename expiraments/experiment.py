@@ -8,7 +8,7 @@ from typing import List
 import torch
 
 from misc.data_classes import FitResult
-from misc.utils import fix_seed
+from misc.utils import fix_seed, Timer
 from model.flow_pic_model import FlowPicModel
 
 
@@ -22,6 +22,7 @@ class Experiment(abc.ABC):
 
     def __init__(self, seed=42):
 
+        self.timer = Timer()
         self.torch_seed = seed
         fix_seed(seed)
 

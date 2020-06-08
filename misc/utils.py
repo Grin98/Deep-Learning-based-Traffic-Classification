@@ -1,6 +1,7 @@
 import os
 from math import floor
 from pathlib import Path
+from time import time
 from typing import List, Sequence, Tuple
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,19 @@ import torch
 from torch import nn
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
+
+
+class Timer:
+    def __init__(self):
+        self._s = 0
+
+    def start(self):
+        self._s = time()
+
+    def stop(self, tag: str = ''):
+        f = time()
+        diff = format(f - self._s, '.2f')
+        print(f'{tag} time = {diff}[sec]')
 
 
 def build_pic(stream: Sequence[Tuple[float, int]],

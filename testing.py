@@ -1,6 +1,6 @@
 from collections import Counter
 from pathlib import Path
-from time import time
+from time import time, sleep
 
 import numpy as np
 import torch
@@ -11,7 +11,7 @@ from flowpic_dataset.dataset import FlowDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from flowpic_dataset.processors import SplitPreProcessor, BasicProcessor
 from misc.data_classes import Flow
-from misc.utils import show_flow_pic, is_file
+from misc.utils import show_flow_pic, is_file, Timer
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 # python expiraments/split_experiment.py --data-dir data_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 35 --lr 0.001 --save-checkpoint 1 --load-checkpoint 0 --checkpoint-every 1 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1
@@ -40,16 +40,16 @@ class C:
 
 if __name__ == '__main__':
 
-    ds = FlowCSVDataLoader().load_dataset('data_reg/test')
-    # x, _ = ds[0]
-    # print(x.shape)
-    dl = DataLoader(ds, batch_size=128, shuffle=True)
-    it = iter(dl)
-    s = time()
-    b, _ = next(it)
-    f = time()
-    print(f - s)
-    print(b.shape)
+    # ds = FlowCSVDataLoader().load_dataset('data_reg/test')
+    # # x, _ = ds[0]
+    # # print(x.shape)
+    # dl = DataLoader(ds, batch_size=128, shuffle=True)
+    # it = iter(dl)
+    # s = time()
+    # b, _ = next(it)
+    # f = time()
+    # print(f - s)
+    # print(b.shape)
 
     exit()
     f = Path('classes_reg/video/reg/netflix_1.csv')
