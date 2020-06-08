@@ -32,17 +32,13 @@ def build_pic(stream: Sequence[Tuple[float, int]],
               pic_height: int = 1500,
               ):
     # scaling stream_duration to pic's width
+    packets = np.array(stream)
     x_axis_to_second_ratio = pic_width * 1.0 / stream_duration_in_seconds
+    packets[:, 0] *= x_axis_to_second_ratio
+    packets = np.floor(packets)
+    hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1],
+                                bins=[range(pic_width+1), range(pic_height+1)])
 
-    hist = np.zeros((pic_width, pic_height))
-    for packet in stream:
-        # packet is (time, size)
-        x_position = int(floor(float(packet[0]) * x_axis_to_second_ratio))
-        y_position = packet[1]
-        if x_position >= pic_width or y_position >= pic_height:
-            raise Exception(f'packet position exceeded pic size of %dx%d, packet position is (%d, %d)' %
-                            (pic_width, pic_height, x_position, y_position))
-        hist[x_position][y_position] += 1
     return torch.from_numpy(hist).float()
 
 

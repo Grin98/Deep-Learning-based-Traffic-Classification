@@ -1,4 +1,5 @@
 from collections import Counter
+from math import floor
 from pathlib import Path
 from time import time, sleep
 
@@ -40,9 +41,22 @@ class C:
 
 if __name__ == '__main__':
 
-    # ds = FlowCSVDataLoader().load_dataset('data_reg/test')
-    # # x, _ = ds[0]
-    # # print(x.shape)
+    # stream = [(0, 0), (0, 1), (0, 2), (0, 3)]
+    # packets = np.array(stream)
+    # packets[:, 0] *= 1
+    # packets = np.floor(packets)
+    # hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1], bins=[range(1501), range(1501)])
+    #
+    # print(hist.shape)
+    # print(hist[1499])
+    # a = np.array(stream)
+    # a[:, 0] *= 5
+    # # b = np.floor(a[:][:])
+    # print(a, a.shape)
+    # print(b)
+    ds = FlowDataSet.from_blocks_file(Path('data_reg/test/chat/reg/data.csv'))
+    x, _ = ds[0]
+    print(x.shape)
     # dl = DataLoader(ds, batch_size=128, shuffle=True)
     # it = iter(dl)
     # s = time()
