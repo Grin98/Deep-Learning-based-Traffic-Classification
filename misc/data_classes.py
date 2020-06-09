@@ -10,6 +10,7 @@ class Flow(NamedTuple):
     num_packets: int
     times: np.ndarray
     sizes: np.ndarray
+    pcap_relative_start_time: float = 0
 
     @classmethod
     def create_from_row(cls, row: List[str], packet_size_limit: int):

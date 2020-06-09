@@ -87,6 +87,8 @@ class PcapClassificationPage(ttk.Frame):
         self.graph.clear_graphs()
         # Open pcap file and save its location and name
         self.pcap_file_path = filedialog.askopenfilename()
+        if self.pcap_file_path == "":
+            return
         pcap_file_name = self.pcap_file_path.split("/")[-1]
         self.pcap_file_label_variable.set("Classifying " + pcap_file_name)
         # Show Classifying animation
@@ -94,13 +96,13 @@ class PcapClassificationPage(ttk.Frame):
         self.progress_bar.grid(column=2, row=7, columnspan=2)
         self.progress_bar.start(15)
         # Begin classifying process
-        threading.Thread(target=lambda: self.graph.classify_pcap_file(pcap_file_name)).start()
+        threading.Thread(target=lambda: self.graph.classify_pcap_file(self.pcap_file_path)).start()
 
-        self.master.after(100, self.check_classify_progress)
+        self.controller.after(100, self.check_classify_progress)
 
     def check_classify_progress(self):
         try:
-            result = result_queue.get()
+            result = result_queue.get(0)
             if result == COMPLETED:
                 self.progress_bar.grid_forget()
                 self.pcap_label.grid_forget()
@@ -108,7 +110,7 @@ class PcapClassificationPage(ttk.Frame):
             else:
                 pass
         except queue.Empty:
-            pass
+            self.controller.after(100, self.check_classify_progress)
 
     def on_back_button_click(self):
         self.progress_bar.stop()

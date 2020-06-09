@@ -27,23 +27,21 @@ class PcapClassifier:
         self.parser = PcapParser()
         self.processor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-    def classify_file(self, file: Path, num_flows_to_classify: int = 1) -> Tuple[PredDist, Sequence[ClassifiedFlow]]:
+    def classify_file(self, file: Path, num_flows_to_classify: int = 1) -> Sequence[Sequence[ClassifiedFlow]]:
         print('parsing file')
         flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
         dss = [FlowDataSet.from_flows([f]) for f in flows]
 
         classified_dist = PredDist(self.num_categories)
-        flow_preds = []
-        classified_flows = []
+        classified_flows = [[] for _ in range(self.num_categories)]
         for i, ds in enumerate(dss):
             print('classifying %s' % str(flows[i].five_tuple))
             distribution, classified_blocks = self.classifier.classify_dataset(ds)
             pred = distribution.most_common(1)[0][0]
-            flow_preds.append(pred)
             classified_dist.update_pred(pred, distribution)
-            classified_flows += [ClassifiedFlow(flows[i], pred, classified_blocks)]
+            classified_flows[pred].append(ClassifiedFlow(flows[i], pred, classified_blocks))
 
-        return classified_dist, classified_flows
+        return classified_flows
 
     def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> Tuple[PredDist, Sequence[ClassifiedFlow]]:
         classified_dist = PredDist(self.num_categories)
