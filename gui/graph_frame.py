@@ -1,3 +1,4 @@
+from collections import Sequence
 from pathlib import Path
 from tkinter import ttk
 from tkinter import *
@@ -6,7 +7,9 @@ import threading
 import itertools
 import matplotlib
 import time
+import numpy as np
 from classification.pcap_classification import PcapClassifier
+from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
 
@@ -16,6 +19,7 @@ import matplotlib.pyplot as plt
 
 result_queue = queue.Queue()
 COMPLETED = "completed"
+TIME_INTERVAL = 60
 
 
 class FlowPicGraphFrame(ttk.Frame):
@@ -27,6 +31,9 @@ class FlowPicGraphFrame(ttk.Frame):
         model_checkpoint = '../reg_overlap_split'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
         self.classifier = PcapClassifier(model, device, num_categories=len(self.categories))
+
+        self.max_time = 0
+        self.min_time = 0
 
         self.title = ""
         self.figure = plt.figure(figsize=(8, 8), dpi=100)
@@ -42,6 +49,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     @staticmethod
     def _create_graph(graph, labels, x, y_axis):
+        y_axis = [flow for flow in y_axis if len(flow) > 0]
         values = list(zip(*y_axis))
         y_values = {label: [] for label in labels}
         y_values_for_fill = {label: [] for label in labels}
@@ -56,9 +64,10 @@ class FlowPicGraphFrame(ttk.Frame):
             graph.plot(x, y_values[label], label=label)
             fill_values = list(zip(*y_values_for_fill[label]))
             graph.fill_between(x, fill_values[1], fill_values[0])
-
-            graph.set_xlim(x[0], x[-1])
-            graph.legend()
+        graph.set_xlabel("time in seconds")
+        graph.set_ylabel("bytes per second")
+        graph.set_xlim(x[0], x[-1])
+        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), shadow=True, ncol=len(labels))
 
     def _generate_predicted_graph(self, labels, x, y_axis):
         predicted_graph = self.figure.add_subplot(212)
@@ -68,7 +77,7 @@ class FlowPicGraphFrame(ttk.Frame):
     def _generate_actual_graph(self, filepath):
         # TODO change from hardcoded values
 
-        labels = ["Video", "Chat", "VoIP"]
+        labels = ['browsing', 'chat', 'file_transfer']
         x = list(range(60, 360, 60))
         flow1 = [0.2, 0.26, 0.30, 0.33, 0.4]
         flow2 = [0.3, 0.24, 0.18, 0.2, 0.2]
@@ -95,8 +104,8 @@ class FlowPicGraphFrame(ttk.Frame):
 
         graph = self.figure_per_flow.add_subplot(111)
         flow = self.flow_selection["values"][self.flow_selection.current()]
-        print(flow)
-        graph.set_title("Classification for " + flow)
+
+        graph.set_title("Classification for " + flow.__str__())
 
         self.graph._tkcanvas.grid_forget()
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
@@ -109,18 +118,36 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
         self.return_button.grid_forget()
 
+    def _extract_graph_values(self, flows_data):
+        flows_by_start_time = [flow.flow.pcap_relative_start_time for flow_list in flows_data for flow in flow_list]
+        flows_by_end_time = [flow.flow.pcap_relative_start_time + flow.flow.times[-1] for flow_list in flows_data for
+                             flow in flow_list]
+
+        self.min_time = np.min(flows_by_start_time)
+        self.max_time = np.max(flows_by_end_time)
+        x = list(np.arange(TIME_INTERVAL, self.max_time + TIME_INTERVAL, TIME_INTERVAL))
+        flows = [[] for _ in self.categories]
+        for index, flows_by_categories in enumerate(flows_data):
+            start_interval = self.min_time
+            for time in x:
+                if time == start_interval:
+                    continue
+                sums = [classified_flow.flow.sizes[((
+                                                                classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_interval) & (
+                                                                classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < time))]
+                        for classified_flow in flows_by_categories]
+                flows[index].append(np.sum(sums))
+                start_interval += TIME_INTERVAL
+
+        flows = [np.array(flow) / TIME_INTERVAL for flow in flows]
+
+        return self.categories, x, flows
+
     def classify_pcap_file(self, filepath):
         self.title = filepath.split("/")[-1]
-        # TODO change to actual classification(via the model)
         flows_data = self.classifier.classify_file(Path(filepath))
-        print(flows_data)
-        print(len(flows_data))
-        labels = ["Video", "Chat", "VoIP"]
-        x = list(range(60, 360, 60))
-        flow1 = [0.2, 0.26, 0.30, 0.33, 0.4]
-        flow2 = [0.3, 0.24, 0.18, 0.2, 0.2]
-        flow3 = [0.4, 0.4, 0.5, 0.4, 0.32]
-        y_axis = [flow1, flow2, flow3]
+
+        labels, x, y_axis = self._extract_graph_values(flows_data)
         flows = [classified_flow.flow.five_tuple for classified_flow in itertools.chain.from_iterable(flows_data)]
 
         self._create_combobox(flows)
@@ -138,6 +165,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.flow_selection.grid_forget()
 
     def draw_graphs(self):
+        self.figure.subplots_adjust(hspace=0.5)
         self.graph.draw()
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
