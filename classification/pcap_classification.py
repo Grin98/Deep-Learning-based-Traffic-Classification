@@ -27,7 +27,7 @@ class PcapClassifier:
         self.parser = PcapParser()
         self.processor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-    def classify_file(self, file: Path, num_flows_to_classify: int = 1) -> Sequence[Sequence[ClassifiedFlow]]:
+    def classify_file(self, file: Path, num_flows_to_classify: int = 3) -> Sequence[Sequence[ClassifiedFlow]]:
         print('parsing file')
         flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
         dss = [FlowDataSet.from_flows([f]) for f in flows]
