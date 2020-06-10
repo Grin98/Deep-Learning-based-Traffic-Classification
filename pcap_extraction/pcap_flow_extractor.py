@@ -10,25 +10,26 @@ import csv
 from pyshark.packet.packet import Packet
 from heapq import nlargest
 
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import Flow
 
 
 class PcapParser:
 
-    def parse_file(self, file: Path, num_flows_to_return: int, packet_size_limit: int) -> Sequence[Flow]:
+    def parse_file(self, file: Path, num_flows_to_return: int,
+                   packet_size_limit: int) -> Sequence[Flow]:
         file_extension = file.suffix
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
 
         packet_streams = {}
-        capture = pyshark.FileCapture(str(file), keep_packets=False)
+        capture = pyshark.FileCapture(str(file), keep_packets=True)
         for packet in capture:
-            if self.is_undesired_packet(packet):
+            if self._is_undesired_packet(packet):
                 continue
 
-            packet_meta = self.extract_packet_meta(packet)
+            packet_meta = self._extract_packet_meta(packet)
             transport = packet.transport_layer
             five_tuple = (
                 packet.ip.src,
@@ -42,11 +43,20 @@ class PcapParser:
                 packet_streams[five_tuple].append(packet_meta)
             else:
                 packet_streams[five_tuple] = [packet_meta]
+        pcap_start_time = float(capture[0].sniff_timestamp)
         capture.close()
 
         max_five_tuples = nlargest(num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
-        return [self.transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit)
+        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit, pcap_start_time)
                 for five_tuple in max_five_tuples]
+
+    @staticmethod
+    def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]],
+                                  packet_size_limit: int, pcap_start_time: float):
+        times, sizes = zip(*stream)
+        pcap_relative_start_time = times[0] - pcap_start_time
+        return Flow.create('app', five_tuple, packet_size_limit,
+                           times, sizes, pcap_relative_start_time=pcap_relative_start_time)
 
     @staticmethod
     def write_flow_rows(file: Path, flows: Sequence[Flow]):
@@ -56,13 +66,7 @@ class PcapParser:
                 writer.writerow(f.convert_to_row())
 
     @staticmethod
-    def transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]], packet_size_limit: int):
-        times, sizes = zip(*stream)
-        return Flow.create('app', five_tuple, packet_size_limit, times, sizes)
-
-
-    @staticmethod
-    def is_undesired_packet(packet: Packet) -> bool:
+    def _is_undesired_packet(packet: Packet) -> bool:
         if packet.transport_layer is None:
             return True
         if 'IPv6' in packet:
@@ -80,7 +84,7 @@ class PcapParser:
         return False
 
     @staticmethod
-    def extract_packet_meta(packet: Packet) -> Tuple[float, int]:
+    def _extract_packet_meta(packet: Packet) -> Tuple[float, int]:
         ip = packet['IP'] if 'IP' in packet else packet['IPv6']
         size = int(ip.len)
         return float(packet.sniff_timestamp), size
@@ -89,9 +93,13 @@ class PcapParser:
 if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
     parser = PcapParser()
-    flow_rows = parser.parse_file(file, num_flows_to_return=1, packet_size_limit=1500)
-    dss = [FlowDataSet.from_flows([row]) for row in flow_rows]
-    for ds in dss:
-        print(len(ds))
-        print(ds.data)
-        print(ds.start_times)
+    flows = parser.parse_file(file, num_flows_to_return=1, packet_size_limit=1500)
+    f = flows[0]
+    print(f.five_tuple)
+    print(f.start_time, f.pcap_relative_start_time, f.num_packets)
+    print(f.times)
+    # dss = [BlocksDataSet.from_flows([f]) for f in flows]
+    # for ds in dss:
+    #     print(len(ds))
+    #     print(ds.)
+    #     print(ds.start_times)

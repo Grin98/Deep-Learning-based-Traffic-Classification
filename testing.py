@@ -8,7 +8,7 @@ import torch
 from pyshark.packet.packet import Packet
 from torch.utils.data import DataLoader
 
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from flowpic_dataset.processors import SplitPreProcessor, BasicProcessor
 from misc.data_classes import Flow
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # # b = np.floor(a[:][:])
     # print(a, a.shape)
     # print(b)
-    ds = FlowDataSet.from_blocks_file(Path('data_reg/test/chat/reg/data.csv'))
+    ds = BlocksDataSet.from_blocks_file(Path('data_reg/test/chat/reg/data.csv'))
     x, _ = ds[0]
     print(x.shape)
     # dl = DataLoader(ds, batch_size=128, shuffle=True)

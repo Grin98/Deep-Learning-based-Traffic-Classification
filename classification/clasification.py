@@ -5,7 +5,7 @@ from typing import Sequence
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from misc.data_classes import ClassifiedBlock
 from model.flow_pic_model import FlowPicModel
@@ -35,7 +35,7 @@ class Classifier:
         ds = FlowCSVDataLoader(path, verbose=False).load_dataset()
         self.classify_dataset(ds, label, tag)
 
-    def classify_dataset(self, ds: FlowDataSet, batch_size: int = 256, label: int = 0, tag: str = ''):
+    def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 256, label: int = 0, tag: str = ''):
         dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     model, _, _ = load_model(file_checkpoint, FlowPicModel, device)
     c = Classifier(model, device)
-    ds = FlowDataSet.from_flows_file(f, 1)
+    ds = BlocksDataSet.from_flows_file(f, 1)
     a, _ = c.classify_dataset(ds, 1, tag='fb-chat')
     print(a)
 

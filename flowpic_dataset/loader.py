@@ -5,7 +5,7 @@ from typing import Tuple, Union
 
 from torch.utils.data import DataLoader
 
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 
 from misc.utils import get_dir_directories, get_dir_csvs
 
@@ -16,7 +16,7 @@ class FlowCSVDataLoader:
         self.verbose = verbose
         self.labels = {}
 
-    def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[FlowDataSet, FlowDataSet]:
+    def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[BlocksDataSet, BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
         dirs = get_dir_directories(root_dir)
 
@@ -26,9 +26,9 @@ class FlowCSVDataLoader:
             if i != test_group_index:
                 train_datasets += self.load_dataset(d, is_split=False)
 
-        return FlowDataSet.concatenate(train_datasets), test_dataset
+        return BlocksDataSet.concatenate(train_datasets), test_dataset
 
-    def load_dataset(self, dataset_root_dir, is_split: bool = False) -> Union[Tuple[FlowDataSet], FlowDataSet]:
+    def load_dataset(self, dataset_root_dir, is_split: bool = False) -> Union[Tuple[BlocksDataSet], BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
         self.labels = {}
 
@@ -39,10 +39,10 @@ class FlowCSVDataLoader:
 
             self._print_verbose('test')
             test_dataset = self._gather_datasets(root_dir/'test')
-            res = FlowDataSet.concatenate(train_datasets), FlowDataSet.concatenate(test_dataset)
+            res = BlocksDataSet.concatenate(train_datasets), BlocksDataSet.concatenate(test_dataset)
         else:
             datasets = self._gather_datasets(root_dir)
-            res = FlowDataSet.concatenate(datasets)
+            res = BlocksDataSet.concatenate(datasets)
         self._print_verbose("=== Dataset loading completed :D ===\n")
 
         return res
@@ -50,7 +50,7 @@ class FlowCSVDataLoader:
     def _gather_datasets(self, path: Path, label_level: bool = True, label: int = 0):
         dirs = get_dir_directories(path)
         if not dirs:
-            dss = [FlowDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
+            dss = [BlocksDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
             self._print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 

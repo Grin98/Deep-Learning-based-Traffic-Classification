@@ -14,7 +14,7 @@ from misc.data_classes import Flow, Block
 from misc.utils import build_pic
 
 
-class FlowDataSet(Dataset):
+class BlocksDataSet(Dataset):
     def __init__(self, data: Sequence[Sequence[Tuple[float, int]]], labels: Sequence[int],
                  start_times: Sequence[float] = None,
                  transform=build_pic):
@@ -39,7 +39,7 @@ class FlowDataSet(Dataset):
             start_times, _, data = zip(*[Block.create(row) for row in csv.reader(f, delimiter=',')])
             labels = np.array([global_label] * len(data))
 
-            return FlowDataSet(data, labels, start_times)
+            return BlocksDataSet(data, labels, start_times)
 
     @classmethod
     def from_flows_file(cls, csv_file_path, global_label=0,
@@ -66,7 +66,7 @@ class FlowDataSet(Dataset):
         start_times, _, data = zip(*blocks)
         labels = np.array([global_label] * len(data))
 
-        return FlowDataSet(data, labels, start_times)
+        return BlocksDataSet(data, labels, start_times)
 
     def get_block(self, index: int) -> Block:
         stream = self._data[index]
@@ -79,7 +79,7 @@ class FlowDataSet(Dataset):
         return len(set(self.labels))
 
     @staticmethod
-    def concatenate(datasets: Sequence[FlowDataSet]) -> FlowDataSet:
+    def concatenate(datasets: Sequence[BlocksDataSet]) -> BlocksDataSet:
         return sum(datasets[1:], datasets[0])
 
     def __len__(self):
@@ -93,7 +93,7 @@ class FlowDataSet(Dataset):
         return x, np.long(self.labels[idx])
 
     def __add__(self, other):
-        if not isinstance(other, FlowDataSet):
+        if not isinstance(other, BlocksDataSet):
             raise Exception("other is not of type FlowsDataSet")
 
         self._data = np.concatenate([self._data, other._data])

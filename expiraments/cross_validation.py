@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from expiraments.experiment import Experiment
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from misc.utils import create_dir, _create_pre_trained_model, is_file
 from model.flow_pic_model import FlowPicModel

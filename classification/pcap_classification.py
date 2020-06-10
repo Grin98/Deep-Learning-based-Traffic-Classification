@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import NamedTuple, Sequence, Tuple
 
 from classification.clasification import Classifier
-from flowpic_dataset.dataset import FlowDataSet
+from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import ClassifiedFlow
 from model.flow_pic_model import FlowPicModel
@@ -30,7 +30,7 @@ class PcapClassifier:
     def classify_file(self, file: Path, num_flows_to_classify: int = 3) -> Sequence[Sequence[ClassifiedFlow]]:
         print('parsing file')
         flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
-        dss = [FlowDataSet.from_flows([f]) for f in flows]
+        dss = [BlocksDataSet.from_flows([f]) for f in flows]
 
         classified_dist = PredDist(self.num_categories)
         classified_flows = [[] for _ in range(self.num_categories)]

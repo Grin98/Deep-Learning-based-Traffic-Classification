@@ -29,7 +29,8 @@ class Flow(NamedTuple):
                packet_size_limit: int,
                times: Sequence,
                sizes: Sequence,
-               start_time: float = None
+               start_time: float = None,
+               pcap_relative_start_time: float = None
                ):
         num_packets = len(times)
         times = np.array(times, dtype=float)
@@ -43,7 +44,7 @@ class Flow(NamedTuple):
             start_time = times[0]
             times -= start_time
 
-        return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
+        return Flow(app, list(five_tuple), start_time, num_packets, times, sizes, pcap_relative_start_time=pcap_relative_start_time)
 
     def convert_to_row(self):
         # self.sizes + 1 because when flow is created it subtracts 1 from sizes
