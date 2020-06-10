@@ -15,11 +15,14 @@ from misc.utils import build_pic
 
 
 class BlocksDataSet(Dataset):
+    """
+    A Dataset which contains blocks and when accessed returns the blocks as FlowPics (2D-Histograms) with
+    their labels
+    """
     def __init__(self, data: Sequence[Sequence[Tuple[float, int]]], labels: Sequence[int],
                  start_times: Sequence[float] = None,
                  transform=build_pic):
         """
-
         :param data: a sequence of blocks where each block contains a sequence of packets ([size, arrival_time])
         :param labels: the labeling of the blocks in data
         :param start_times: the start times of the blocks in data
@@ -80,6 +83,11 @@ class BlocksDataSet(Dataset):
 
     @staticmethod
     def concatenate(datasets: Sequence[BlocksDataSet]) -> BlocksDataSet:
+        """
+
+        :param datasets: a sequence of BlockDatasets
+        :return: merges all datasets into the first one and returns it
+        """
         return sum(datasets[1:], datasets[0])
 
     def __len__(self):
@@ -105,55 +113,3 @@ class BlocksDataSet(Dataset):
     def __str__(self) -> str:
         return 'FlowDataSet:\n' + '   num samples: ' + str(len(self._data)) + '\n   label count: ' + \
                str(Counter(self.labels))
-
-    # def split_set(self, train_percent: float) -> Tuple[FlowsDataSet, FlowsDataSet]:
-    #     test_size = int(self.__len__() * (1 - train_percent))
-    #     indices = random.sample(range(self.__len__()), test_size)
-    #
-    #     test_data = self.data[indices]
-    #     test_labels = self.labels[indices]
-    #
-    #     train_data = np.delete(self.data, indices)
-    #     train_labels = np.delete(self.labels, indices)
-    #
-    #     return FlowsDataSet(data=train_data, labels=train_labels), FlowsDataSet(data=test_data, labels=test_labels)
-    #
-    # def balance(self, num_samples_per_class: int):
-    #
-    #     label_count = list(self._get_label_count().items())
-    #     under_sample_quantities = dict(
-    #         map(lambda key_val: (key_val[0], min(key_val[1], num_samples_per_class)), label_count)
-    #     )
-    #
-    #     over_sample_quantities = dict(
-    #         map(lambda key_val: (key_val[0], max(key_val[1], num_samples_per_class)), under_sample_quantities.items())
-    #     )
-    #
-    #     rus = RandomUnderSampler(under_sample_quantities, replacement=False)
-    #     ros = RandomOverSampler(over_sample_quantities)
-    #
-    #     self._apply_sampler(rus)
-    #     self._apply_sampler(ros)
-    #
-    # def _apply_sampler(self, sampler):
-    #     dummy_data = [[0]] * len(self.data)
-    #     sampler.fit_resample(dummy_data, self.labels)
-    #     indices = sampler.sample_indices_
-    #
-    #     self.data = self.data[indices]
-    #     self.labels = self.labels[indices]
-    #
-    # def create_weighted_random_sampler(self, num_to_sample: int, replacement: bool = False) -> WeightedRandomSampler:
-    #     return WeightedRandomSampler(self._create_dataset_weights(),
-    #                                  num_to_sample,
-    #                                  replacement=replacement)
-    #
-    # def _create_dataset_weights(self) -> List[float]:
-    #     label_probabilities = list(map(lambda x: 1 / x,
-    #                                    self._get_label_count().values()
-    #                                    ))
-    #     return [label_probabilities[y] for y in self.labels]
-    #
-    # def _get_label_count(self):
-    #     return dict(sorted(Counter(self.labels).items(),
-    #                        key=lambda item: item[0]))

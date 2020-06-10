@@ -17,8 +17,15 @@ from misc.data_classes import Flow
 
 class PcapParser:
 
-    def parse_file(self, file: Path, num_flows_to_return: int,
+    def parse_file(self, file: Path, n: int,
                    packet_size_limit: int) -> Sequence[Flow]:
+        """
+        returns flows from a pcap file
+        :param file: the pcap file to be parsed, either .pcap or .pcapng
+        :param n: the number of flows to be returned
+        :param packet_size_limit: size in bytes where larger packages will be discarded
+        :return: the top n flows with the most number of pcaps in the pcap
+        """
         file_extension = file.suffix
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
@@ -46,7 +53,7 @@ class PcapParser:
         pcap_start_time = float(capture[0].sniff_timestamp)
         capture.close()
 
-        max_five_tuples = nlargest(num_flows_to_return, packet_streams, key=lambda key: len(packet_streams.get(key)))
+        max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
         return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit, pcap_start_time)
                 for five_tuple in max_five_tuples]
 
@@ -93,7 +100,7 @@ class PcapParser:
 if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
     parser = PcapParser()
-    flows = parser.parse_file(file, num_flows_to_return=1, packet_size_limit=1500)
+    flows = parser.parse_file(file, n=1, packet_size_limit=1500)
     f = flows[0]
     print(f.five_tuple)
     print(f.start_time, f.pcap_relative_start_time, f.num_packets)

@@ -20,6 +20,16 @@ class PcapClassifier:
                  block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500,
                  ):
+        """
+
+        :param model: model that will be used for classifying FlowPics
+        :param device: if value is cuda then the model will run on gpu and if cpu then it will run on cpu
+        :param num_categories: the number of possible different classifications
+        :param seed: seed for numpy and torch
+        :param block_duration_in_seconds: the duration of a block
+        :param block_delta_in_seconds: the time difference between the start of 2 consecutive blocks
+        :param packet_size_limit: size in bytes where larger packages will be discarded
+        """
         fix_seed(seed)
         self.num_categories = num_categories
         self.packet_size_limit = packet_size_limit
