@@ -8,6 +8,7 @@ import torch
 from pyshark.packet.packet import Packet
 from torch.utils.data import DataLoader
 
+from expiraments.cross_validation import CrossValidation
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor
@@ -41,6 +42,9 @@ class C:
 
 
 if __name__ == '__main__':
+    c = CrossValidation()
+    c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
+          load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)
     # l = FlowCSVDataLoader(verbose=True)
     # train, test = l.load_cross_validation_dataset('data_cv_reg', 2)
     # print(train, test)

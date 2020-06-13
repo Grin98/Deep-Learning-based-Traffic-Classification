@@ -44,7 +44,7 @@ class CrossValidation(Experiment):
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
         loader = FlowCSVDataLoader()
-        for i in (start_i, k):
+        for i in range(start_i, k):
             ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, test_group_index=i)
             dl_train = DataLoader(ds_train, bs_train, shuffle=True)
             dl_test = DataLoader(ds_test, bs_test, shuffle=True)
@@ -87,7 +87,7 @@ class CrossValidation(Experiment):
         saved_state = dict(i=i + 1, k=k, f1=f1, acc=acc, loss=loss)
 
         torch.save(saved_state, checkpoint_filename)
-        print(f'*** Saved at fold {i}/{k}')
+        print(f'*** Saved checkpoint to {cv_checkpoint} at fold {i+1}/{k}')
 
     @staticmethod
     def load_cv(cv_checkpoint: str):
