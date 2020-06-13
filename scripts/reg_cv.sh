@@ -10,11 +10,11 @@ python expiraments/CrossValidation.py \
 --out-dir $out_dir \
 --bs-train 128 \
 --bs-test 256 \
---epochs 35 \
+--epochs 40 \
 --lr 0.001 \
 --save-checkpoint 1 \
---load-checkpoint 0 \
---checkpoint-every 35 \
+--load-checkpoint 1 \
+--checkpoint-every 20 \
 --hidden-dims 64 \
 --filters-per-layer 10 20 \
 --layers-per-block 1 \
