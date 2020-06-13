@@ -41,22 +41,21 @@ class C:
 
 
 if __name__ == '__main__':
-    # l = FlowCSVDataLoader(verbose=False)
-    # train, test = l.load_dataset('data_reg', format_=Format.Split)
+    # l = FlowCSVDataLoader(verbose=True)
+    # train, test = l.load_cross_validation_dataset('data_cv_reg', 2)
     # print(train, test)
     # print('===================')
-    # train, test = l.load_dataset('del', Format.SplitCV)
+    # train, test = l.load_dataset('del', format_=Format.SplitCV)
     # print(train, test)
-    # exit()
-    p1 = HoldOutPreProcessor('delho', 0.2, 2400, 600)
-    p2 = CrossValidationPreProcessor('del',
-                                    test_percent=0.2,
-                                    train_size_cap=2400,
-                                    test_size_cap=600,
-                                    k=5)
-
-    p1.process_dataset('classes_reg')
-    p2.process_dataset('classes_reg')
+    exit()
+    # p = CrossValidationPreProcessor('data_cv_reg',
+    #                                 test_percent=0.2,
+    #                                 train_size_cap=2400,
+    #                                 test_size_cap=600,
+    #                                 k=5)
+    #
+    # # p1.process_dataset('classes_reg')
+    # p.process_dataset('classes_reg')
 
     exit()
     # stream = [(0, 0), (0, 1), (0, 2), (0, 3)]

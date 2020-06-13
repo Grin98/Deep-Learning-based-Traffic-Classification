@@ -26,9 +26,9 @@ class FlowCSVDataLoader:
 
     def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[BlocksDataSet, BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
-        dirs = get_dir_directories(root_dir)
+        dirs = get_dir_directories(root_dir/'train')
 
-        test_dataset = self.load_dataset(dir([test_group_index]), format_=Format.Default)
+        test_dataset = self.load_dataset(dirs[test_group_index], format_=Format.Default)
         train_datasets = [self.load_dataset(d, format_=Format.Default)
                           for i, d in enumerate(dirs)
                           if i != test_group_index]

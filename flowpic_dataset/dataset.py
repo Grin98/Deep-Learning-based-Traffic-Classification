@@ -111,5 +111,12 @@ class BlocksDataSet(Dataset):
         return self
 
     def __str__(self) -> str:
-        return 'FlowDataSet:\n' + '   num samples: ' + str(len(self._data)) + '\n   label count: ' + \
-               str(Counter(self.labels))
+        count = Counter(self.labels)
+        count = sorted(count.items())
+        count_str = ''
+        for k, v in count:
+            count_str += f'{k}: {v}, '
+
+        return f'FlowDataSet:\n' \
+            f'num samples: {str(len(self._data))}\n' \
+            f'label count: {count_str}'
