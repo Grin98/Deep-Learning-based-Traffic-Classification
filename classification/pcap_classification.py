@@ -80,6 +80,7 @@ class PredDist:
         self.pd = [self.pd[i] + other.pd[i] for i in range(self.n)]
         return self
 
+
 if __name__ == '__main__':
     device = 'cuda'
     categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']

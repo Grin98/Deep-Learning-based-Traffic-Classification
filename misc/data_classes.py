@@ -47,6 +47,9 @@ class Flow(NamedTuple):
         return Flow(app, list(five_tuple), start_time, num_packets, times, sizes, pcap_relative_start_time=pcap_relative_start_time)
 
     def convert_to_row(self):
+        """
+        :return: returns the flow as a list in a format for saving it in a csv file
+        """
         # self.sizes + 1 because when flow is created it subtracts 1 from sizes
         row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] +\
               list(self.times) + [' '] + list(self.sizes + 1)
@@ -73,6 +76,9 @@ class Block(NamedTuple):
         return Block(start_time, num_packets, list(zip(times, sizes)))
 
     def convert_to_row(self):
+        """
+        :return: returns the block as a list in a format for saving it in a csv file
+        """
         times, sizes = zip(*self.data)
         row = [self.start_time, self.num_packets] + list(times) + list(sizes)
         return row

@@ -52,6 +52,9 @@ class Experiment(abc.ABC):
         return parsed
 
     def add_parser_args(self, p: argparse.ArgumentParser):
+        """
+        adds possible arguments to be accepted in command line
+        """
         # Experiment config
         p.add_argument('--data-dir', '-d', type=str, help='data folder', required=True)
         p.add_argument('--out-dir', '-o', type=str, help='Output folder', required=True)

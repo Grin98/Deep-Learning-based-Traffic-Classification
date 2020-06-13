@@ -65,6 +65,10 @@ def create_output_dir(out_root_dir: Path, input_dir_path: Path):
     return out_path_dir
 
 
+def create_multiple_output_dirs(out_root_dirs: Sequence[Path], input_dir_path: Path):
+    return [create_output_dir(d, input_dir_path) for d in out_root_dirs]
+
+
 def get_dir_directories(dir_path: Path):
     return [d for d in get_dir_items(dir_path) if d.is_dir()]
 

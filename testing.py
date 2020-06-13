@@ -9,11 +9,12 @@ from pyshark.packet.packet import Packet
 from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import BlocksDataSet
-from flowpic_dataset.loader import FlowCSVDataLoader
-from flowpic_dataset.processors import SplitPreProcessor, BasicProcessor
+from flowpic_dataset.loader import FlowCSVDataLoader, Format
+from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor
 from misc.data_classes import Flow
 from misc.utils import show_flow_pic, is_file, Timer
 from pcap_extraction.pcap_flow_extractor import PcapParser
+
 
 # python expiraments/split_experiment.py --data-dir data_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 35 --lr 0.001 --save-checkpoint 1 --load-checkpoint 0 --checkpoint-every 1 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1
 
@@ -40,7 +41,24 @@ class C:
 
 
 if __name__ == '__main__':
+    # l = FlowCSVDataLoader(verbose=False)
+    # train, test = l.load_dataset('data_reg', format_=Format.Split)
+    # print(train, test)
+    # print('===================')
+    # train, test = l.load_dataset('del', Format.SplitCV)
+    # print(train, test)
+    # exit()
+    p1 = HoldOutPreProcessor('delho', 0.2, 2400, 600)
+    p2 = CrossValidationPreProcessor('del',
+                                    test_percent=0.2,
+                                    train_size_cap=2400,
+                                    test_size_cap=600,
+                                    k=5)
 
+    p1.process_dataset('classes_reg')
+    p2.process_dataset('classes_reg')
+
+    exit()
     # stream = [(0, 0), (0, 1), (0, 2), (0, 3)]
     # packets = np.array(stream)
     # packets[:, 0] *= 1
@@ -77,7 +95,6 @@ if __name__ == '__main__':
     # # ds4 = FlowDataSet.from_flows_file(f4)
     # print(len(ds1))
     # print(len(ds2))
-
 
     # p = BasicProcessor(60, 15, 1500)
     # n1 = p.process_file_to_flows(f)[0]
