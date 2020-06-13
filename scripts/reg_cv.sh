@@ -5,7 +5,7 @@ log_path=$out_dir/out.log
 
 mkdir -p $out_dir
 
-python expiraments/CrossValidation.py \
+python expiraments/cross_validation.py \
 --data-dir data_cv_reg \
 --out-dir $out_dir \
 --bs-train 128 \

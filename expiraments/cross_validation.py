@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("../")
+sys.path.append("./")
 import argparse
 import multiprocessing
 import os
@@ -80,7 +84,7 @@ class CrossValidation(Experiment):
     @staticmethod
     def save_cv(cv_checkpoint: str, i: int, k: int, f1: float, acc: float, loss: float):
         checkpoint_filename = f'{cv_checkpoint}.pt'
-        saved_state = dict(i=i+1, k=k, f1=f1, acc=acc, loss=loss)
+        saved_state = dict(i=i + 1, k=k, f1=f1, acc=acc, loss=loss)
 
         torch.save(saved_state, checkpoint_filename)
         print(f'*** Saved at fold {i}/{k}')
