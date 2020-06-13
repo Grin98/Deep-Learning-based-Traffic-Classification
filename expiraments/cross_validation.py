@@ -40,7 +40,7 @@ class CrossValidation(Experiment):
             cv_checkpoint = str(out_dir / 'cv')
 
         start_i, f1, acc, loss = 0, 0, 0, 0
-        if load_checkpoint:
+        if load_checkpoint and is_file(cv_checkpoint):
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
         loader = FlowCSVDataLoader()
