@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from expiraments.experiment import Experiment
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
-from misc.utils import create_dir, _create_pre_trained_model, is_file
+from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer
 from model.flow_pic_model import FlowPicModel
 from training.flowpic_trainer import FlowPicTrainer
 from misc.data_classes import BatchResult
@@ -102,8 +102,11 @@ class CrossValidation(Experiment):
 
 
 if __name__ == '__main__':
+    t = Timer()
+    t.start()
     exp = CrossValidation()
     parsed_args = exp.parse_cli()
     print(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
     res = exp.run(**vars(parsed_args))
     res = exp.run(**vars(parsed_args))
+    t.stop('2 entire runs')
