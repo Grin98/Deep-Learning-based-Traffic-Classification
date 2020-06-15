@@ -20,7 +20,7 @@ class Timer:
     def start(self):
         self._s = time()
 
-    def stop(self, tag: str = ''):
+    def lap(self, tag: str = ''):
         f = time()
         diff = format(f - self._s, '.2f')
         print(f'{tag} time = {diff}[sec]')

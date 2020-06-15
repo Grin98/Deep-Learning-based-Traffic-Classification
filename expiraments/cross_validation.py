@@ -107,6 +107,6 @@ if __name__ == '__main__':
     exp = CrossValidation()
     parsed_args = exp.parse_cli()
     print(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
-    res = exp.run(**vars(parsed_args))
-    res = exp.run(**vars(parsed_args))
-    t.stop('2 entire runs')
+    for i in range(10):
+        exp.run(**vars(parsed_args))
+        t.lap(f'{i} entire runs')

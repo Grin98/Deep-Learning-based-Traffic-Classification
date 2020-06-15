@@ -33,7 +33,7 @@ class SplitExperiment(Experiment):
         dataset_loader = FlowCSVDataLoader()
         self.timer.start()
         ds_train, ds_test = dataset_loader.load_dataset(data_dir, is_split=True)
-        self.timer.stop('dataset loading')
+        self.timer.lap('dataset loading')
         dl_train = DataLoader(ds_train, bs_train, shuffle=True)
         dl_test = DataLoader(ds_test, bs_test, shuffle=True)
 
@@ -52,7 +52,7 @@ class SplitExperiment(Experiment):
                               load_checkpoint=load_checkpoint,
                               early_stopping=early_stopping,
                               print_every=5, **kw)
-        self.timer.stop('training')
+        self.timer.lap('training')
 
         if save_checkpoint:
             self.save_fit_graphs(out_dir, fit_res)
