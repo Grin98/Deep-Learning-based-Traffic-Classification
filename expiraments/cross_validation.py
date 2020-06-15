@@ -106,3 +106,4 @@ if __name__ == '__main__':
     parsed_args = exp.parse_cli()
     print(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
     res = exp.run(**vars(parsed_args))
+    res = exp.run(**vars(parsed_args))
