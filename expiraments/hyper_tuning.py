@@ -1,3 +1,4 @@
+import random
 import sys
 
 sys.path.append("../")
@@ -30,18 +31,24 @@ def run_conf(conf):
     args.update(conf)
     f1, _, _ = cv.run(**args)
     res = f1, conf
+    print(f'cv result is: {res}')
     return res
 
 
 if __name__ == '__main__':
-    run_conf({'lr': 1, 'reg': 2})
-    # lr = list(np.logspace(start=-3, stop=-1, num=3))
-    # reg = list(np.logspace(start=-4, stop=-1, num=4))
-    # reg.append(0.0)
-    #
-    # confs = list(map(conf_as_dict, itertools.product(lr, reg)))
-    # pool = Pool(processes=torch.cuda.device_count())
-    # res = list(pool.imap_unordered(run_conf, confs))
-    # print(f'results: {res}')
-    # best = nlargest(1, res, key=lambda r: r[0])
-    # print(f'best config is {res[1]} with f1={res[0]}')
+    lr = list(np.logspace(start=-3, stop=-1, num=3))
+    reg = list(np.logspace(start=-4, stop=-1, num=4))
+    reg.append(0.0)
+
+    confs = list(map(conf_as_dict, itertools.product(lr, reg)))
+    pool = Pool(processes=torch.cuda.device_count())
+    res = list(pool.imap_unordered(run_conf, confs))
+    pool.close()
+    pool.join()
+
+    print('=== results ===')
+    for r in res:
+        print(f'{r}')
+
+    best = nlargest(1, res, key=lambda r: r[0])[0]
+    print(f'best config is {best[1]} with f1={best[0]}')

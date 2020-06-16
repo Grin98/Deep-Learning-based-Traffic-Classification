@@ -38,7 +38,7 @@ class BlocksDataSet(Dataset):
 
     @classmethod
     def from_blocks_file(cls, csv_file_path, global_label=0):
-        with open(csv_file_path, newline='') as f:
+        with open(csv_file_path, newline='', mode='r') as f:
             start_times, _, data = zip(*[Block.create(row) for row in csv.reader(f, delimiter=',')])
             labels = np.array([global_label] * len(data))
 
