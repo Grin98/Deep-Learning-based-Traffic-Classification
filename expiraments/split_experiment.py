@@ -22,7 +22,7 @@ class SplitExperiment(Experiment):
             bs_train=128, bs_test=None, epochs=100, early_stopping=3,
             save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
-            **kw):
+            parallel=True, **kw):
 
         model_checkpoint = None
         out_dir = Path(out_dir)

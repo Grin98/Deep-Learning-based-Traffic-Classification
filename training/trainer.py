@@ -25,7 +25,7 @@ class Trainer(abc.ABC):
     - Single batch (train_batch/test_batch)
     """
 
-    def __init__(self, model: nn.Module, loss_fn, optimizer, device=None):
+    def __init__(self, model: nn.Module, loss_fn, optimizer, device: torch.device = None, parallel: bool = True):
         """
         Initialize the trainer.
         :param model: Instance of the model to train.
@@ -39,8 +39,8 @@ class Trainer(abc.ABC):
         self.device = device
 
         if self.device:
-            print(torch.cuda.device_count())
-            if torch.cuda.device_count() > 1:
+            if torch.cuda.device_count() > 1 and parallel:
+                print('using parallel on model')
                 model = nn.DataParallel(model)
             model.to(self.device)
 

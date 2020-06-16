@@ -95,6 +95,7 @@ class Experiment(abc.ABC):
         p.add_argument('--hidden-dims', '-H', type=int, nargs='+',
                        help='Output size of hidden linear layers',
                        metavar='H')
+        p.add_argument('--parallel', type=int, help='if 1 then parallels model if possible', default=1)
 
         return p
 

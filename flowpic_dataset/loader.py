@@ -28,6 +28,9 @@ class FlowCSVDataLoader:
         root_dir = Path(dataset_root_dir)
         dirs = get_dir_directories(root_dir/'train')
 
+        print(f'test: {dirs[test_group_index].parts[-1]}')
+        print(f'train: {[d.parts[-1] for i, d in enumerate(dirs) if i != test_group_index]}')
+
         test_dataset = self.load_dataset(dirs[test_group_index], format_=Format.Default)
         train_datasets = [self.load_dataset(d, format_=Format.Default)
                           for i, d in enumerate(dirs)

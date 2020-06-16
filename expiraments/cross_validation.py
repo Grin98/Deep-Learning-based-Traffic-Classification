@@ -28,22 +28,18 @@ class CrossValidation(Experiment):
     def run(self, data_dir=None, out_dir=None, bs_train=128, bs_test=256, epochs=40, early_stopping=3,
             save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
-            k: int = None, **kw):
+            parallel=True, k: int = None, **kw):
 
-        model_checkpoint = None
-        cv_checkpoint = None
         out_dir = Path(out_dir)
         create_dir(out_dir)
-
-        if save_checkpoint or load_checkpoint:
-            model_checkpoint = str(out_dir / 'model')
-            cv_checkpoint = str(out_dir / 'cv')
+        model_checkpoint = str(out_dir / 'model')
+        cv_checkpoint = str(out_dir / 'cv')
 
         start_i, f1, acc, loss = 0, 0, 0, 0
         if load_checkpoint and is_file(cv_checkpoint):
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
-        loader = FlowCSVDataLoader()
+        loader = FlowCSVDataLoader(verbose=False)
         for i in range(start_i, k):
             ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, test_group_index=i)
             dl_train = DataLoader(ds_train, bs_train, shuffle=True)
@@ -57,7 +53,7 @@ class CrossValidation(Experiment):
             loss_fn = torch.nn.CrossEntropyLoss()
             optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
-            trainer = FlowPicTrainer(model, loss_fn, optimizer, self.device)
+            trainer = FlowPicTrainer(model, loss_fn, optimizer, self.device, parallel)
             res = trainer.fit(dl_train, dl_test, epochs, model_checkpoint,
                               checkpoint_every=checkpoint_every,
                               save_checkpoint=save_checkpoint,
@@ -87,7 +83,7 @@ class CrossValidation(Experiment):
         saved_state = dict(i=i + 1, k=k, f1=f1, acc=acc, loss=loss)
 
         torch.save(saved_state, checkpoint_filename)
-        print(f'*** Saved checkpoint to {cv_checkpoint} at fold {i+1}/{k}')
+        print(f'*** Saved checkpoint to {cv_checkpoint} at fold {i + 1}/{k}')
 
     @staticmethod
     def load_cv(cv_checkpoint: str):
@@ -100,6 +96,8 @@ class CrossValidation(Experiment):
         saved_state = torch.load(checkpoint_filename)
         return saved_state['i'], saved_state['k'], saved_state['f1'], saved_state['acc'], saved_state['loss']
 
+
+# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0
 
 if __name__ == '__main__':
     t = Timer()

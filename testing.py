@@ -1,3 +1,4 @@
+import itertools
 from collections import Counter
 from math import floor
 from pathlib import Path
@@ -17,7 +18,7 @@ from misc.utils import show_flow_pic, is_file, Timer
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
-# python expiraments/split_experiment.py --data-dir data_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 35 --lr 0.001 --save-checkpoint 1 --load-checkpoint 0 --checkpoint-every 1 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1
+# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1
 
 class C:
     def __init__(self, x):
@@ -42,9 +43,15 @@ class C:
 
 
 if __name__ == '__main__':
-    c = CrossValidation()
-    c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
-          load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)
+    lr = list(np.logspace(start=-3, stop=-1, num=3))
+    reg = list(np.logspace(start=-4, stop=-1, num=4))
+    reg.append(0.0)
+    conf = list(itertools.product(lr, reg))
+    print(lr, reg)
+    print(len(conf), conf)
+    # c = CrossValidation()
+    # c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
+    #       load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)
     # l = FlowCSVDataLoader(verbose=True)
     # train, test = l.load_cross_validation_dataset('data_cv_reg', 2)
     # print(train, test)
