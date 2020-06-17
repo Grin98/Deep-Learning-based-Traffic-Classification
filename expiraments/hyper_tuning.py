@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-from multiprocessing import Lock, current_process
+from multiprocessing import Lock, current_process, set_start_method
 from time import sleep
 
 sys.path.append("../")
@@ -62,6 +62,7 @@ def run_conf(conf, log: Logger):
 # python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
+    set_start_method('spawn')
     lr = list(np.logspace(start=-3, stop=-1, num=3))
     reg = list(np.logspace(start=-4, stop=-1, num=4))
     reg.append(0.0)
