@@ -50,14 +50,14 @@ def run_experiments(experiment):
 
 
 def run_conf(conf, log: Logger):
-    print(f'{current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()}')
+    log.write(f'{current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()}')
     cv = CrossValidation(log)
     args = cv.parse_cli()
     args = vars(args)
     args.update(conf)
     f1, _, _ = cv.run(**args)
-    res = f1, conf
-    return res
+    log.write(f'cv result for config {conf} on gpu: {torch.cuda.current_device()} is {f1}')
+    return f1, conf
 
 
 # python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
