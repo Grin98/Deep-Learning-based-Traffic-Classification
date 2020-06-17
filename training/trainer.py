@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 
 from misc.data_classes import EpochResult, FitResult, BatchResult
-from misc.utils import save_model, load_model, is_file, print_verbose, print_
+from misc.utils import save_model, load_model, is_file, print_verbose
 
 
 class Trainer(abc.ABC):
@@ -159,7 +159,7 @@ class Trainer(abc.ABC):
     def _print(message, verbose=True):
         """ Simple wrapper around print to make it conditional """
         if verbose:
-            print_(message)
+            print(message)
 
     @staticmethod
     def _foreach_batch(data_loader,

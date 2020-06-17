@@ -1,3 +1,4 @@
+import os
 import random
 import sys
 from multiprocessing import Lock, current_process
@@ -10,14 +11,25 @@ import itertools
 from heapq import nlargest
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Iterable, Tuple
 
 import numpy as np
 import torch
 
 from expiraments.cross_validation import CrossValidation
 from expiraments.experiment import Experiment
-from misc.utils import create_dir, print_, print_lock
+from misc.utils import create_dir
+
+
+def list_chunk(l: Sequence, n: int) -> Tuple[Sequence, ...]:
+    '''
+    return a list of n even chunks of l
+    '''
+    sizes = np.full(n, len(l) // n)
+    sizes[:len(l) % n] += 1
+    ends = np.cumsum(sizes)
+
+    return tuple(l[ends[i] - sizes[i]:ends[i]] for i in range(len(sizes)))
 
 
 def conf_as_dict(conf: Sequence):
@@ -25,15 +37,20 @@ def conf_as_dict(conf: Sequence):
                 reg=conf[1])
 
 
+def run_experiments(experiment):
+    confs, device = experiment
+    torch.cuda.set_device(device)
+    return [run_conf(c) for c in confs]
+
+
 def run_conf(conf):
-    print_(f'pid={current_process()}, config {conf}')
+    print(f'{current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()}')
     cv = CrossValidation()
     args = cv.parse_cli()
     args = vars(args)
     args.update(conf)
     f1, _, _ = cv.run(**args)
     res = f1, conf
-    print_(f'pid={current_process()}, cv result is: {res}')
     return res
 
 
@@ -45,9 +62,12 @@ if __name__ == '__main__':
     reg.append(0.0)
 
     print_lock = Lock()
+    num_devices = torch.cuda.device_count()
     confs = list(map(conf_as_dict, itertools.product(lr, reg)))
-    pool = Pool(processes=torch.cuda.device_count())
-    res = list(pool.imap_unordered(run_conf, confs))
+    experiment = list(zip(list_chunk(confs, num_devices), range(num_devices)))
+    print(experiment)
+    pool = Pool(processes=num_devices)
+    res = list(itertools.chain.from_iterable(pool.imap_unordered(run_experiments, experiment)))
     pool.close()
     pool.join()
 
