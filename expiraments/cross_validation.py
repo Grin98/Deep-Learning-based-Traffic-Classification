@@ -39,7 +39,7 @@ class CrossValidation(Experiment):
         if load_checkpoint and is_file(cv_checkpoint):
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
-        loader = FlowCSVDataLoader(verbose=False)
+        loader = FlowCSVDataLoader()
         for i in range(start_i, k):
             ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, test_group_index=i)
             dl_train = DataLoader(ds_train, bs_train, shuffle=True)
@@ -59,7 +59,7 @@ class CrossValidation(Experiment):
                               save_checkpoint=save_checkpoint,
                               load_checkpoint=load_checkpoint,
                               early_stopping=early_stopping,
-                              print_every=5, **kw)
+                              print_every=5)
 
             if res.num_epochs > 0:
                 f1 += res.test_f1[-1]
@@ -97,7 +97,7 @@ class CrossValidation(Experiment):
         return saved_state['i'], saved_state['k'], saved_state['f1'], saved_state['acc'], saved_state['loss']
 
 
-# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0
+# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
     t = Timer()

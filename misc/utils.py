@@ -37,7 +37,7 @@ def build_pic(stream: Sequence[Tuple[float, int]],
     packets[:, 0] *= x_axis_to_second_ratio
     packets = np.floor(packets)
     hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1],
-                                bins=[range(pic_width+1), range(pic_height+1)])
+                                bins=[range(pic_width + 1), range(pic_height + 1)])
 
     return torch.from_numpy(hist).float()
 
@@ -124,7 +124,7 @@ def load_model(checkpoint: str, model_type, device):
 def save_model(checkpoints, model, epoch, best_acc, epochs_without_improvement):
     checkpoint_filename = f'{checkpoints}.pt'
     saved_state = dict(best_acc=best_acc,
-                       last_epoch=epoch+1,
+                       last_epoch=epoch + 1,
                        ewi=epochs_without_improvement,
                        model_state=model.state_dict(),
                        model_init_params=model.model_init_params)
@@ -140,3 +140,12 @@ def _create_pre_trained_model(model_class, model_state: dict, model_init_params:
         m.to(device)
     m.load_state_dict(model_state)
     return m
+
+
+# Updates on parsing command line arguments in Experiment, never changes after that
+verbose: bool = True
+
+
+def print_verbose(*values):
+    if verbose:
+        print(values)

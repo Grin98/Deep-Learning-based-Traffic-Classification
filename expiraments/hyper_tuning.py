@@ -20,13 +20,13 @@ from misc.utils import create_dir
 
 def conf_as_dict(conf: Sequence):
     return dict(lr=conf[0],
-                reg=conf[1]
-                )
+                reg=conf[1])
 
 
 def run_conf(conf):
     cv = CrossValidation()
     args = cv.parse_cli()
+    print(conf)
     args = vars(args)
     args.update(conf)
     f1, _, _ = cv.run(**args)
@@ -34,6 +34,8 @@ def run_conf(conf):
     print(f'cv result is: {res}')
     return res
 
+
+# python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
     lr = list(np.logspace(start=-3, stop=-1, num=3))

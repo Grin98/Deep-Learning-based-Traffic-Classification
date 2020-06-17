@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import BlocksDataSet
 
-from misc.utils import get_dir_directories, get_dir_csvs
+from misc.utils import get_dir_directories, get_dir_csvs, print_verbose
 
 
 class Format(Enum):
@@ -21,40 +21,40 @@ class FlowCSVDataLoader:
 
     def __init__(self, testing=False, verbose: bool = True):
         self.testing = testing
-        self.verbose = verbose
         self.labels = {}
 
-    def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[BlocksDataSet, BlocksDataSet]:
+    def load_cross_validation_dataset(self, dataset_root_dir, test_group_index: int) -> Tuple[
+        BlocksDataSet, BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
-        dirs = get_dir_directories(root_dir/'train')
+        dirs = get_dir_directories(root_dir / 'train')
 
-        print(f'test: {dirs[test_group_index].parts[-1]}')
-        print(f'train: {[d.parts[-1] for i, d in enumerate(dirs) if i != test_group_index]}')
+        train_dirs = [d for i, d in enumerate(dirs) if i != test_group_index]
+        test_dir = dirs[test_group_index]
 
-        test_dataset = self.load_dataset(dirs[test_group_index], format_=Format.Default)
-        train_datasets = [self.load_dataset(d, format_=Format.Default)
-                          for i, d in enumerate(dirs)
-                          if i != test_group_index]
+        train_dataset = BlocksDataSet.concatenate([self.load_dataset(d, format_=Format.Default) for d in train_dirs])
+        test_dataset = self.load_dataset(test_dir, format_=Format.Default)
 
-        return BlocksDataSet.concatenate(train_datasets), test_dataset
+        print(f'train {[d.parts[-1] for d in train_dirs]} {train_dataset}')
+        print(f'test {test_dir.parts[-1]} {test_dataset}')
+        return train_dataset, test_dataset
 
     def load_dataset(self, dataset_root_dir, format_: Format) -> Union[Tuple[BlocksDataSet], BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
         self.labels = {}
 
-        self._print_verbose("=== Loading dataset from %s ===" % root_dir)
+        print_verbose("=== Loading dataset from %s ===" % root_dir)
         if format_ == Format.Default:
             datasets = self._gather_datasets(root_dir, level=0)
             res = BlocksDataSet.concatenate(datasets)
         else:
-            self._print_verbose('train')
+            print_verbose('train')
             level = 0 if format_ == Format.Split else 1
-            train_datasets = self._gather_datasets(root_dir/'train', level=level)
+            train_datasets = self._gather_datasets(root_dir / 'train', level=level)
 
-            self._print_verbose('test')
-            test_dataset = self._gather_datasets(root_dir/'test', level=0)
+            print_verbose('test')
+            test_dataset = self._gather_datasets(root_dir / 'test', level=0)
             res = BlocksDataSet.concatenate(train_datasets), BlocksDataSet.concatenate(test_dataset)
-        self._print_verbose("=== Dataset loading completed :D ===")
+        print_verbose("=== Dataset loading completed :D ===")
 
         return res
 
@@ -63,7 +63,7 @@ class FlowCSVDataLoader:
         if not dirs:
             dss = [BlocksDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
-            self._print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
+            print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 
             return dss
 
@@ -77,7 +77,7 @@ class FlowCSVDataLoader:
                 dir_name = d.parts[-1]
                 label = labels.index(dir_name)
 
-            datasets += self._gather_datasets(d, level-1, label)
+            datasets += self._gather_datasets(d, level - 1, label)
 
         return datasets
 
@@ -91,13 +91,3 @@ class FlowCSVDataLoader:
 
     def _get_directory_label(self, d):
         return self.labels[d]
-
-    def _print_verbose(self, s: str):
-        if self.verbose:
-            print(s)
-
-
-
-
-
-

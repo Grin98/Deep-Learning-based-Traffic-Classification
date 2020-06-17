@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+from misc.utils import print_verbose
 
 class FlowPicModel(nn.Module):
 
@@ -12,8 +12,6 @@ class FlowPicModel(nn.Module):
         :param hidden_dims: List of of length M containing hidden dimensions of
             each Linear layer (not including the output layer).
         """
-
-        print(in_size, out_classes, filters, hidden_dims, drop_every)
 
         super().__init__()
         self.in_size = in_size
@@ -42,20 +40,20 @@ class FlowPicModel(nn.Module):
                 layers.append(nn.Dropout(0.25))
             in_h = (in_h - 10 + 6) // 5 + 1
             in_w = (in_w - 10 + 6) // 5 + 1
-            print("conv %dx%d" % (in_w, in_h))
+            print_verbose("conv %dx%d" % (in_w, in_h))
             layers.append(nn.ReLU())
             in_channels = self.filters[i]
             layers.append(nn.MaxPool2d(2, stride=2))
             in_h = (in_h - 2) // 2 + 1
             in_w = (in_w - 2) // 2 + 1
-            print("maxpool %dx%d" % (in_w, in_h))
+            print_verbose("maxpool %dx%d" % (in_w, in_h))
 
         self.features = in_channels * in_h * in_w
-        print("in_channels: ", in_channels)
-        print("in_h: ", in_h)
-        print("features: ", self.features)
+        print_verbose("in_channels: ", in_channels)
+        print_verbose("in_h: ", in_h)
+        print_verbose("features: ", self.features)
         seq = nn.Sequential(*layers)
-        print(seq)
+        print_verbose(seq)
         return seq
 
     def _make_classifier(self):
@@ -68,12 +66,12 @@ class FlowPicModel(nn.Module):
             layers.append(nn.Dropout(0.5))
             layers.append(nn.ReLU())
             input = self.hidden_dims[i]
-        print("out classes:", self.out_classes)
         layers.append(nn.Linear(input, self.out_classes))
         layers.append(nn.Softmax(dim=1))
 
         seq = nn.Sequential(*layers)
-        print(seq)
+        print_verbose(seq)
+        print_verbose("out classes:", self.out_classes)
         return seq
 
     def forward(self, x):
@@ -82,3 +80,4 @@ class FlowPicModel(nn.Module):
         out = self.classifier(features.view(features.shape[0], -1))
 
         return out
+

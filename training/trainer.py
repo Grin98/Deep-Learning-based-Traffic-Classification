@@ -45,15 +45,16 @@ class Trainer(abc.ABC):
             model.to(self.device)
 
     def fit(self, dl_train, dl_test: DataLoader,
-            num_epochs, model_checkpoint: str = None,
-            checkpoint_every: int = 1,
-            save_checkpoint: bool = False,
-            load_checkpoint: bool = False,
-            early_stopping: int = None,
-            print_every=1, **kw) -> FitResult:
+            num_epochs, model_checkpoint: str,
+            checkpoint_every: int,
+            save_checkpoint: bool,
+            load_checkpoint: bool,
+            early_stopping: int,
+            print_every: int) -> FitResult:
         """
         Trains the model for multiple epochs with a given training set,
         and calculates validation loss over a given validation set.
+        :param save_checkpoint: Whether to save a checkpoint or not
         :param load_checkpoint: Whether to load a saved checkpoint or not
         :param checkpoint_every: Number of epochs for every checkpoint save
         :param dl_train: Dataloader for the training set.
@@ -82,12 +83,12 @@ class Trainer(abc.ABC):
 
             self._print(f'--- EPOCH {epoch}/{num_epochs} ---', verbose)
 
-            loss, acc, f1 = self.train_epoch(dl_train, verbose=verbose, **kw)
+            loss, acc, f1 = self.train_epoch(dl_train, verbose)
             train_loss.append(sum(loss).item() / float(len(loss)))
             train_acc.append(acc.item())
             train_f1.append(f1)
 
-            loss, acc, f1 = self.test_epoch(dl_test, verbose=verbose, **kw)
+            loss, acc, f1 = self.test_epoch(dl_test, verbose)
             test_loss.append(sum(loss).item() / float(len(loss)))
             test_acc.append(acc.item())
             test_f1.append(f1)
@@ -109,25 +110,25 @@ class Trainer(abc.ABC):
                          train_loss, train_acc, train_f1,
                          test_loss, test_acc, test_f1)
 
-    def train_epoch(self, data_loader_train, **kw) -> EpochResult:
+    def train_epoch(self, data_loader_train, verbose: bool) -> EpochResult:
         """
         Train once over a training set (single epoch).
         :param data_loader_train: DataLoader for the training set.
-        :param kw: Keyword args supported by _foreach_batch.
+        :param verbose: whether to print info of epoch or not
         :return: An EpochResult for the epoch.
         """
         self.model.train(True)  # set train mode
-        return self._foreach_batch(data_loader_train, self.train_batch, **kw)
+        return self._foreach_batch(data_loader_train, self.train_batch, verbose)
 
-    def test_epoch(self, data_loader_test, **kw) -> EpochResult:
+    def test_epoch(self, data_loader_test, verbose: bool) -> EpochResult:
         """
         Evaluate model once over a test set (single epoch).
         :param data_loader_test: DataLoader for the test set.
-        :param kw: Keyword args supported by _foreach_batch.
+        :param verbose: whether to print info of epoch or not
         :return: An EpochResult for the epoch.
         """
         self.model.train(False)  # set evaluation (test) mode
-        return self._foreach_batch(data_loader_test, self.test_batch, **kw)
+        return self._foreach_batch(data_loader_test, self.test_batch, verbose)
 
     @abc.abstractmethod
     def train_batch(self, batch) -> BatchResult:
@@ -163,7 +164,7 @@ class Trainer(abc.ABC):
     @staticmethod
     def _foreach_batch(data_loader,
                        forward_fn: Callable[[Any], BatchResult],
-                       verbose=True) -> EpochResult:
+                       verbose) -> EpochResult:
         """
         Evaluates the given forward-function on batches from the given
         dataloader, and prints progress along the way.

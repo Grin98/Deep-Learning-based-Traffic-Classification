@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from typing import List
 
 import torch
+from misc import utils
 
 from misc.data_classes import FitResult
 from misc.utils import fix_seed, Timer
@@ -33,13 +34,14 @@ class Experiment(abc.ABC):
 
     @abc.abstractmethod
     def run(self,
-                # Training params
-                data_dir=None, out_dir=None,
-                bs_train=128, bs_test=None, epochs=100,
-                early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
-                # Model params
-                filters_per_layer=None, layers_per_block=2, pool_every=2,
-                drop_every=2, hidden_dims=None, **kw):
+            # Training params
+            data_dir=None, out_dir=None,
+            bs_train=128, bs_test=None, epochs=100,
+            early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
+            # Model params
+            filters_per_layer=None, layers_per_block=2, pool_every=2,
+            drop_every=2, hidden_dims=None,
+            parallel=True, verbose=True, **kw):
         """
             Execute a single run of experiment with given configuration
         """
@@ -49,6 +51,7 @@ class Experiment(abc.ABC):
         p = argparse.ArgumentParser(description=type(self).__name__)
         p = self.add_parser_args(p)
         parsed = p.parse_args()
+        utils.verbose = parsed.verbose
         return parsed
 
     def add_parser_args(self, p: argparse.ArgumentParser):
@@ -96,6 +99,7 @@ class Experiment(abc.ABC):
                        help='Output size of hidden linear layers',
                        metavar='H')
         p.add_argument('--parallel', type=int, help='if 1 then parallels model if possible', default=1)
+        p.add_argument('--verbose', type=int, help='if 1 then run prints additional info', default=1)
 
         return p
 
