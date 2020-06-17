@@ -1,5 +1,7 @@
 import random
 import sys
+from multiprocessing import Lock, current_process
+from time import sleep
 
 sys.path.append("../")
 sys.path.append("./")
@@ -15,7 +17,7 @@ import torch
 
 from expiraments.cross_validation import CrossValidation
 from expiraments.experiment import Experiment
-from misc.utils import create_dir
+from misc.utils import create_dir, print_, print_lock
 
 
 def conf_as_dict(conf: Sequence):
@@ -24,31 +26,32 @@ def conf_as_dict(conf: Sequence):
 
 
 def run_conf(conf):
+    print_(f'pid={current_process()}, config {conf}')
     cv = CrossValidation()
     args = cv.parse_cli()
-    print(conf)
     args = vars(args)
     args.update(conf)
     f1, _, _ = cv.run(**args)
     res = f1, conf
-    print(f'cv result is: {res}')
+    print_(f'pid={current_process()}, cv result is: {res}')
     return res
 
 
-# python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
+# python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
     lr = list(np.logspace(start=-3, stop=-1, num=3))
     reg = list(np.logspace(start=-4, stop=-1, num=4))
     reg.append(0.0)
 
+    print_lock = Lock()
     confs = list(map(conf_as_dict, itertools.product(lr, reg)))
     pool = Pool(processes=torch.cuda.device_count())
     res = list(pool.imap_unordered(run_conf, confs))
     pool.close()
     pool.join()
 
-    print('=== results ===')
+    print('\n=== results ===')
     for r in res:
         print(f'{r}')
 

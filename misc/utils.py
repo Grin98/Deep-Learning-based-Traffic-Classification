@@ -1,5 +1,6 @@
 import os
 from math import floor
+from multiprocessing import Lock
 from pathlib import Path
 from time import time
 from typing import List, Sequence, Tuple
@@ -94,7 +95,7 @@ def fix_seed(seed: int):
     if seed is None:
         return
 
-    print('seed fixed to', seed)
+    print_('seed fixed to', seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True
@@ -144,8 +145,19 @@ def _create_pre_trained_model(model_class, model_state: dict, model_init_params:
 
 # Updates on parsing command line arguments in Experiment, never changes after that
 verbose: bool = True
+# can be used to insure that only one process can print to stdout at any given moment
+print_lock: Lock = None
 
 
 def print_verbose(*values):
     if verbose:
+        print_(values)
+
+
+def print_(*values):
+    if print_lock is not None:
+        print_lock.acquire()
+        print(values)
+        print_lock.release()
+    else:
         print(values)

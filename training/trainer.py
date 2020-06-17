@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 
 from misc.data_classes import EpochResult, FitResult, BatchResult
-from misc.utils import save_model, load_model, is_file
+from misc.utils import save_model, load_model, is_file, print_verbose, print_
 
 
 class Trainer(abc.ABC):
@@ -40,7 +40,7 @@ class Trainer(abc.ABC):
 
         if self.device:
             if torch.cuda.device_count() > 1 and parallel:
-                print('using parallel on model')
+                print_verbose('using parallel on model')
                 model = nn.DataParallel(model)
             model.to(self.device)
 
@@ -159,7 +159,7 @@ class Trainer(abc.ABC):
     def _print(message, verbose=True):
         """ Simple wrapper around print to make it conditional """
         if verbose:
-            print(message)
+            print_(message)
 
     @staticmethod
     def _foreach_batch(data_loader,
