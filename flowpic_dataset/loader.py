@@ -7,8 +7,9 @@ from typing import Tuple, Union
 from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import BlocksDataSet
+from misc.loging import Logger
 
-from misc.utils import get_dir_directories, get_dir_csvs, print_verbose
+from misc.utils import get_dir_directories, get_dir_csvs
 
 
 class Format(Enum):
@@ -19,7 +20,8 @@ class Format(Enum):
 
 class FlowCSVDataLoader:
 
-    def __init__(self, testing=False):
+    def __init__(self, log: Logger = Logger(), testing=False):
+        self.log = log
         self.testing = testing
         self.labels = {}
 
@@ -34,27 +36,27 @@ class FlowCSVDataLoader:
         train_dataset = BlocksDataSet.concatenate([self.load_dataset(d, format_=Format.Default) for d in train_dirs])
         test_dataset = self.load_dataset(test_dir, format_=Format.Default)
 
-        print(f'train {[d.parts[-1] for d in train_dirs]} {train_dataset}\n'
-              f'test {test_dir.parts[-1]} {test_dataset}')
+        self.log.write(f'***train {[d.parts[-1] for d in train_dirs]} {train_dataset}\n'
+                       f'***test {test_dir.parts[-1]} {test_dataset}')
         return train_dataset, test_dataset
 
     def load_dataset(self, dataset_root_dir, format_: Format) -> Union[Tuple[BlocksDataSet], BlocksDataSet]:
         root_dir = Path(dataset_root_dir)
         self.labels = {}
 
-        print_verbose("=== Loading dataset from %s ===" % root_dir)
+        self.log.write_verbose("=== Loading dataset from %s ===" % root_dir)
         if format_ == Format.Default:
             datasets = self._gather_datasets(root_dir, level=0)
             res = BlocksDataSet.concatenate(datasets)
         else:
-            print_verbose('train')
+            self.log.write_verbose('train')
             level = 0 if format_ == Format.Split else 1
             train_datasets = self._gather_datasets(root_dir / 'train', level=level)
 
-            print_verbose('test')
+            self.log.write_verbose('test')
             test_dataset = self._gather_datasets(root_dir / 'test', level=0)
             res = BlocksDataSet.concatenate(train_datasets), BlocksDataSet.concatenate(test_dataset)
-        print_verbose("=== Dataset loading completed :D ===")
+        self.log.write_verbose("=== Dataset loading completed :D ===")
 
         return res
 
@@ -63,7 +65,7 @@ class FlowCSVDataLoader:
         if not dirs:
             dss = [BlocksDataSet.from_blocks_file(file, label) for file in get_dir_csvs(path)]
             num_blocks = sum(map(len, dss))
-            print_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
+            self.log.write_verbose("path: %s, num blocks: %d, label: %d" % (path, num_blocks, label))
 
             return dss
 

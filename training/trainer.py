@@ -12,7 +12,8 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 
 from misc.data_classes import EpochResult, FitResult, BatchResult
-from misc.utils import save_model, load_model, is_file, print_verbose
+from misc.loging import Logger
+from misc.utils import save_model, load_model, is_file
 
 
 class Trainer(abc.ABC):
@@ -25,7 +26,7 @@ class Trainer(abc.ABC):
     - Single batch (train_batch/test_batch)
     """
 
-    def __init__(self, model: nn.Module, loss_fn, optimizer, device: torch.device = None, parallel: bool = True):
+    def __init__(self, model: nn.Module, loss_fn, optimizer, log: Logger, device: torch.device = None, parallel: bool = True):
         """
         Initialize the trainer.
         :param model: Instance of the model to train.
@@ -36,11 +37,12 @@ class Trainer(abc.ABC):
         self.model: nn.Module = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+        self.log = log
         self.device = device
 
         if self.device:
             if torch.cuda.device_count() > 1 and parallel:
-                print_verbose('using parallel on model')
+                self.log.write_verbose('using parallel on model')
                 model = nn.DataParallel(model)
             model.to(self.device)
 
@@ -80,8 +82,7 @@ class Trainer(abc.ABC):
             verbose = False  # pass this to train/test_epoch.
             if epoch % print_every == 0 or epoch == num_epochs or epoch == 1:
                 verbose = True
-
-            self._print(f'--- EPOCH {epoch}/{num_epochs} ---', verbose)
+                self.log.write(f'--- EPOCH {epoch}/{num_epochs} ---')
 
             loss, acc, f1 = self.train_epoch(dl_train, verbose)
             train_loss.append(sum(loss).item() / float(len(loss)))
@@ -155,14 +156,8 @@ class Trainer(abc.ABC):
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def _print(message, verbose=True):
-        """ Simple wrapper around print to make it conditional """
-        if verbose:
-            print(message)
-
-    @staticmethod
-    def _foreach_batch(data_loader,
+    def _foreach_batch(self,
+                       data_loader,
                        forward_fn: Callable[[Any], BatchResult],
                        verbose) -> EpochResult:
         """
@@ -177,7 +172,7 @@ class Trainer(abc.ABC):
         num_batches = len(data_loader)
 
         if verbose:
-            pbar_file = sys.stdout
+            pbar_file = self.log.file
         else:
             pbar_file = open(os.devnull, 'w')
 

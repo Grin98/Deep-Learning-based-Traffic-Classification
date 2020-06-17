@@ -1,9 +1,11 @@
 import torch.nn as nn
-from misc.utils import print_verbose
+
+from misc.loging import Logger
+
 
 class FlowPicModel(nn.Module):
 
-    def __init__(self, in_size, out_classes, filters, hidden_dims, drop_every):
+    def __init__(self, in_size, out_classes, filters, hidden_dims, drop_every, log: Logger = Logger):
         """
         :param in_size: Size of input pixel images, (Packet size, arrival time).
         :param out_classes: Number of classes to output in the final layer.
@@ -19,6 +21,7 @@ class FlowPicModel(nn.Module):
         self.filters = filters
         self.hidden_dims = hidden_dims
         self.drop_every = drop_every
+        self.log = log
 
         self.feature_extractor = self._make_feature_extractor()
         self.classifier = self._make_classifier()
@@ -40,20 +43,20 @@ class FlowPicModel(nn.Module):
                 layers.append(nn.Dropout(0.25))
             in_h = (in_h - 10 + 6) // 5 + 1
             in_w = (in_w - 10 + 6) // 5 + 1
-            print_verbose("conv %dx%d" % (in_w, in_h))
+            self.log.write_verbose("conv %dx%d" % (in_w, in_h))
             layers.append(nn.ReLU())
             in_channels = self.filters[i]
             layers.append(nn.MaxPool2d(2, stride=2))
             in_h = (in_h - 2) // 2 + 1
             in_w = (in_w - 2) // 2 + 1
-            print_verbose("maxpool %dx%d" % (in_w, in_h))
+            self.log.write_verbose("maxpool %dx%d" % (in_w, in_h))
 
         self.features = in_channels * in_h * in_w
-        print_verbose("in_channels: ", in_channels)
-        print_verbose("in_h: ", in_h)
-        print_verbose("features: ", self.features)
+        self.log.write_verbose("in_channels: ", in_channels)
+        self.log.write_verbose("in_h: ", in_h)
+        self.log.write_verbose("features: ", self.features)
         seq = nn.Sequential(*layers)
-        print_verbose(seq)
+        self.log.write_verbose(seq)
         return seq
 
     def _make_classifier(self):
@@ -70,8 +73,8 @@ class FlowPicModel(nn.Module):
         layers.append(nn.Softmax(dim=1))
 
         seq = nn.Sequential(*layers)
-        print_verbose(seq)
-        print_verbose("out classes:", self.out_classes)
+        self.log.write_verbose(seq)
+        self.log.write_verbose("out classes:", self.out_classes)
         return seq
 
     def forward(self, x):

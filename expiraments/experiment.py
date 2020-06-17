@@ -9,7 +9,7 @@ import torch
 from misc import utils
 
 from misc.data_classes import FitResult
-from misc.utils import fix_seed, Timer, print_verbose
+from misc.utils import fix_seed, Timer
 from model.flow_pic_model import FlowPicModel
 
 

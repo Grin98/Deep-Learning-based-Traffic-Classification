@@ -13,17 +13,19 @@ from torch.utils.data import DataLoader
 from expiraments.experiment import Experiment
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
-from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer, print_verbose
+from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer
 from model.flow_pic_model import FlowPicModel
 from training.flowpic_trainer import FlowPicTrainer
+from misc.loging import Logger
 from misc.data_classes import BatchResult
 from training.trainer import Trainer
 
 
 class CrossValidation(Experiment):
 
-    def __init__(self):
+    def __init__(self, log: Logger = Logger()):
         super().__init__()
+        self.log = log
 
     def run(self, data_dir=None, out_dir=None, bs_train=128, bs_test=256, epochs=40, early_stopping=3,
             save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
@@ -39,7 +41,7 @@ class CrossValidation(Experiment):
         if load_checkpoint and is_file(cv_checkpoint):
             start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
 
-        loader = FlowCSVDataLoader()
+        loader = FlowCSVDataLoader(self.log)
         for i in range(start_i, k):
             ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, test_group_index=i)
             dl_train = DataLoader(ds_train, bs_train, shuffle=True)
@@ -49,11 +51,11 @@ class CrossValidation(Experiment):
             num_classes = ds_train.get_num_classes()
             filters = self.get_filters(filters_per_layer, layers_per_block)
 
-            model = FlowPicModel(input_shape, num_classes, filters, hidden_dims, drop_every)
+            model = FlowPicModel(input_shape, num_classes, filters, hidden_dims, drop_every, self.log)
             loss_fn = torch.nn.CrossEntropyLoss()
             optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
-            trainer = FlowPicTrainer(model, loss_fn, optimizer, self.device, parallel)
+            trainer = FlowPicTrainer(model, loss_fn, optimizer, self.log, self.device, parallel)
             res = trainer.fit(dl_train, dl_test, epochs, model_checkpoint,
                               checkpoint_every=checkpoint_every,
                               save_checkpoint=save_checkpoint,
@@ -102,5 +104,5 @@ class CrossValidation(Experiment):
 if __name__ == '__main__':
     exp = CrossValidation()
     parsed_args = exp.parse_cli()
-    print_verbose(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
+    print(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
     exp.run(**vars(parsed_args))

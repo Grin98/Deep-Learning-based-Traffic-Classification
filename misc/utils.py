@@ -140,12 +140,3 @@ def _create_pre_trained_model(model_class, model_state: dict, model_init_params:
         m.to(device)
     m.load_state_dict(model_state)
     return m
-
-
-# Updates on parsing command line arguments in Experiment, never changes after that
-verbose: bool = True
-
-
-def print_verbose(*values):
-    if verbose:
-        print(*values)

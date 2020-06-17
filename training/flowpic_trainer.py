@@ -1,14 +1,16 @@
 from collections import Counter
 
 import torch
+
+from misc.loging import Logger
 from training.trainer import Trainer
 from misc.data_classes import BatchResult
 from sklearn.metrics import confusion_matrix, f1_score
 
 
 class FlowPicTrainer(Trainer):
-    def __init__(self, model, loss_fn, optimizer, device=None, parallel=True):
-        super().__init__(model, loss_fn, optimizer, device, parallel)
+    def __init__(self, model, loss_fn, optimizer, log: Logger = Logger(), device=None, parallel=True):
+        super().__init__(model, loss_fn, optimizer, log, device, parallel)
 
     def train_batch(self, batch) -> BatchResult:
         X, y = batch

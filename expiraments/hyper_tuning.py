@@ -4,6 +4,8 @@ import sys
 from multiprocessing import Lock, current_process
 from time import sleep
 
+from misc.loging import Logger
+
 sys.path.append("../")
 sys.path.append("./")
 
@@ -40,12 +42,16 @@ def conf_as_dict(conf: Sequence):
 def run_experiments(experiment):
     confs, device = experiment
     torch.cuda.set_device(device)
-    return [run_conf(c) for c in confs]
+    args = CrossValidation().parse_cli()
+    out_file = Path(args.out_dir) / f'gpu{device}'
+    with out_file.open(mode='w+') as f:
+        log = Logger(file=f, verbose=False)
+        return [run_conf(c, log) for c in confs]
 
 
-def run_conf(conf):
+def run_conf(conf, log: Logger):
     print(f'{current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()}')
-    cv = CrossValidation()
+    cv = CrossValidation(log)
     args = cv.parse_cli()
     args = vars(args)
     args.update(conf)
