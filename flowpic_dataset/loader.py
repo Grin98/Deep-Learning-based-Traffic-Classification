@@ -19,7 +19,7 @@ class Format(Enum):
 
 class FlowCSVDataLoader:
 
-    def __init__(self, testing=False, verbose: bool = True):
+    def __init__(self, testing=False):
         self.testing = testing
         self.labels = {}
 
@@ -34,8 +34,8 @@ class FlowCSVDataLoader:
         train_dataset = BlocksDataSet.concatenate([self.load_dataset(d, format_=Format.Default) for d in train_dirs])
         test_dataset = self.load_dataset(test_dir, format_=Format.Default)
 
-        print(f'train {[d.parts[-1] for d in train_dirs]} {train_dataset}')
-        print(f'test {test_dir.parts[-1]} {test_dataset}')
+        print(f'train {[d.parts[-1] for d in train_dirs]} {train_dataset}\n'
+              f'test {test_dir.parts[-1]} {test_dataset}')
         return train_dataset, test_dataset
 
     def load_dataset(self, dataset_root_dir, format_: Format) -> Union[Tuple[BlocksDataSet], BlocksDataSet]:

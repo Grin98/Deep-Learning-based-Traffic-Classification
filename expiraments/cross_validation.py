@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from expiraments.experiment import Experiment
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
-from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer
+from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer, print_verbose
 from model.flow_pic_model import FlowPicModel
 from training.flowpic_trainer import FlowPicTrainer
 from misc.data_classes import BatchResult
@@ -100,11 +100,7 @@ class CrossValidation(Experiment):
 # python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
-    t = Timer()
-    t.start()
     exp = CrossValidation()
     parsed_args = exp.parse_cli()
-    print(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
-    for i in range(10):
-        exp.run(**vars(parsed_args))
-        t.lap(f'{i} entire runs')
+    print_verbose(f'*** Starting {CrossValidation.__name__} with config:\n{parsed_args}')
+    exp.run(**vars(parsed_args))

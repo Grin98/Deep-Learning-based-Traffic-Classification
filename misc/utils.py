@@ -95,7 +95,6 @@ def fix_seed(seed: int):
     if seed is None:
         return
 
-    print_('seed fixed to', seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True
@@ -151,13 +150,13 @@ print_lock: Lock = None
 
 def print_verbose(*values):
     if verbose:
-        print_(values)
+        print_(*values)
 
 
 def print_(*values):
     if print_lock is not None:
         print_lock.acquire()
-        print(values)
+        print(*values)
         print_lock.release()
     else:
-        print(values)
+        print(*values)
