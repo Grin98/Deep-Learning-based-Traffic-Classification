@@ -4,8 +4,6 @@ import sys
 from multiprocessing import Lock, current_process
 from time import sleep
 
-from misc.loging import Logger
-
 sys.path.append("../")
 sys.path.append("./")
 
@@ -21,6 +19,7 @@ import torch
 from expiraments.cross_validation import CrossValidation
 from expiraments.experiment import Experiment
 from misc.utils import create_dir
+from misc.loging import Logger
 
 
 def list_chunk(l: Sequence, n: int) -> Tuple[Sequence, ...]:
