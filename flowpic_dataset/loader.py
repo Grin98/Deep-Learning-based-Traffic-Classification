@@ -36,8 +36,11 @@ class FlowCSVDataLoader:
         train_dataset = BlocksDataSet.concatenate([self.load_dataset(d, format_=Format.Default) for d in train_dirs])
         test_dataset = self.load_dataset(test_dir, format_=Format.Default)
 
-        self.log.write(f'***train {[d.parts[-1] for d in train_dirs]} {train_dataset}\n'
-                       f'***test {test_dir.parts[-1]} {test_dataset}')
+        self.log.write(f'*\n'
+                       f'train {[d.parts[-1] for d in train_dirs]} {train_dataset}\n'
+                       f'*\n'
+                       f'test {test_dir.parts[-1]} {test_dataset}\n'
+                       f'*')
         return train_dataset, test_dataset
 
     def load_dataset(self, dataset_root_dir, format_: Format) -> Union[Tuple[BlocksDataSet], BlocksDataSet]:

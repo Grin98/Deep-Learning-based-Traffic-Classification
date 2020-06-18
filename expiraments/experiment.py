@@ -34,7 +34,7 @@ class Experiment(abc.ABC):
     def run(self,
             # Training params
             data_dir=None, out_dir=None,
-            bs_train=128, bs_test=None, epochs=100,
+            bs_train=128, bs_test=None, epochs=100, print_every=5,
             early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
             # Model params
             filters_per_layer=None, layers_per_block=2, pool_every=2,
@@ -67,6 +67,8 @@ class Experiment(abc.ABC):
                        default=256, metavar='BATCH_SIZE')
         p.add_argument('--epochs', type=int,
                        help='Maximal number of epochs', default=40)
+        p.add_argument('--print-every', type=int,
+                       help='Maximal number of epochs', default=5)
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
                             'improvement', default=None)

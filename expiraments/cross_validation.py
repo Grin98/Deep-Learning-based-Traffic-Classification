@@ -27,7 +27,7 @@ class CrossValidation(Experiment):
         super().__init__()
         self.log = log
 
-    def run(self, data_dir=None, out_dir=None, bs_train=128, bs_test=256, epochs=40, early_stopping=3,
+    def run(self, data_dir=None, out_dir=None, bs_train=128, bs_test=256, epochs=40, print_every=5, early_stopping=3,
             save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
             parallel=True, k: int = None, **kw):
@@ -61,7 +61,7 @@ class CrossValidation(Experiment):
                               save_checkpoint=save_checkpoint,
                               load_checkpoint=load_checkpoint,
                               early_stopping=early_stopping,
-                              print_every=5)
+                              print_every=print_every)
 
             if res.num_epochs > 0:
                 f1 += res.test_f1[-1]

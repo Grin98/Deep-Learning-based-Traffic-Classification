@@ -49,13 +49,13 @@ def run_experiments(experiment):
 
 
 def run_conf(conf, log: Logger):
-    log.write(f'{current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()}')
+    log.write(f'=== {current_process().pid} running config {conf} on gpu: {torch.cuda.current_device()} ===')
     cv = CrossValidation(log)
     args = cv.parse_cli()
     args = vars(args)
     args.update(conf)
     f1, _, _ = cv.run(**args)
-    log.write(f'cv result for config {conf} on gpu: {torch.cuda.current_device()} is {f1}')
+    log.write(f'=== cv result for config {conf} on gpu: {torch.cuda.current_device()} is {f1} ===')
     return f1, conf
 
 

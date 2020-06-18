@@ -11,6 +11,7 @@ python expiraments/hyper_tuning.py \
 --bs-train 128 \
 --bs-test 256 \
 --epochs 40 \
+--print_every 40 \
 --save-checkpoint 0 \
 --load-checkpoint 0 \
 --checkpoint-every 10 \
