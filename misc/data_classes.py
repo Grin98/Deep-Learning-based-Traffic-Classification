@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import NamedTuple, List, Tuple, Sequence, Any
 import numpy as np
 
+from misc.constatns import PACKET_SIZE_LIMIT
+
 
 class Flow(NamedTuple):
     app: str
@@ -13,7 +15,7 @@ class Flow(NamedTuple):
     pcap_relative_start_time: float = 0
 
     @classmethod
-    def create_from_row(cls, row: List[str], packet_size_limit: int):
+    def create_from_row(cls, row: List[str]):
         app = row[0]
         five_tuple = row[1:6]
         start_time = float(row[6])
@@ -21,12 +23,11 @@ class Flow(NamedTuple):
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
         sizes = row[(num_packets + off_set + 1):]  # +1 because there is an empty cell between times and sizes
-        return cls.create(app, five_tuple, packet_size_limit, times, sizes, start_time)
+        return cls.create(app, five_tuple, times, sizes, start_time)
 
     @classmethod
     def create(cls, app: str,
                five_tuple: Sequence,
-               packet_size_limit: int,
                times: Sequence,
                sizes: Sequence,
                start_time: float = None,
@@ -36,7 +37,7 @@ class Flow(NamedTuple):
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
 
-        mask = sizes <= packet_size_limit
+        mask = sizes <= PACKET_SIZE_LIMIT
         times = times[mask]
         sizes = sizes[mask] - 1
 

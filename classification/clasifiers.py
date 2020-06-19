@@ -62,9 +62,9 @@ class Classifier:
 
 class PcapClassifier:
 
-    def __init__(self, model, device: str,
+    def __init__(self, model,
+                 device: str,
                  seed: int = 42,
-                 packet_size_limit: int = 1500,
                  ):
         """
 
@@ -73,13 +73,12 @@ class PcapClassifier:
         :param seed: seed for numpy and torch
         :param packet_size_limit: size in bytes where larger packages will be discarded
         """
-        self.packet_size_limit = packet_size_limit
         self.classifier = Classifier(model, device, seed)
         self.parser = PcapParser()
 
     def classify_file(self, file: Path, num_flows_to_classify: int) -> Sequence[ClassifiedFlow]:
         print(f'parsing pcap file {str(file)}')
-        flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
+        flows = self.parser.parse_file(file, num_flows_to_classify)
         return self.classifier.classify_multiple_flows(flows)
 
     def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> Sequence[ClassifiedFlow]:
@@ -89,22 +88,18 @@ class PcapClassifier:
 
 
 class FlowCsvClassifier:
-    def __init__(self, model, device: str,
+    def __init__(self, model,
+                 device: str,
                  seed: int = 42,
-                 block_duration=60,
-                 block_delta=15,
-                 packet_size_limit: int = 1500,
                  ):
         """
 
         :param model: model that will be used for classifying FlowPics
         :param device: if value is cuda then the model will run on gpu and if cpu then it will run on cpu
         :param seed: seed for numpy and torch
-        :param packet_size_limit: size in bytes where larger packages will be discarded
         """
-        self.packet_size_limit = packet_size_limit
         self.classifier = Classifier(model, device, seed)
-        self.processor = BasicProcessor(block_duration, block_delta, packet_size_limit)
+        self.processor = BasicProcessor()
 
     def classify_file(self, file: Path) -> Sequence[ClassifiedFlow]:
         print(f'parsing csv file {str(file)}')
@@ -133,7 +128,7 @@ if __name__ == '__main__':
     print('csv', Counter([b.pred for b in c.classify_file(f)[0].classified_blocks]))
 
     c = PcapClassifier(model, device)
-    print('pca', Counter([b.pred for b in c.classify_file(p, 1)[0].classified_blocks]))
+    print('pcap', Counter([b.pred for b in c.classify_file(p, 1)[0].classified_blocks]))
 
     # ds = FlowsDataSet(file_samples, global_label=3)
     # dl = DataLoader(ds, batch_size=128, shuffle=True)

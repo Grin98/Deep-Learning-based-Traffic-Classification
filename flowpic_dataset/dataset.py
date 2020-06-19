@@ -9,7 +9,7 @@ from torch.utils.data.dataset import Dataset
 import csv
 from typing import List, Sequence, Tuple, NamedTuple, overload
 import numpy as np
-from flowpic_dataset.processors import QuickFlowFileProcessor, QuickPcapFileProcessor, BasicProcessor
+from flowpic_dataset.processors import QuickFlowFileProcessor, BasicProcessor
 from misc.data_classes import Flow, Block
 from misc.utils import build_pic
 
@@ -45,22 +45,14 @@ class BlocksDataSet(Dataset):
             return BlocksDataSet(data, labels, start_times)
 
     @classmethod
-    def from_flows_file(cls, csv_file_path, global_label=0,
-                        block_duration_in_seconds: int = 60,
-                        block_delta_in_seconds: int = 15,
-                        packet_size_limit: int = 1500
-                        ):
-        p = QuickFlowFileProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
+    def from_flows_file(cls, csv_file_path, global_label=0):
+        p = QuickFlowFileProcessor()
         blocks = p.transform_file_to_blocks(csv_file_path)
         return cls.from_blocks(blocks, global_label)
 
     @classmethod
-    def from_flows(cls, flows: Sequence[Flow], global_label=0,
-                   block_duration_in_seconds: int = 60,
-                   block_delta_in_seconds: int = 15,
-                   packet_size_limit: int = 1500
-                   ):
-        p = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
+    def from_flows(cls, flows: Sequence[Flow], global_label=0):
+        p = BasicProcessor()
         blocks = p.split_multiple_flows_to_blocks(flows)
         return cls.from_blocks(blocks, global_label)
 

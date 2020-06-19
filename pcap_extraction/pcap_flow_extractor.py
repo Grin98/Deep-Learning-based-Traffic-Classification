@@ -12,13 +12,13 @@ from heapq import nlargest
 
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.processors import BasicProcessor
+from misc.constatns import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
 
 
 class PcapParser:
 
-    def parse_file(self, file: Path, n: int,
-                   packet_size_limit: int) -> Sequence[Flow]:
+    def parse_file(self, file: Path, n: int) -> Sequence[Flow]:
         """
         returns flows from a pcap file
         :param file: the pcap file to be parsed, either .pcap or .pcapng
@@ -54,16 +54,14 @@ class PcapParser:
         capture.close()
 
         max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
-        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], packet_size_limit, pcap_start_time)
+        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], pcap_start_time)
                 for five_tuple in max_five_tuples]
 
     @staticmethod
-    def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]],
-                                  packet_size_limit: int, pcap_start_time: float):
+    def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]], pcap_start_time: float):
         times, sizes = zip(*stream)
         pcap_relative_start_time = times[0] - pcap_start_time
-        return Flow.create('app', five_tuple, packet_size_limit,
-                           times, sizes, pcap_relative_start_time=pcap_relative_start_time)
+        return Flow.create('app', five_tuple, times, sizes, pcap_relative_start_time=pcap_relative_start_time)
 
     @staticmethod
     def write_flow_rows(file: Path, flows: Sequence[Flow]):
@@ -100,7 +98,7 @@ class PcapParser:
 if __name__ == '__main__':
     file = Path('../pcaps/facebook-chat.pcapng')
     parser = PcapParser()
-    flows = parser.parse_file(file, n=1, packet_size_limit=1500)
+    flows = parser.parse_file(file, n=1)
     f = flows[0]
     print(f.five_tuple)
     print(f.start_time, f.pcap_relative_start_time, f.num_packets)
