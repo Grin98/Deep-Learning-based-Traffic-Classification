@@ -13,6 +13,7 @@ from torch import nn
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
+from misc.constatns import BLOCK_DURATION, PACKET_SIZE_LIMIT
 from misc.loging import Logger
 
 
@@ -29,14 +30,14 @@ class Timer:
         print(f'{tag} time = {diff}[sec]')
 
 
-def build_pic(stream: Sequence[Tuple[float, int]],
-              stream_duration_in_seconds: int = 60,
-              pic_width: int = 1500,
-              pic_height: int = 1500,
-              ):
+def build_pic(stream: Sequence[Tuple[float, int]]):
+    stream_duration = BLOCK_DURATION
+    pic_width = PACKET_SIZE_LIMIT
+    pic_height = PACKET_SIZE_LIMIT
+
     # scaling stream_duration to pic's width
     packets = np.array(stream)
-    x_axis_to_second_ratio = pic_width * 1.0 / stream_duration_in_seconds
+    x_axis_to_second_ratio = pic_width * 1.0 / stream_duration
     packets[:, 0] *= x_axis_to_second_ratio
     packets = np.floor(packets)
     hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1],

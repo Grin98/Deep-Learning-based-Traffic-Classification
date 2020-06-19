@@ -45,19 +45,10 @@ class C:
 
 
 if __name__ == '__main__':
-    file_checkpoint = 'reg_overlap_split'
-    f = Path('parsed_flows/facebook-chat.csv')
-    device = 'cuda'
-
-    model, _, _, _ = load_model(file_checkpoint, FlowPicModel, device)
-    c = Classifier(model, device)
-    ds = BlocksDataSet.from_flows_file(f, 1)
-    a, b = c.classify_dataset(ds)
-    print(a)
 
     # print(list(map(lambda d: str(d),get_dir_csvs(Path('data_netflix')))))
-    # dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_zoom'))]
-    # [print(ds) for ds in dss]
+    dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_netflix'))]
+    [print(ds) for ds in dss]
 
     # p = CrossValidationPreProcessor('data_cv_nz_reg2', test_percent=0.2,
     #                                 train_size_cap=2400, test_size_cap=600, k=5)
