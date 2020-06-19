@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import itertools
 from collections import Counter
 from pathlib import Path
 from typing import NamedTuple, Sequence, Tuple
@@ -9,15 +11,13 @@ from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import ClassifiedFlow
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
-from misc.utils import load_model, fix_seed
+from misc.utils import load_model, set_seed
 
 
 class PcapClassifier:
 
     def __init__(self, model, device: str, num_categories,
                  seed: int = 42,
-                 block_duration_in_seconds: int = 60,
-                 block_delta_in_seconds: int = 15,
                  packet_size_limit: int = 1500,
                  ):
         """
@@ -26,59 +26,23 @@ class PcapClassifier:
         :param device: if value is cuda then the model will run on gpu and if cpu then it will run on cpu
         :param num_categories: the number of possible different classifications
         :param seed: seed for numpy and torch
-        :param block_duration_in_seconds: the duration of a block
-        :param block_delta_in_seconds: the time difference between the start of 2 consecutive blocks
         :param packet_size_limit: size in bytes where larger packages will be discarded
         """
-        fix_seed(seed)
+        set_seed(seed)
         self.num_categories = num_categories
         self.packet_size_limit = packet_size_limit
         self.classifier = Classifier(model, device, seed)
         self.parser = PcapParser()
-        self.processor = BasicProcessor(block_duration_in_seconds, block_delta_in_seconds, packet_size_limit)
 
-    def classify_file(self, file: Path, num_flows_to_classify: int = 3) -> Sequence[Sequence[ClassifiedFlow]]:
-        print('parsing file')
+    def classify_file(self, file: Path, num_flows_to_classify: int) -> Sequence[ClassifiedFlow]:
+        print(f'parsing file {str(file)}')
         flows = self.parser.parse_file(file, num_flows_to_classify, self.packet_size_limit)
-        dss = [BlocksDataSet.from_flows([f]) for f in flows]
+        return self.classifier.classify_multiple_flows(flows)
 
-        classified_dist = PredDist(self.num_categories)
-        classified_flows = [[] for _ in range(self.num_categories)]
-        for i, ds in enumerate(dss):
-            print('classifying %s' % str(flows[i].five_tuple))
-            distribution, classified_blocks = self.classifier.classify_dataset(ds)
-            pred = distribution.most_common(1)[0][0]
-            classified_dist.update_pred(pred, distribution)
-            classified_flows[pred].append(ClassifiedFlow(flows[i], pred, classified_blocks))
-
+    def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> Sequence[ClassifiedFlow]:
+        classified_flows = list(itertools.chain.from_iterable([self.classify_file(f, num_flows_to_classify)
+                                                               for f in files]))
         return classified_flows
-
-    def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> Tuple[PredDist, Sequence[ClassifiedFlow]]:
-        classified_dist = PredDist(self.num_categories)
-        classified_flows = []
-        for f in files:
-            print('classifying %s' % str(f))
-            cd, cf = self.classify_file(f, num_flows_to_classify)
-            classified_dist.join_with(cd)
-            classified_flows += cf
-
-        return classified_dist, classified_flows
-
-
-class PredDist:
-    def __init__(self, num_preds):
-        self.n = num_preds
-        self.pd = [Counter([]) for _ in range(num_preds)]
-
-    def update_pred(self, pred: int, c: Counter):
-        self.pd[pred] += c
-        return self
-
-    def join_with(self, other: PredDist):
-        if self.n != other.n:
-            raise Exception('self and other have different number of possible preds')
-        self.pd = [self.pd[i] + other.pd[i] for i in range(self.n)]
-        return self
 
 
 if __name__ == '__main__':

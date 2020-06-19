@@ -7,9 +7,9 @@ from torch.utils.data import DataLoader, Dataset
 
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
-from misc.data_classes import ClassifiedBlock
+from misc.data_classes import ClassifiedBlock, Flow, ClassifiedFlow
 from model.flow_pic_model import FlowPicModel
-from misc.utils import load_model, fix_seed
+from misc.utils import load_model, set_seed
 
 
 class Classifier:
@@ -17,7 +17,7 @@ class Classifier:
         self.model = model
         self.device = device
         self.model.train(False)
-        fix_seed(seed)
+        set_seed(seed)
 
     def classify(self, X):
         if self.device == 'cuda':
@@ -31,11 +31,19 @@ class Classifier:
         # print('pred', pred)
         return pred
 
-    def classify_folder(self, path: str, label: int, tag=''):
-        ds = FlowCSVDataLoader(path, verbose=False).load_dataset()
-        self.classify_dataset(ds, label, tag)
+    def classify_multiple_flows(self, flows: Sequence[Flow]) -> Sequence[ClassifiedFlow]:
+        return [self.classify_flow(f) for f in flows]
 
-    def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 256, label: int = 0, tag: str = ''):
+    def classify_flow(self, f: Flow) -> ClassifiedFlow:
+        print('classifying %s' % str(f.five_tuple))
+        ds = BlocksDataSet.from_flows([f])
+        distribution, classified_blocks = self.classify_dataset(ds)
+        pred = distribution.most_common(1)[0][0]
+        return ClassifiedFlow(f, pred, classified_blocks)
+
+
+
+    def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 256):
         dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
@@ -48,12 +56,6 @@ class Classifier:
             classified_blocks += [ClassifiedBlock(ds.get_block(j * batch_size + i), pred[i]) for i in range(len(pred))]
 
         return cnt, classified_blocks
-
-    def classify_folders(self, p1:Path, folders: Sequence[str], p2: Path):
-        for i, folder in enumerate(folders):
-            file_samples = p1 / folder / p2
-            self.classify_folder(str(file_samples), label=i, tag=folder)
-
 
 
 

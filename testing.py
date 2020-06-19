@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from expiraments.cross_validation import CrossValidation
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
-from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor
+from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
 from misc.data_classes import Flow
 from misc.utils import show_flow_pic, is_file, Timer
 from pcap_extraction.pcap_flow_extractor import PcapParser
@@ -43,12 +43,25 @@ class C:
 
 
 if __name__ == '__main__':
-    lr = list(np.logspace(start=-3, stop=-1, num=3))
-    reg = list(np.logspace(start=-4, stop=-1, num=4))
-    reg.append(0.0)
-    conf = list(itertools.product(lr, reg))
-    print(lr, reg)
-    print(len(conf), conf)
+    # print(list(map(lambda d: str(d),get_dir_csvs(Path('data_netflix')))))
+    # dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_zoom'))]
+    # [print(ds) for ds in dss]
+    a = [[1, 2, 3], [4, 5], [6]]
+    print(list(itertools.chain.from_iterable(a)))
+    exit()
+    p = CrossValidationPreProcessor('data_cv_nz_reg2', test_percent=0.2,
+                                    train_size_cap=2400, test_size_cap=600, k=5)
+    p.process_dataset(dataset_dir='classes_reg')
+    # FlowCSVDataLoader().load_dataset('data_cv_net_reg', format_=Format.SplitCV)
+    # print('*****************')
+    exit()
+
+    # lr = list(np.logspace(start=-3, stop=-1, num=3))
+    # reg = list(np.logspace(start=-4, stop=-1, num=4))
+    # reg.append(0.0)
+    # conf = list(itertools.product(lr, reg))
+    # print(lr, reg)
+    # print(len(conf), conf)
     # c = CrossValidation()
     # c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
     #       load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)

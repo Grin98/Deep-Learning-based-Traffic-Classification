@@ -91,7 +91,7 @@ def is_file(file_path: str):
     return os.path.isfile(file_path)
 
 
-def fix_seed(seed: int):
+def set_seed(seed: int):
     if seed is None:
         return
 

@@ -9,7 +9,7 @@ import torch
 from misc import utils
 
 from misc.data_classes import FitResult
-from misc.utils import fix_seed, Timer
+from misc.utils import set_seed, Timer
 from model.flow_pic_model import FlowPicModel
 
 
@@ -24,7 +24,7 @@ class Experiment(abc.ABC):
     def __init__(self, seed=42):
 
         self.timer = Timer()
-        fix_seed(seed)
+        set_seed(seed)
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
