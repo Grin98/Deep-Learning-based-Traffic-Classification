@@ -93,6 +93,7 @@ class ClassifiedFlow(NamedTuple):
 class ClassifiedBlock(NamedTuple):
     block: Block
     pred: int
+    probabilities: Sequence[float]
 
 
 class BatchResult(NamedTuple):

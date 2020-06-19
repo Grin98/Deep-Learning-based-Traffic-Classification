@@ -13,6 +13,8 @@ from torch import nn
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
+from misc.loging import Logger
+
 
 class Timer:
     def __init__(self):

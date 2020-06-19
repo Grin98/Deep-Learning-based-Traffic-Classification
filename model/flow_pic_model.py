@@ -5,7 +5,7 @@ from misc.loging import Logger
 
 class FlowPicModel(nn.Module):
 
-    def __init__(self, in_size, out_classes, filters, hidden_dims, drop_every, log: Logger = Logger):
+    def __init__(self, in_size, out_classes, filters, hidden_dims, drop_every, log: Logger = Logger()):
         """
         :param in_size: Size of input pixel images, (Packet size, arrival time).
         :param out_classes: Number of classes to output in the final layer.
