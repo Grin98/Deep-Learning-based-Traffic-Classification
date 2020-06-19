@@ -28,7 +28,6 @@ class PcapClassifier:
         :param seed: seed for numpy and torch
         :param packet_size_limit: size in bytes where larger packages will be discarded
         """
-        set_seed(seed)
         self.num_categories = num_categories
         self.packet_size_limit = packet_size_limit
         self.classifier = Classifier(model, device, seed)
