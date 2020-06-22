@@ -5,10 +5,11 @@ from tkinter import *
 import queue
 import threading
 import itertools
+from itertools import groupby
 import matplotlib
 import time
 import numpy as np
-from classification.pcap_classification import PcapClassifier
+from classification.clasifiers import PcapClassifier
 from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
@@ -20,7 +21,8 @@ import matplotlib.pyplot as plt
 result_queue = queue.Queue()
 COMPLETED = "completed"
 TIME_INTERVAL = 60
-BLOCK_INTERVAL = 2
+BLOCK_INTERVAL = 15
+FLOWS_TO_CLASSIFY = 3
 
 
 def _blocks_to_time(block_amount):
@@ -35,7 +37,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../reg_overlap_split'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
-        self.classifier = PcapClassifier(model, device, num_categories=len(self.categories))
+        self.classifier = PcapClassifier(model, device)
 
         self.max_time = 0
         self.min_time = 0
@@ -95,16 +97,18 @@ class FlowPicGraphFrame(ttk.Frame):
         self._create_graph(actual_graph, labels, x, y_axis)
 
     def _create_combobox(self):
-        self.flow_selection["values"] = list(self.flows_map.keys())
+
+        self.flow_selection["values"] = list(
+            map(lambda flow: f'{flow.flow.five_tuple} ({self.categories[flow.pred]})', self.flows_map.values()))
 
     def _on_flow_select(self, event):
         self.figure_per_flow.clear()
 
         graph = self.figure_per_flow.add_subplot(111)
-        flow = self.flow_selection["values"][self.flow_selection.current()]
-        labels, x, y_axis = self._extract_flow_values(self.flows_map[flow])
+        flow = self.flows_map[list(self.flows_map.keys())[self.flow_selection.current()]]
+        labels, x, y_axis = self._extract_flow_values(flow)
 
-        graph.set_title("Classification for " + flow.__str__())
+        graph.set_title("Classification for " + str(flow.flow.five_tuple))
 
         self.graph._tkcanvas.grid_forget()
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
@@ -145,31 +149,33 @@ class FlowPicGraphFrame(ttk.Frame):
         return self.categories, x, flows
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
-        x = list(np.arange(BLOCK_INTERVAL, len(classified_flow.classified_blocks) + BLOCK_INTERVAL, BLOCK_INTERVAL))
-        blocks = [[] for _ in self.categories]
-        for block_amount in x:
-            sums_per_pred = [0 for _ in self.categories]
-            for index, block in enumerate(classified_flow.classified_blocks[:block_amount]):
-                sizes = np.array([data[1] for data in block.block.data])
-                times = np.array([data[0] for data in block.block.data])
-                pred = block.pred
-                if index == 0:
-                    sizes = np.sum(sizes)
-                else:
-                    sizes = np.sum(sizes[((times >= 45) & (times <= 60))])
-                sums_per_pred[pred] += sizes / 1000
-            blocks = [block+[sums / _blocks_to_time(block_amount)] for block, sums in zip(blocks, sums_per_pred)]
-        x = [_blocks_to_time(block_amount) for block_amount in x]
+        x = list(np.arange(BLOCK_INTERVAL, classified_flow.flow.times[-1], BLOCK_INTERVAL))
+        bandwidth_per_category = [[] for _ in self.categories]
 
-        return self.categories, x, blocks
+        for window_index, time_window in enumerate(x):
+            min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)
+            max_index = min(window_index, len(classified_flow.classified_blocks) - 1)
+            data = np.array(classified_flow.classified_blocks[max_index].block.data)
+            times = data[:, 0]
+            size = np.sum(data[:, 1][times <= TIME_INTERVAL])
+            prob_sum = np.array([0.0] * len(self.categories))
+            for block in classified_flow.classified_blocks[min_index:max_index + 1]:
+                prob_sum += block.probabilities
+            prob_sum /= (max_index + 1) - min_index
+            print(min_index, max_index, window_index)
+            print(prob_sum)
+            for index, bandwidth_list in enumerate(bandwidth_per_category):
+                bandwidth_list.append(prob_sum[index] * ((size / 1000) / TIME_INTERVAL))
+        return self.categories, x, bandwidth_per_category
 
     def classify_pcap_file(self, filepath):
         self.title = filepath.split("/")[-1]
-        flows_data = self.classifier.classify_file(Path(filepath))
-
-        labels, x, y_axis = self._extract_graph_values(flows_data)
-        self.flows_map = {classified_flow.flow.five_tuple.__str__(): classified_flow for classified_flow in
-                          itertools.chain.from_iterable(flows_data)}
+        flows_data = self.classifier.classify_file(Path(filepath), FLOWS_TO_CLASSIFY)
+        flows_by_categories = [[] for _ in self.categories]
+        [flows_by_categories[flow.pred].append(flow) for flow in flows_data]
+        labels, x, y_axis = self._extract_graph_values(flows_by_categories)
+        self.flows_map = {str(classified_flow.flow.five_tuple): classified_flow for classified_flow in
+                          itertools.chain.from_iterable(flows_by_categories)}
 
         self._create_combobox()
         self._generate_predicted_graph(labels, x, y_axis)
@@ -180,8 +186,6 @@ class FlowPicGraphFrame(ttk.Frame):
         self._on_return_click()
         self.figure.clear()
         self.graph.draw()
-        # self.figure_per_flow.clear()
-        # self.graph_per_flow.draw()
         self.flow_selection_label.grid_forget()
         self.flow_selection.grid_forget()
 
