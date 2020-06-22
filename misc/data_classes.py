@@ -23,7 +23,7 @@ class Flow(NamedTuple):
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
         sizes = row[(num_packets + off_set + 1):]  # +1 because there is an empty cell between times and sizes
-        return cls.create(app, five_tuple, times, sizes, start_time)
+        return cls.create(app, five_tuple, times, sizes, start_time, 0)
 
     @classmethod
     def create(cls, app: str,

@@ -72,9 +72,9 @@ class PcapClassificationPage(ttk.Frame):
         self.graph = FlowPicGraphFrame(self)
         self.graph.grid(column=1, row=1, columnspan=4, rowspan=4)
 
-        title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="Pcap File Classification")
+        title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="File Classification")
 
-        pcap_button = ttk.Button(self, text="Upload pcap file", width=24, command=self.upload_pcap_file)
+        pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file)
         back_button = ttk.Button(self, width=24, text="Back",
                                  command=lambda: self.on_back_button_click())
 
@@ -86,11 +86,11 @@ class PcapClassificationPage(ttk.Frame):
     def upload_pcap_file(self):
         self.graph.clear_graphs()
         # Open pcap file and save its location and name
-        self.pcap_file_path = filedialog.askopenfilename()
-        if self.pcap_file_path == "":
+        self.pcap_file_path = list(map(lambda file: Path(file), filedialog.askopenfilenames()))
+        if len(self.pcap_file_path) == 0:
             return
-        pcap_file_name = self.pcap_file_path.split("/")[-1]
-        self.pcap_file_label_variable.set("Classifying " + pcap_file_name)
+        pcap_file_name = list(map(lambda file: file.name, self.pcap_file_path))
+        self.pcap_file_label_variable.set("Classifying " + str(pcap_file_name))
         # Show Classifying animation
         self.pcap_label.grid(column=2, row=6, columnspan=2)
         self.progress_bar.grid(column=2, row=7, columnspan=2)

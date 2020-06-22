@@ -6,10 +6,12 @@ import queue
 import threading
 import itertools
 from itertools import groupby
+from typing import List
+
 import matplotlib
 import time
 import numpy as np
-from classification.clasifiers import PcapClassifier
+from classification.clasifiers import PcapClassifier, FlowCsvClassifier
 from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
@@ -23,10 +25,8 @@ COMPLETED = "completed"
 TIME_INTERVAL = 60
 BLOCK_INTERVAL = 15
 FLOWS_TO_CLASSIFY = 3
-
-
-def _blocks_to_time(block_amount):
-    return 60 + (15 * (block_amount - 1))
+PCAP_KEY = "p"
+CSV_KEY = "c"
 
 
 class FlowPicGraphFrame(ttk.Frame):
@@ -37,7 +37,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../reg_overlap_split'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
-        self.classifier = PcapClassifier(model, device)
+        self.pcap_classifier = PcapClassifier(model, device)
+        self.csv_classifier = FlowCsvClassifier(model, device)
 
         self.max_time = 0
         self.min_time = 0
@@ -79,21 +80,19 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def _generate_predicted_graph(self, labels, x, y_axis):
         predicted_graph = self.figure.add_subplot(212)
-        predicted_graph.set_title("Predicted Categories Bandwidth for " + self.title)
+        predicted_graph.set_title("Predicted Categories Bandwidth for \n" + self.title)
         self._create_graph(predicted_graph, labels, x, y_axis)
 
-    def _generate_actual_graph(self, filepath):
-        # TODO change from hardcoded values
+    def _generate_actual_graph(self, files, flows_data: List[ClassifiedFlow]):
+        title = str(list(map(lambda file: file.name, files)))
 
-        labels = ['browsing', 'chat', 'file_transfer']
-        x = list(range(60, 360, 60))
-        flow1 = [0.2, 0.26, 0.30, 0.33, 0.4]
-        flow2 = [0.3, 0.24, 0.18, 0.2, 0.2]
-        flow3 = [0.4, 0.4, 0.5, 0.4, 0.32]
-        y_axis = [flow1, flow2, flow3]
+        flows_by_categories = [[] for _ in self.categories]
+        [flows_by_categories[self.categories.index(flow.flow.app)].append(flow) for flow in flows_data]
+
+        labels, x, y_axis = self._extract_graph_values(flows_by_categories)
 
         actual_graph = self.figure.add_subplot(211)
-        actual_graph.set_title("Actual Categories Bandwidth for " + self.title)
+        actual_graph.set_title("Actual Categories Bandwidth for \n" + title)
         self._create_graph(actual_graph, labels, x, y_axis)
 
     def _create_combobox(self):
@@ -162,24 +161,37 @@ class FlowPicGraphFrame(ttk.Frame):
             for block in classified_flow.classified_blocks[min_index:max_index + 1]:
                 prob_sum += block.probabilities
             prob_sum /= (max_index + 1) - min_index
-            print(min_index, max_index, window_index)
-            print(prob_sum)
             for index, bandwidth_list in enumerate(bandwidth_per_category):
                 bandwidth_list.append(prob_sum[index] * ((size / 1000) / TIME_INTERVAL))
         return self.categories, x, bandwidth_per_category
 
-    def classify_pcap_file(self, filepath):
-        self.title = filepath.split("/")[-1]
-        flows_data = self.classifier.classify_file(Path(filepath), FLOWS_TO_CLASSIFY)
+    def classify_pcap_file(self, files_list: List[Path]):
+        self.title = str(list(map(lambda file: file.name, files_list)))
+        files_list.sort(key=lambda file: file.suffix[1])
+        files_dict = {key: list(group) for key, group in
+                      groupby(files_list, key=lambda file: file.suffix[1])}
+        pcap_files = files_dict.get(PCAP_KEY)
+        csv_files = files_dict.get(CSV_KEY)
+        flows_data = []
+        print(pcap_files)
+        if csv_files is not None:
+            flows_data += self.csv_classifier.classify_multiple_files(csv_files)
+            self._generate_actual_graph(csv_files, list(flows_data))
+
+        if pcap_files is not None:
+            flows_data += self.pcap_classifier.classify_multiple_files(pcap_files, FLOWS_TO_CLASSIFY)
+
         flows_by_categories = [[] for _ in self.categories]
         [flows_by_categories[flow.pred].append(flow) for flow in flows_data]
         labels, x, y_axis = self._extract_graph_values(flows_by_categories)
-        self.flows_map = {str(classified_flow.flow.five_tuple): classified_flow for classified_flow in
-                          itertools.chain.from_iterable(flows_by_categories)}
+
+        self.flows_map = {f'{index}: {str(classified_flow.flow.five_tuple)}': classified_flow for
+                          index, classified_flow in
+                          enumerate(flows_data)}
 
         self._create_combobox()
         self._generate_predicted_graph(labels, x, y_axis)
-        self._generate_actual_graph(filepath)
+
         result_queue.put(COMPLETED)
 
     def clear_graphs(self):

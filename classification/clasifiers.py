@@ -1,7 +1,7 @@
 import itertools
 from collections import Counter
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, List
 
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -81,7 +81,7 @@ class PcapClassifier:
         flows = self.parser.parse_file(file, num_flows_to_classify)
         return self.classifier.classify_multiple_flows(flows)
 
-    def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> Sequence[ClassifiedFlow]:
+    def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> List[ClassifiedFlow]:
         classified_flows = list(itertools.chain.from_iterable([self.classify_file(f, num_flows_to_classify)
                                                                for f in files]))
         return classified_flows
@@ -106,7 +106,7 @@ class FlowCsvClassifier:
         flows = self.processor.process_file_to_flows(file)
         return self.classifier.classify_multiple_flows(flows)
 
-    def classify_multiple_files(self, files: Sequence[Path]) -> Sequence[ClassifiedFlow]:
+    def classify_multiple_files(self, files: Sequence[Path]) -> List[ClassifiedFlow]:
         classified_flows = list(itertools.chain.from_iterable([self.classify_file(f)
                                                                for f in files]))
         return classified_flows
