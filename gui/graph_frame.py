@@ -49,7 +49,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.figure_per_flow = plt.figure(figsize=(8, 8), dpi=100)
         self.graph = FigureCanvasTkAgg(self.figure, self)
         self.graph_per_flow = FigureCanvasTkAgg(self.figure_per_flow, self)
-        self.flow_selection = ttk.Combobox(self)
+        self.flow_selection = ttk.Combobox(self, width=50)
         self.flow_selection.bind("<<ComboboxSelected>>", self._on_flow_select)
         self.flow_selection_label = ttk.Label(self, text="Choose specific Flow:")
         self.return_button = ttk.Button(self, text="return", command=self._on_return_click)
@@ -80,7 +80,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def _generate_predicted_graph(self, labels, x, y_axis):
         predicted_graph = self.figure.add_subplot(212)
-        predicted_graph.set_title("Predicted Categories Bandwidth for \n" + self.title)
+        predicted_graph.set_title("Predicted Categories Bandwidth")
         self._create_graph(predicted_graph, labels, x, y_axis)
 
     def _generate_actual_graph(self, files, flows_data: List[ClassifiedFlow]):
@@ -92,19 +92,20 @@ class FlowPicGraphFrame(ttk.Frame):
         labels, x, y_axis = self._extract_graph_values(flows_by_categories)
 
         actual_graph = self.figure.add_subplot(211)
-        actual_graph.set_title("Actual Categories Bandwidth for \n" + title)
+        actual_graph.set_title("Actual Categories Bandwidth")
         self._create_graph(actual_graph, labels, x, y_axis)
 
     def _create_combobox(self):
 
         self.flow_selection["values"] = list(
-            map(lambda flow: f'{flow.flow.five_tuple} ({self.categories[flow.pred]})', self.flows_map.values()))
+            map(lambda item: f'{item[0]}({self.categories[item[1].pred]})', self.flows_map.items()))
 
     def _on_flow_select(self, event):
         self.figure_per_flow.clear()
 
         graph = self.figure_per_flow.add_subplot(111)
-        flow = self.flows_map[list(self.flows_map.keys())[self.flow_selection.current()]]
+        key = str(self.flow_selection.get()).split("(")[0]
+        flow = self.flows_map[key]
         labels, x, y_axis = self._extract_flow_values(flow)
 
         graph.set_title("Classification for " + str(flow.flow.five_tuple))

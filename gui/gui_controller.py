@@ -61,7 +61,6 @@ class PcapClassificationPage(ttk.Frame):
         self.pcap_values = []
         self.pcap_lables = []
         self.controller = controller
-        self.slider_graph = None
 
         progress_bar_frame = ttk.Frame(self, padding=(5, 5, 5, 5), width=200)
         self.progress_bar = ttk.Progressbar(progress_bar_frame, orient=HORIZONTAL, length=200,
@@ -89,8 +88,7 @@ class PcapClassificationPage(ttk.Frame):
         self.pcap_file_path = list(map(lambda file: Path(file), filedialog.askopenfilenames()))
         if len(self.pcap_file_path) == 0:
             return
-        pcap_file_name = list(map(lambda file: file.name, self.pcap_file_path))
-        self.pcap_file_label_variable.set("Classifying " + str(pcap_file_name))
+        self.pcap_file_label_variable.set("Classifying files")
         # Show Classifying animation
         self.pcap_label.grid(column=2, row=6, columnspan=2)
         self.progress_bar.grid(column=2, row=7, columnspan=2)
