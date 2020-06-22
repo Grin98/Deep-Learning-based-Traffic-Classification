@@ -15,6 +15,7 @@ from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
 from misc.data_classes import Flow
+from misc.loging import Logger
 from misc.utils import show_flow_pic, is_file, Timer, load_model
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
@@ -47,8 +48,8 @@ class C:
 if __name__ == '__main__':
 
     # print(list(map(lambda d: str(d),get_dir_csvs(Path('data_netflix')))))
-    dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_netflix'))]
-    [print(ds) for ds in dss]
+    # dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_netflix'))]
+    # [print(ds) for ds in dss]
 
     # p = CrossValidationPreProcessor('data_cv_nz_reg2', test_percent=0.2,
     #                                 train_size_cap=2400, test_size_cap=600, k=5)
@@ -66,8 +67,10 @@ if __name__ == '__main__':
     # c = CrossValidation()
     # c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
     #       load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)
-    # l = FlowCSVDataLoader(verbose=True)
-    # train, test = l.load_cross_validation_dataset('data_cv_reg', 2)
+    l = FlowCSVDataLoader()
+    train, test = l.load_dataset('data_cv_net_reg1', Format.SplitCV)
+    print(train)
+    print(test)
     # print(train, test)
     # print('===================')
     # train, test = l.load_dataset('del', format_=Format.SplitCV)
@@ -162,9 +165,4 @@ if __name__ == '__main__':
     # exit()
 
     # exit()
-    # p = SplitPreProcessor('data_reg_net', test_percent=0.3, train_size_cap=2100, test_size_cap=900).process_dataset('classes_reg')
-    # FlowCSVDataLoader('data_reg_net', verbose=True).load_dataset(is_split=True)
-    # FlowCSVDataLoader('data_reg', verbose=True).load_dataset(is_split=True)
-    # ds = FlowsDataSet.from_blocks_file(p)
-    # print(len(ds))
-    # exit()
+

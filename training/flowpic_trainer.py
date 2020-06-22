@@ -9,7 +9,7 @@ from sklearn.metrics import confusion_matrix, f1_score
 
 
 class FlowPicTrainer(Trainer):
-    def __init__(self, model, loss_fn, optimizer, log: Logger = Logger(), device=None, parallel=True):
+    def __init__(self, model, loss_fn, optimizer, log, device, parallel):
         super().__init__(model, loss_fn, optimizer, log, device, parallel)
 
     def train_batch(self, batch) -> BatchResult:

@@ -39,7 +39,7 @@ class Experiment(abc.ABC):
             # Model params
             filters_per_layer=None, layers_per_block=2, pool_every=2,
             drop_every=2, hidden_dims=None,
-            parallel=True, verbose=True, **kw):
+            parallel=True, **kw):
         """
             Execute a single run of experiment with given configuration
         """
