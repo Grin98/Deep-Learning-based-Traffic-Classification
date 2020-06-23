@@ -27,6 +27,7 @@ BLOCK_INTERVAL = 15
 FLOWS_TO_CLASSIFY = 3
 PCAP_KEY = "p"
 CSV_KEY = "c"
+BYTES_IN_KB = 1024
 
 
 class FlowPicGraphFrame(ttk.Frame):
@@ -57,22 +58,28 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
 
     @staticmethod
-    def _create_graph(graph, labels, x, y_axis):
-        y_axis = [flow for flow in y_axis if len(flow) > 0]
-        values = list(zip(*y_axis))
+    def _create_graph(graph, labels, x, y_axis_by_category):
+        print(y_axis_by_category)
+        y_axis_by_category = [y_axis_per_flow for y_axis_per_flow in y_axis_by_category if len(y_axis_per_flow) > 0]
+        values = list(zip(*y_axis_by_category))
         y_values = {label: [] for label in labels}
         y_values_for_fill = {label: [] for label in labels}
+        print(values)
         for value_list in values:
             current_y = 0
+            print("value_list: ", value_list)
             for label, value in zip(reversed(labels), reversed(value_list)):
                 y_values_for_fill[label].append((current_y, current_y + value))
+
                 current_y = current_y + value
                 y_values[label].append(current_y)
 
         for label in labels:
             graph.plot(x, y_values[label], label=label)
             fill_values = list(zip(*y_values_for_fill[label]))
+            print("fill_values: ", fill_values)
             graph.fill_between(x, fill_values[1], fill_values[0])
+
         graph.set_xlabel("time in seconds")
         graph.set_ylabel("Kbps")
         graph.set_xlim(x[0], x[-1])
@@ -84,8 +91,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self._create_graph(predicted_graph, labels, x, y_axis)
 
     def _generate_actual_graph(self, files, flows_data: List[ClassifiedFlow]):
-        title = str(list(map(lambda file: file.name, files)))
-
+        flows_data = [flow for flow in flows_data if flow.flow.times[-1] > TIME_INTERVAL]
         flows_by_categories = [[] for _ in self.categories]
         [flows_by_categories[self.categories.index(flow.flow.app)].append(flow) for flow in flows_data]
 
@@ -144,12 +150,14 @@ class FlowPicGraphFrame(ttk.Frame):
                 flows[index].append(np.sum(sums))
                 start_interval += TIME_INTERVAL
 
-        flows = [(np.array(flow) / 1000) / TIME_INTERVAL for flow in flows]
+        flows = [(np.array(flow) * 8 / BYTES_IN_KB) / TIME_INTERVAL for flow in flows]
 
         return self.categories, x, flows
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
-        x = list(np.arange(BLOCK_INTERVAL, classified_flow.flow.times[-1], BLOCK_INTERVAL))
+        x = list(
+            np.arange(TIME_INTERVAL, classified_flow.flow.pcap_relative_start_time + classified_flow.flow.times[-1],
+                      BLOCK_INTERVAL))
         bandwidth_per_category = [[] for _ in self.categories]
 
         for window_index, time_window in enumerate(x):
@@ -157,13 +165,14 @@ class FlowPicGraphFrame(ttk.Frame):
             max_index = min(window_index, len(classified_flow.classified_blocks) - 1)
             data = np.array(classified_flow.classified_blocks[max_index].block.data)
             times = data[:, 0]
-            size = np.sum(data[:, 1][times <= TIME_INTERVAL])
+            size_in_bits = np.sum(data[:, 1][times <= TIME_INTERVAL]) * 8
             prob_sum = np.array([0.0] * len(self.categories))
             for block in classified_flow.classified_blocks[min_index:max_index + 1]:
                 prob_sum += block.probabilities
             prob_sum /= (max_index + 1) - min_index
             for index, bandwidth_list in enumerate(bandwidth_per_category):
-                bandwidth_list.append(prob_sum[index] * ((size / 1000) / TIME_INTERVAL))
+                bandwidth_list.append(prob_sum[index] * ((size_in_bits / BYTES_IN_KB) / TIME_INTERVAL))
+
         return self.categories, x, bandwidth_per_category
 
     def classify_pcap_file(self, files_list: List[Path]):
@@ -181,7 +190,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         if pcap_files is not None:
             flows_data += self.pcap_classifier.classify_multiple_files(pcap_files, FLOWS_TO_CLASSIFY)
-
+        flows_data = [flow for flow in flows_data if flow.flow.times[-1] > TIME_INTERVAL]
         flows_by_categories = [[] for _ in self.categories]
         [flows_by_categories[flow.pred].append(flow) for flow in flows_data]
         labels, x, y_axis = self._extract_graph_values(flows_by_categories)
