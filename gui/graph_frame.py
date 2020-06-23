@@ -7,7 +7,6 @@ import threading
 import itertools
 from itertools import groupby
 from typing import List
-
 import matplotlib
 import time
 import numpy as np
@@ -30,7 +29,7 @@ FLOWS_TO_CLASSIFY = 3
 PCAP_KEY = "p"
 CSV_KEY = "c"
 BYTES_IN_KB = 1024
-
+LARGE_FONT = ("Verdana", 12)
 
 class FlowPicGraphFrame(ttk.Frame):
 
@@ -47,7 +46,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self.min_time = 0
         self.flows_map = {}
 
-        self.title = ""
+        self.f1_score_text = StringVar()
+        self.f1_score_label = ttk.Label(self, font=LARGE_FONT, anchor="center", textvariable=self.f1_score_text)
         self.figure = plt.figure(figsize=(8, 8), dpi=100)
         self.figure_per_flow = plt.figure(figsize=(8, 8), dpi=100)
         self.graph = FigureCanvasTkAgg(self.figure, self)
@@ -119,6 +119,7 @@ class FlowPicGraphFrame(ttk.Frame):
         graph.set_title("Classification for " + str(flow.flow.five_tuple))
 
         self.graph._tkcanvas.grid_forget()
+        self.f1_score_label.grid_forget()
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
         self.return_button.grid(column=0, row=0, sticky=W)
         self._create_graph(graph, labels, x, y_axis)
@@ -128,6 +129,8 @@ class FlowPicGraphFrame(ttk.Frame):
     def _on_return_click(self):
         self.graph_per_flow._tkcanvas.grid_forget()
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
+        if self.f1_score_text.get() != "":
+            self.f1_score_label.grid(column=3, row=1, columnspan=2)
         self.flow_selection.selection_clear()
         self.return_button.grid_forget()
 
@@ -186,12 +189,14 @@ class FlowPicGraphFrame(ttk.Frame):
         csv_files = files_dict.get(CSV_KEY)
         flows_data = []
         print(pcap_files)
+        csv_flows_data =[]
         if csv_files is not None:
-            flows_data += self.csv_classifier.classify_multiple_files(csv_files)
-            self._generate_actual_graph(csv_files, list(flows_data))
+            csv_flows_data = self.csv_classifier.classify_multiple_files(csv_files)
+            flows_data += csv_flows_data
 
         if pcap_files is not None:
             flows_data += self.pcap_classifier.classify_multiple_files(pcap_files, FLOWS_TO_CLASSIFY)
+
         flows_data = [flow for flow in flows_data if flow.flow.times[-1] > TIME_INTERVAL]
         flows_by_categories = [[] for _ in self.categories]
         [flows_by_categories[flow.pred].append(flow) for flow in flows_data]
@@ -200,29 +205,40 @@ class FlowPicGraphFrame(ttk.Frame):
         self.flows_map = {f'{index}: {str(classified_flow.flow.five_tuple)}': classified_flow for
                           index, classified_flow in
                           enumerate(flows_data)}
+        categories_by_int = list(map(lambda category: self.categories.index(category), self.categories))
+        if len(csv_flows_data)> 0:
+            total_f1, per_class_F1 = self.f1_score(csv_flows_data, flows_data, categories_by_int)
+            f1_text = f'F1 Score:\n\nTotal: {total_f1}\n'
+            for index, f1_score in enumerate(per_class_F1):
+                if f1_score is not None:
+                    f1_text += f'{self.categories[index]}: {f1_score}'
+            self.f1_score_text.set(f1_text)
 
         self._create_combobox()
+        self._generate_actual_graph(csv_files, list(csv_flows_data))
         self._generate_predicted_graph(labels, x, y_axis)
-
         result_queue.put(COMPLETED)
 
     def clear_graphs(self):
         self._on_return_click()
         self.figure.clear()
         self.graph.draw()
+        self.f1_score_label.grid_forget()
         self.flow_selection_label.grid_forget()
         self.flow_selection.grid_forget()
 
     def draw_graphs(self):
         self.figure.subplots_adjust(hspace=0.5)
         self.graph.draw()
+        if self.f1_score_text.get() != "":
+            self.f1_score_label.grid(column=3, row=1, columnspan=2)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
 
     @staticmethod
     def f1_score(actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
-        actual_flows_preds = map(lambda f: f.pred, itertools.chain.from_iterable(actual_flows_by_categories))
-        analyzed_flows_preds = map(lambda f: f.pred, itertools.chain.from_iterable(analyzed_flows_by_categories))
+        actual_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
+        analyzed_flows_preds = list(map(lambda f: f.pred, analyzed_flows_by_categories))
         existing_labels: List = np.unique(actual_flows_preds).tolist()
 
         total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
