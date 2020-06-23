@@ -31,13 +31,14 @@ CSV_KEY = "c"
 BYTES_IN_KB = 1024
 LARGE_FONT = ("Verdana", 12)
 
+
 class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
         device = 'cuda'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
-        model_checkpoint = '../reg_overlap_split'
+        model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
         self.pcap_classifier = PcapClassifier(model, device)
         self.csv_classifier = FlowCsvClassifier(model, device)
@@ -61,15 +62,12 @@ class FlowPicGraphFrame(ttk.Frame):
 
     @staticmethod
     def _create_graph(graph, labels, x, y_axis_by_category):
-        print(y_axis_by_category)
         y_axis_by_category = [y_axis_per_flow for y_axis_per_flow in y_axis_by_category if len(y_axis_per_flow) > 0]
         values = list(zip(*y_axis_by_category))
         y_values = {label: [] for label in labels}
         y_values_for_fill = {label: [] for label in labels}
-        print(values)
         for value_list in values:
             current_y = 0
-            print("value_list: ", value_list)
             for label, value in zip(reversed(labels), reversed(value_list)):
                 y_values_for_fill[label].append((current_y, current_y + value))
 
@@ -79,7 +77,6 @@ class FlowPicGraphFrame(ttk.Frame):
         for label in labels:
             graph.plot(x, y_values[label], label=label)
             fill_values = list(zip(*y_values_for_fill[label]))
-            print("fill_values: ", fill_values)
             graph.fill_between(x, fill_values[1], fill_values[0])
 
         graph.set_xlabel("time in seconds")
@@ -180,6 +177,18 @@ class FlowPicGraphFrame(ttk.Frame):
 
         return self.categories, x, bandwidth_per_category
 
+    def _f1_score(self, actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
+        actual_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
+        analyzed_flows_preds = list(map(lambda f: self.categories.index(f.flow.app), analyzed_flows_by_categories))
+        existing_labels: List = np.unique(actual_flows_preds).tolist()
+
+        total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
+        per_class_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average=None, labels=existing_labels)
+        per_class_f1 = [per_class_f1[existing_labels.index(label)] if label in existing_labels else None for label in
+                        labels]
+
+        return total_f1, per_class_f1
+
     def classify_pcap_file(self, files_list: List[Path]):
         self.title = str(list(map(lambda file: file.name, files_list)))
         files_list.sort(key=lambda file: file.suffix[1])
@@ -188,8 +197,7 @@ class FlowPicGraphFrame(ttk.Frame):
         pcap_files = files_dict.get(PCAP_KEY)
         csv_files = files_dict.get(CSV_KEY)
         flows_data = []
-        print(pcap_files)
-        csv_flows_data =[]
+        csv_flows_data = []
         if csv_files is not None:
             csv_flows_data = self.csv_classifier.classify_multiple_files(csv_files)
             flows_data += csv_flows_data
@@ -206,8 +214,8 @@ class FlowPicGraphFrame(ttk.Frame):
                           index, classified_flow in
                           enumerate(flows_data)}
         categories_by_int = list(map(lambda category: self.categories.index(category), self.categories))
-        if len(csv_flows_data)> 0:
-            total_f1, per_class_F1 = self.f1_score(csv_flows_data, flows_data, categories_by_int)
+        if len(csv_flows_data) > 0:
+            total_f1, per_class_F1 = self._f1_score(csv_flows_data, csv_flows_data, categories_by_int)
             f1_text = f'F1 Score:\n\nTotal: {total_f1}\n'
             for index, f1_score in enumerate(per_class_F1):
                 if f1_score is not None:
@@ -235,14 +243,4 @@ class FlowPicGraphFrame(ttk.Frame):
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
 
-    @staticmethod
-    def f1_score(actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
-        actual_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
-        analyzed_flows_preds = list(map(lambda f: f.pred, analyzed_flows_by_categories))
-        existing_labels: List = np.unique(actual_flows_preds).tolist()
 
-        total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
-        per_class_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average=None, labels=existing_labels)
-        per_class_f1 = [per_class_f1[existing_labels.index(label)] if label in existing_labels else None for label in labels]
-
-        return total_f1, per_class_f1
