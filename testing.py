@@ -7,6 +7,7 @@ from time import time, sleep
 import numpy as np
 import torch
 from pyshark.packet.packet import Packet
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 
 from classification.clasifiers import Classifier
@@ -14,6 +15,7 @@ from expiraments.cross_validation import CrossValidation
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
+from gui.graph_frame import FlowPicGraphFrame
 from misc.data_classes import Flow
 from misc.loging import Logger
 from misc.utils import show_flow_pic, is_file, Timer, load_model
@@ -46,7 +48,13 @@ class C:
 
 
 if __name__ == '__main__':
-
+    y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
+    pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
+    # a = f1_score(y, pred, average='weighted', labels=np.unique(y))
+    a = f1_score(y, pred, average=None, labels=[0, 1, 2, 3, 4])
+    _, b = FlowPicGraphFrame.f1_score(y, pred, labels=[0, 1, 2, 3, 4])
+    print(a, b)
+    exit()
     # print(list(map(lambda d: str(d),get_dir_csvs(Path('data_netflix')))))
     # dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_netflix'))]
     # [print(ds) for ds in dss]
@@ -165,4 +173,3 @@ if __name__ == '__main__':
     # exit()
 
     # exit()
-

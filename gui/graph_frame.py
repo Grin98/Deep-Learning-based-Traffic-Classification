@@ -11,6 +11,8 @@ from typing import List
 import matplotlib
 import time
 import numpy as np
+from sklearn.metrics import f1_score
+
 from classification.clasifiers import PcapClassifier, FlowCsvClassifier
 from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
@@ -207,3 +209,15 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph.draw()
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
+
+    @staticmethod
+    def f1_score(actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
+        actual_flows_preds = map(lambda f: f.pred, itertools.chain.from_iterable(actual_flows_by_categories))
+        analyzed_flows_preds = map(lambda f: f.pred, itertools.chain.from_iterable(analyzed_flows_by_categories))
+        existing_labels: List = np.unique(actual_flows_preds).tolist()
+
+        total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
+        per_class_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average=None, labels=existing_labels)
+        per_class_f1 = [per_class_f1[existing_labels.index(label)] if label in existing_labels else None for label in labels]
+
+        return total_f1, per_class_f1
