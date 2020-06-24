@@ -73,7 +73,7 @@ class PcapClassificationPage(ttk.Frame):
 
         title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="File Classification")
 
-        pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file)
+        pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file,)
         back_button = ttk.Button(self, width=24, text="Back",
                                  command=lambda: self.on_back_button_click())
 
