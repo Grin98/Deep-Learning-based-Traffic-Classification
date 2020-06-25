@@ -11,14 +11,14 @@ from pyshark.packet.packet import Packet
 from heapq import nlargest
 
 from flowpic_dataset.dataset import BlocksDataSet
-from flowpic_dataset.processors import BasicProcessor
+from flowpic_dataset.processors import BasicProcessor, get_dir_items
 from misc.constatns import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
 
 
 class PcapParser:
 
-    def parse_file(self, file: Path, n: int) -> Sequence[Flow]:
+    def parse_file(self, file: Path, n: int = None) -> Sequence[Flow]:
         """
         returns flows from a pcap file
         :param file: the pcap file to be parsed, either .pcap or .pcapng
@@ -53,7 +53,11 @@ class PcapParser:
         pcap_start_time = float(capture[0].sniff_timestamp)
         capture.close()
 
-        max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
+        if n is None:
+            max_five_tuples = list(packet_streams.keys())
+        else:
+            max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
+
         return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], pcap_start_time)
                 for five_tuple in max_five_tuples]
 
@@ -96,13 +100,20 @@ class PcapParser:
 
 
 if __name__ == '__main__':
-    file = Path('../pcaps/facebook-chat.pcapng')
+    # pcap = Path('../pcaps/scpDown2.pcap')
+    # csv = Path('../parsed_flows/scpDown2.csv')
+    # flows = PcapParser().parse_file(pcap, n=1)
+    # flows = BasicProcessor().process_file_to_flows(csv)
+    # print(flows[0].num_packets, flows[0].times, flows[0].sizes)
+    # exit()
+    d = Path('../pcaps')
     parser = PcapParser()
-    flows = parser.parse_file(file, n=1)
-    f = flows[0]
-    print(f.five_tuple)
-    print(f.start_time, f.pcap_relative_start_time, f.num_packets)
-    print(f.times)
+    t = len(get_dir_items(d))
+    for i, f in enumerate(get_dir_items(d)):
+        print(f'{i} / {t}')
+        flows = parser.parse_file(f, n=1)
+        parser.write_flow_rows(Path(f'../parsed_flows/{f.stem}.csv'), flows)
+
     # dss = [BlocksDataSet.from_flows([f]) for f in flows]
     # for ds in dss:
     #     print(len(ds))

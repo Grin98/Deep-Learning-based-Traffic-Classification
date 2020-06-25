@@ -49,8 +49,8 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.f1_score_text = StringVar()
         self.f1_score_label = ttk.Label(self, font=LARGE_FONT, anchor="center", textvariable=self.f1_score_text)
-        self.figure = plt.figure(figsize=(6,6), dpi=100)
-        self.figure_per_flow = plt.figure(figsize=(6,6), dpi=100)
+        self.figure = plt.figure(figsize=(6, 6), dpi=100)
+        self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=100)
         self.graph = FigureCanvasTkAgg(self.figure, self)
         self.graph_per_flow = FigureCanvasTkAgg(self.figure_per_flow, self)
         self.flow_selection = ttk.Combobox(self, width=50)

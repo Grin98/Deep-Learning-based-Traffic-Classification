@@ -44,7 +44,7 @@ class Classifier:
         pred = distribution.most_common(1)[0][0]
         return ClassifiedFlow(f, pred, classified_blocks)
 
-    def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 256):
+    def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 128):
         dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)

@@ -33,13 +33,13 @@ class Flow(NamedTuple):
                start_time: float = None,
                pcap_relative_start_time: float = None
                ):
-        num_packets = len(times)
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
 
         mask = sizes <= PACKET_SIZE_LIMIT
         times = times[mask]
         sizes = sizes[mask] - 1
+        num_packets = len(times)
 
         if start_time is None:
             start_time = times[0]
