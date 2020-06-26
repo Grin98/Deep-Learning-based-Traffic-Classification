@@ -36,7 +36,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
-        device = 'cuda'
+        device = 'cpu'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
