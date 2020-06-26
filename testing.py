@@ -17,7 +17,7 @@ from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
 from gui.graph_frame import FlowPicGraphFrame
 from misc.data_classes import Flow
-from misc.loging import Logger
+from misc.output import Logger, Progress
 from misc.utils import show_flow_pic, is_file, Timer, load_model
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
@@ -48,13 +48,22 @@ class C:
 
 
 if __name__ == '__main__':
-    y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
-    pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
-    # a = f1_score(y, pred, average='weighted', labels=np.unique(y))
-    a = f1_score(y, pred, average=None, labels=[0, 1, 2, 3, 4])
-    _, b = FlowPicGraphFrame.f1_score(y, pred, labels=[0, 1, 2, 3, 4])
-    print(a, b)
-    exit()
+
+    p = Progress()
+    p.progress_title('classifying file').progress_sub_title('sub').counter_title('packets').set_counter(400)
+    print(p)
+
+    p.reset()
+    print(p)
+
+
+    # y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
+    # pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
+    # # a = f1_score(y, pred, average='weighted', labels=np.unique(y))
+    # a = f1_score(y, pred, average=None, labels=[0, 1, 2, 3, 4])
+    # _, b = FlowPicGraphFrame.f1_score(y, pred, labels=[0, 1, 2, 3, 4])
+    # print(a, b)
+    # exit()
     # print(list(map(lambda d: str(d),get_dir_csvs(Path('data_netflix')))))
     # dss = [BlocksDataSet.from_flows_file(d) for d in get_dir_csvs(Path('classes_netflix'))]
     # [print(ds) for ds in dss]
@@ -75,10 +84,10 @@ if __name__ == '__main__':
     # c = CrossValidation()
     # c.run('data_cv_reg', 'del', early_stopping=None, save_checkpoint=True,
     #       load_checkpoint=True, filters_per_layer=[10, 20], layers_per_block=1,hidden_dims=[64], k=5)
-    l = FlowCSVDataLoader()
-    train, test = l.load_dataset('data_cv_net_reg1', Format.SplitCV)
-    print(train)
-    print(test)
+    # l = FlowCSVDataLoader()
+    # train, test = l.load_dataset('data_cv_net_reg1', Format.SplitCV)
+    # print(train)
+    # print(test)
     # print(train, test)
     # print('===================')
     # train, test = l.load_dataset('del', format_=Format.SplitCV)

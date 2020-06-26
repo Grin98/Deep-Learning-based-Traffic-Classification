@@ -7,7 +7,7 @@ from typing import Tuple, Union
 from torch.utils.data import DataLoader
 
 from flowpic_dataset.dataset import BlocksDataSet
-from misc.loging import Logger
+from misc.output import Logger
 
 from misc.utils import get_dir_directories, get_dir_csvs
 

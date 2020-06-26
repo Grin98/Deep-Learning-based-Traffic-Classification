@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from typing import Callable, Any
 
 from misc.data_classes import EpochResult, FitResult, BatchResult
-from misc.loging import Logger
+from misc.output import Logger
 from misc.utils import save_model, load_model, is_file
 
 

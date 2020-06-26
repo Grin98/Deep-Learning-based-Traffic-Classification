@@ -19,7 +19,7 @@ import torch
 from expiraments.cross_validation import CrossValidation
 from expiraments.experiment import Experiment
 from misc.utils import create_dir
-from misc.loging import Logger
+from misc.output import Logger
 
 
 def list_chunk(l: Sequence, n: int) -> Tuple[Sequence, ...]:

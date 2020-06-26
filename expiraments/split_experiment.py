@@ -15,7 +15,7 @@ from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from model.flow_pic_model import FlowPicModel
 from expiraments.experiment import Experiment
 from training.flowpic_trainer import FlowPicTrainer
-from misc.loging import Logger
+from misc.output import Logger
 
 
 class SplitExperiment(Experiment):

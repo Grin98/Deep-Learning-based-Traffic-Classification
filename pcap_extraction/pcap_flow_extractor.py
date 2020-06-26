@@ -14,9 +14,13 @@ from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.processors import BasicProcessor, get_dir_items
 from misc.constatns import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
+from misc.output import Progress
 
 
 class PcapParser:
+
+    def __init__(self, progress=Progress()):
+        self.progress = progress
 
     def parse_file(self, file: Path, n: int = None) -> Sequence[Flow]:
         """
@@ -30,9 +34,13 @@ class PcapParser:
         if file_extension != '.pcap' and file_extension != '.pcapng':
             return []
 
+        self.progress.counter_title('parsed packets').set_counter(0)
         packet_streams = {}
         capture = pyshark.FileCapture(str(file), keep_packets=True)
-        for packet in capture:
+        for i, packet in enumerate(capture):
+            if i % 500 == 0:
+                self.progress.set_counter(i)
+
             if self._is_undesired_packet(packet):
                 continue
 

@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from misc.loging import Logger
+from misc.output import Logger
 
 
 class FlowPicModel(nn.Module):

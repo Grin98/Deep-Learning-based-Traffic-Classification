@@ -14,7 +14,7 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
 from misc.constatns import BLOCK_DURATION, PACKET_SIZE_LIMIT
-from misc.loging import Logger
+from misc.output import Logger
 
 
 class Timer:
