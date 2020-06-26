@@ -30,12 +30,15 @@ class LiveCaptureProvider:
 
     def __init__(self):
         # only_summaries flag is extremely important! contains packet size and arrival time (relative to capture start)
-        self.capture = NonPromiscuousLiveCapture(only_summaries=True)
+        self.capture = NonPromiscuousLiveCapture()
         self.queue = deque()
+        self.absolute_start_time = None
         self.relative_time = 0.0
 
     def packet_callback(self, packet):
-        self.relative_time = self.relative_time + 1
+        if self.absolute_start_time is None:
+            self.absolute_start_time = float(packet.sniff_timestamp)
+        self.relative_time = float(packet.sniff_timestamp) - self.absolute_start_time
         print(self.relative_time)
 
     def start_capture(self):
