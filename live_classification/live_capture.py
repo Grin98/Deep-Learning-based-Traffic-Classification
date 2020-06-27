@@ -2,9 +2,8 @@ from pyshark import LiveCapture
 from pyshark.packet.packet import Packet
 from collections import deque
 from typing import Tuple
-import time
-import os
-
+from misc.data_classes import Block
+import itertools
 
 BLOCK_LENGTH = 60
 BLOCK_INTERVAL = 15
@@ -26,21 +25,29 @@ class NonPromiscuousLiveCapture(LiveCapture):
 
 
 class FlowData:
-    def __init__(self, sample):
-        self.samples = [sample]
-        # this is a size 4 array with the amount of samples from that flow during the last: [0,15], [15,30], [30,
-        # 45] and [45,60] seconds respectively
-        self.window_frequencies = [1, 0, 0, 0]
+    def __init__(self, sample, absolute_start_time):
+        # these are windows with the samples from the flow during the last: [0,15], [15,30], [30,45] and [45,60]
+        # seconds. self.head refers to the "most recent" window, and every subsequent number modulo 4 will be the next
+        self.window_samples = [[] for _ in range(BLOCK_LENGTH // BLOCK_INTERVAL)]
+        self.head = 0
+        self.window_samples[self.head].append(sample)
+        self.absolute_start_time = absolute_start_time
 
     def add_sample(self, sample):
-        self.samples.append(sample)
-        self.window_frequencies[0] += 1
+        self.window_samples[self.head].append(sample)
 
     def advance_sliding_window(self):
-        self.window_frequencies[3] = self.window_frequencies[2]
-        self.window_frequencies[2] = self.window_frequencies[1]
-        self.window_frequencies[1] = self.window_frequencies[0]
-        self.window_frequencies[0] = 0
+        self.window_samples[(self.head + len(self.window_samples) - 1) % len(self.window_samples)].clear()
+        self.head = (self.head + 1) % len(self.window_samples)
+        self.absolute_start_time += BLOCK_INTERVAL
+        return self
+
+    def __len__(self):
+        return sum(len(window) for window in self.window_samples)
+
+    def to_block(self):
+        return Block(start_time=self.absolute_start_time, num_packets=self.__len__(),
+                     data=list(itertools.chain.from_iterable(window for window in self.window_samples)))
 
 
 class FlowsManager:
@@ -52,20 +59,27 @@ class FlowsManager:
         self.flows = {}
 
     def advance_sliding_window(self):
-        for _, flow_data in self.flows:
-            flow_data.advance_sliding_window()
+        self.flows = {flow: flow_data.advance_sliding_window()
+                      for flow, flow_data in self.flows.items()
+                      if len(flow_data) is not 0}
 
-    def add_sample(self, flow, sample):
+    def add_sample(self, flow, sample, absolute_timestamp):
         if flow in self.flows:
             self.flows[flow].add_sample(sample)
         else:
-            self.flows[flow] = FlowData(sample)
+            self.flows[flow] = FlowData(sample, absolute_start_time=absolute_timestamp)
+
+    def compose_new_batch(self):
+        batch = []
+        for flow, flow_data in self.flows.items():
+            batch.append((flow, flow_data.to_block()))
+        return batch
 
 
 class LiveCaptureProvider:
     """
     Performs a live capture.
-    Creates a new flow after 60 seconds and every 15 seconds thereafter, and adds the flows to [queue].
+    Creates a new block after 60 seconds and every 15 seconds thereafter, and adds the flows to [queue].
     Each time a flow is created - all subscribers are notified
 
     :raises [exception] if no interfaces are found
@@ -87,13 +101,16 @@ class LiveCaptureProvider:
         self.queue = deque()
         self.absolute_start_time = None
         self.relative_time = 0.0
-        self.pushed_flows_counter = 0
+        self.sliding_window_advancements = 0
         self.flows_manager = FlowsManager()
 
     def packet_callback(self, packet):
         if self.absolute_start_time is None:
             self.absolute_start_time = float(packet.sniff_timestamp)
         self.relative_time = float(packet.sniff_timestamp) - self.absolute_start_time
+
+        self.advance_sliding_window_if_needed()
+
         transport = packet.transport_layer
         flow = (
             packet['ip'].src,
@@ -102,19 +119,22 @@ class LiveCaptureProvider:
             packet[transport].dstport,
             transport
         )
-        self.flows_manager.add_sample(flow, self._extract_packet_meta(packet))
-        self.push_flows_if_needed()
+        self.flows_manager.add_sample(flow, self._extract_packet_meta(packet),
+                                      self.relative_time + self.absolute_start_time)
 
-    def push_flows_if_needed(self):
-        if (self.pushed_flows_counter is 0 and self.relative_time >= BLOCK_LENGTH) or \
-                self.pushed_flows_counter <= (self.relative_time - BLOCK_LENGTH) // BLOCK_INTERVAL:
-            self.pushed_flows_counter += 1
-            # sleep for 3 seconds (long-running task)
-            time.sleep(3)
-            print('created new block at time ', self.relative_time)
-            # need to create new block
+    def advance_sliding_window_if_needed(self):
+        while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
+            self.sliding_window_advancements += 1
+            if self.sliding_window_advancements >= BLOCK_LENGTH // BLOCK_INTERVAL:
+                self.push_flows()
+                self.flows_manager.advance_sliding_window()
 
-
+    def push_flows(self):
+        self.queue.append(self.flows_manager.compose_new_batch())
+        print('created new block at time:', self.relative_time)
+        for item in self.queue:
+            print(item)
+        self.queue.clear()
 
     @staticmethod
     def _extract_packet_meta(packet: Packet) -> Tuple[float, int]:
