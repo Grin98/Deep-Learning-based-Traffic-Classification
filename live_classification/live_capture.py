@@ -4,6 +4,7 @@ from collections import deque
 from typing import Tuple
 from misc.data_classes import Block
 import itertools
+import datetime
 
 BLOCK_LENGTH = 60
 BLOCK_INTERVAL = 15
@@ -126,8 +127,11 @@ class LiveCaptureProvider:
         while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
             self.sliding_window_advancements += 1
             if self.sliding_window_advancements >= BLOCK_LENGTH // BLOCK_INTERVAL:
+                # pre_update = datetime.datetime.now()
                 self.push_flows()
                 self.flows_manager.advance_sliding_window()
+                # post_update = datetime.datetime.now()
+                # print('time it took to push flows & advance window: ', post_update - pre_update)
 
     def push_flows(self):
         self.queue.append(self.flows_manager.compose_new_batch())
