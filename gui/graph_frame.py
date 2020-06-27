@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 result_queue = queue.Queue()
 COMPLETED = "completed"
-TIME_INTERVAL = 60
+TIME_INTERVAL = 15
 BLOCK_INTERVAL = 15
 FLOWS_TO_CLASSIFY = 3
 PCAP_KEY = "p"
@@ -49,7 +49,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.f1_score_text = StringVar()
         self.f1_score_label = ttk.Label(self, font=LARGE_FONT, anchor="center", textvariable=self.f1_score_text)
-        self.figure = plt.figure(figsize=(6, 6), dpi=100)
+        self.figure = plt.figure(figsize=(6, 7), dpi=100)
         self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=100)
         self.graph = FigureCanvasTkAgg(self.figure, self)
         self.graph_per_flow = FigureCanvasTkAgg(self.figure_per_flow, self)
@@ -82,7 +82,7 @@ class FlowPicGraphFrame(ttk.Frame):
         graph.set_xlabel("time in seconds")
         graph.set_ylabel("Kbps")
         graph.set_xlim(x[0], x[-1])
-        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), shadow=True, ncol=len(labels))
+        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=len(labels))
 
     def _generate_predicted_graph(self, labels, x, y_axis):
         predicted_graph = self.figure.add_subplot(212)
@@ -120,7 +120,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
         self.return_button.grid(column=0, row=0, sticky=W)
         self._create_graph(graph, labels, x, y_axis)
-        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07), shadow=True, ncol=len(labels))
+        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), shadow=True, ncol=len(labels))
         self.graph_per_flow.draw()
 
     def _on_return_click(self):
@@ -143,8 +143,8 @@ class FlowPicGraphFrame(ttk.Frame):
         for index, flows_by_categories in enumerate(flows_data):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time+TIME_INTERVAL))])
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time - TIME_INTERVAL) & (
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time <= start_time))])
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
@@ -164,15 +164,15 @@ class FlowPicGraphFrame(ttk.Frame):
         for window_index, time_window in enumerate(x):
             min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)
             max_index = min(window_index, len(classified_flow.classified_blocks) - 1)
-            data = np.array(classified_flow.classified_blocks[max_index].block.data)
-            times = data[:, 0]
-            size_in_bits = np.sum(data[:, 1][times <= TIME_INTERVAL]) * 8
+            times = np.array(classified_flow.flow.times)
+            sizes = np.array(classified_flow.flow.sizes)
+            size_in_bits = np.sum(sizes[((time_window <= times) & (times < time_window + BLOCK_INTERVAL))]) * 8
             prob_sum = np.array([0.0] * len(self.categories))
             for block in classified_flow.classified_blocks[min_index:max_index + 1]:
                 prob_sum += block.probabilities
             prob_sum /= (max_index + 1) - min_index
             for index, bandwidth_list in enumerate(bandwidth_per_category):
-                bandwidth_list.append(prob_sum[index] * ((size_in_bits / BYTES_IN_KB) / TIME_INTERVAL))
+                bandwidth_list.append(prob_sum[index] * ((size_in_bits / BYTES_IN_KB) / BLOCK_INTERVAL))
 
         return self.categories, x, bandwidth_per_category
 
@@ -241,5 +241,3 @@ class FlowPicGraphFrame(ttk.Frame):
             self.f1_score_label.grid(column=3, row=1, columnspan=2)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
-
-
