@@ -1,5 +1,6 @@
 from tkinter import ttk
 from tkinter import *
+import tkinter as tk
 from tkinter import filedialog
 import matplotlib
 import threading
@@ -19,7 +20,7 @@ class GuiController(Tk):
         Tk.__init__(self, *args, **kwargs)
 
         Tk.wm_title(self, "Traffic Classification")
-
+        self.iconbitmap("../statistics.ico")
         container = ttk.Frame(self)
         container.grid(column=0, row=0, sticky=(N, S, E, W))
 
@@ -125,7 +126,7 @@ class StartPage(ttk.Frame):
         title_label = ttk.Label(self, text="Traffic Classification", font=LARGE_FONT)
         title_label.pack(pady=10, padx=10)
 
-        pcap_class_button = ttk.Button(self, text="Pcap file Classification",
+        pcap_class_button = ttk.Button(self, text="File Classification",
                                        command=lambda: controller.show_frame(PcapClassificationPage))
         pcap_class_button.pack(side=RIGHT)
 

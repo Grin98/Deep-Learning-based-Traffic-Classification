@@ -11,7 +11,7 @@ import matplotlib
 import time
 import numpy as np
 from sklearn.metrics import f1_score
-
+import torch
 from classification.clasifiers import PcapClassifier, FlowCsvClassifier
 from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
@@ -36,7 +36,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
-        device = 'cpu'
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
@@ -143,8 +143,8 @@ class FlowPicGraphFrame(ttk.Frame):
         for index, flows_by_categories in enumerate(flows_data):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time - TIME_INTERVAL) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time <= start_time))])
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time) & (
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time+TIME_INTERVAL))])
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
