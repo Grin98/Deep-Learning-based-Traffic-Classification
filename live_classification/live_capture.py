@@ -2,7 +2,12 @@ from pyshark import LiveCapture
 from pyshark.packet.packet import Packet
 from collections import deque
 from typing import Tuple
+import time
 import os
+
+
+BLOCK_LENGTH = 60
+BLOCK_INTERVAL = 15
 
 
 class NonPromiscuousLiveCapture(LiveCapture):
@@ -69,16 +74,20 @@ class LiveCaptureProvider:
 
     def __init__(self):
         # only_summaries flag is important! contains packet size and arrival time (relative to capture start)
-        # TODO: add more capture filters
+        # TODO: see if we need to add more capture filters
         capture_filter = 'not arp and ' \
                          'port not 53 and ' \
                          'not broadcast and ' \
-                         'not ip6'
+                         'not ip6 and ' \
+                         'not igmp and ' \
+                         'not icmp and ' \
+                         'port not 123'
 
         self.capture = NonPromiscuousLiveCapture(capture_filter=capture_filter)
         self.queue = deque()
         self.absolute_start_time = None
         self.relative_time = 0.0
+        self.pushed_flows_counter = 0
         self.flows_manager = FlowsManager()
 
     def packet_callback(self, packet):
@@ -94,7 +103,18 @@ class LiveCaptureProvider:
             transport
         )
         self.flows_manager.add_sample(flow, self._extract_packet_meta(packet))
-        print(self.relative_time)
+        self.push_flows_if_needed()
+
+    def push_flows_if_needed(self):
+        if (self.pushed_flows_counter is 0 and self.relative_time >= BLOCK_LENGTH) or \
+                self.pushed_flows_counter <= (self.relative_time - BLOCK_LENGTH) // BLOCK_INTERVAL:
+            self.pushed_flows_counter += 1
+            # sleep for 3 seconds (long-running task)
+            time.sleep(3)
+            print('created new block at time ', self.relative_time)
+            # need to create new block
+
+
 
     @staticmethod
     def _extract_packet_meta(packet: Packet) -> Tuple[float, int]:
