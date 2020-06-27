@@ -131,10 +131,10 @@ class LiveCaptureProvider:
 
     def push_flows(self):
         self.queue.append(self.flows_manager.compose_new_batch())
-        print('created new block at time:', self.relative_time)
-        for item in self.queue:
-            print(item)
-        self.queue.clear()
+        # print('created new block at time:', self.relative_time)
+        # for item in self.queue:
+        #     print(item)
+        # self.queue.clear()
 
     @staticmethod
     def _extract_packet_meta(packet: Packet) -> Tuple[float, int]:
