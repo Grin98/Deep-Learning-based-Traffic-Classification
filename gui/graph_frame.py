@@ -154,7 +154,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
         x = list(
-            np.arange(TIME_INTERVAL, classified_flow.flow.pcap_relative_start_time + classified_flow.flow.times[-1],
+            np.arange(TIME_INTERVAL, classified_flow.flow.times[-1],
                       BLOCK_INTERVAL))
         bandwidth_per_category = [[] for _ in self.categories]
 
