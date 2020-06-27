@@ -128,7 +128,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
         if self.f1_score_text.get() != "":
             self.f1_score_label.grid(column=3, row=1, columnspan=2)
-        self.flow_selection.selection_clear()
+        self.flow_selection.set('')
         self.return_button.grid_forget()
 
     def _extract_graph_values(self, flows_data):
@@ -138,7 +138,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.min_time = np.min(flows_by_start_time)
         self.max_time = np.max(flows_by_end_time)
-        x = list(np.arange(self.min_time, self.max_time + TIME_INTERVAL, TIME_INTERVAL))
+        x = list(np.arange(self.min_time, self.max_time, TIME_INTERVAL))
         flows = [[] for _ in self.categories]
         for index, flows_by_categories in enumerate(flows_data):
             for start_time in x:
@@ -154,9 +154,12 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
         x = list(
-            np.arange(TIME_INTERVAL, classified_flow.flow.times[-1],
+            np.arange(0, classified_flow.flow.times[-1],
                       BLOCK_INTERVAL))
         bandwidth_per_category = [[] for _ in self.categories]
+
+        print(classified_flow.flow.times)
+        print(x)
 
         for window_index, time_window in enumerate(x):
             min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)
