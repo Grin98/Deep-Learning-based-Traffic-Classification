@@ -120,7 +120,7 @@ class FlowCsvClassifier:
 
 
 if __name__ == '__main__':
-    device = 'cuda'
+    device = 'cpu'
     file_checkpoint = '../reg_overlap_split'
     f = Path('../parsed_flows/facebook-chat.csv')
     p = Path('../pcaps/email1a.pcap')
