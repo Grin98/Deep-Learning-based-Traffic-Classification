@@ -138,19 +138,15 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.min_time = np.min(flows_by_start_time)
         self.max_time = np.max(flows_by_end_time)
-        x = list(np.arange(TIME_INTERVAL, self.max_time + TIME_INTERVAL, TIME_INTERVAL))
+        x = list(np.arange(self.min_time, self.max_time + TIME_INTERVAL, TIME_INTERVAL))
         flows = [[] for _ in self.categories]
         for index, flows_by_categories in enumerate(flows_data):
-            start_interval = self.min_time
-            for time in x:
-                if time == start_interval:
-                    continue
+            for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_interval) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < time))])
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time) & (
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time+TIME_INTERVAL))])
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
-                start_interval += TIME_INTERVAL
 
         flows = [(np.array(flow) * 8 / BYTES_IN_KB) / TIME_INTERVAL for flow in flows]
 
@@ -200,6 +196,7 @@ class FlowPicGraphFrame(ttk.Frame):
         csv_flows_data = []
         if csv_files is not None:
             csv_flows_data = self.csv_classifier.classify_multiple_files(csv_files)
+            self._generate_actual_graph(csv_files, list(csv_flows_data))
             flows_data += csv_flows_data
 
         if pcap_files is not None:
@@ -219,12 +216,10 @@ class FlowPicGraphFrame(ttk.Frame):
             f1_text = f'F1 Score:\n\nTotal: {total_f1}\n'
             for index, f1_score in enumerate(per_class_F1):
                 if f1_score is not None:
-                    f1_text += f'{self.categories[index]}: {f1_score}'
+                    f1_text += f'{self.categories[index]}: {f1_score}\n'
             self.f1_score_text.set(f1_text)
 
         self._create_combobox()
-        if len(csv_flows_data) > 0:
-            self._generate_actual_graph(csv_files, list(csv_flows_data))
         self._generate_predicted_graph(labels, x, y_axis)
         result_queue.put(COMPLETED)
 
