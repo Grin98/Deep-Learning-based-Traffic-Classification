@@ -38,7 +38,7 @@ class FlowData:
 
     def advance_sliding_window(self):
         self.window_samples[(self.head + len(self.window_samples) - 1) % len(self.window_samples)].clear()
-        self.head = (self.head + 1) % len(self.window_samples)
+        self.head = (self.head - 1) % len(self.window_samples)
         self.absolute_start_time += BLOCK_INTERVAL
         return self
 
