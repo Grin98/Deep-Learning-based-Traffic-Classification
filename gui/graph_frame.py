@@ -216,10 +216,12 @@ class FlowPicGraphFrame(ttk.Frame):
         categories_by_int = list(map(lambda category: self.categories.index(category), self.categories))
         if len(csv_flows_data) > 0:
             total_f1, per_class_F1 = self._f1_score(csv_flows_data, csv_flows_data, categories_by_int)
-            f1_text = f'F1 Score:\n\nTotal: {total_f1}\n'
+            total_f1 *= 100
+            f1_text = f'F1 Score:\n\nTotal: {total_f1:.1f}%\n'
             for index, f1_score in enumerate(per_class_F1):
                 if f1_score is not None:
-                    f1_text += f'{self.categories[index]}: {f1_score}\n'
+                    f1_score *= 100
+                    f1_text += f'{self.categories[index]}: {f1_score:.1f}%\n'
             self.f1_score_text.set(f1_text)
 
         self._create_combobox()
