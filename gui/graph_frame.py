@@ -14,6 +14,7 @@ from sklearn.metrics import f1_score
 import torch
 from classification.clasifiers import PcapClassifier, FlowCsvClassifier
 from misc.data_classes import ClassifiedFlow
+from misc.output import Progress
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
 from gui.statistics_frame import StatisticsFrame
@@ -35,14 +36,14 @@ LARGE_FONT = ("Verdana", 12)
 
 class FlowPicGraphFrame(ttk.Frame):
 
-    def __init__(self, parent):
+    def __init__(self, parent, progress: Progress):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
-        self.pcap_classifier = PcapClassifier(model, device)
-        self.csv_classifier = FlowCsvClassifier(model, device)
+        self.pcap_classifier = PcapClassifier(model, device, progress=progress)
+        self.csv_classifier = FlowCsvClassifier(model, device, progress=progress)
 
         self.max_time = 0
         self.min_time = 0
@@ -143,7 +144,7 @@ class FlowPicGraphFrame(ttk.Frame):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
                                                                    classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time+TIME_INTERVAL))])
+                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time + TIME_INTERVAL))])
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
@@ -174,8 +175,6 @@ class FlowPicGraphFrame(ttk.Frame):
                 bandwidth_list.append(prob_sum[index] * ((size_in_bits / BYTES_IN_KB) / BLOCK_INTERVAL))
 
         return self.categories, x, bandwidth_per_category
-
-
 
     def classify_pcap_file(self, files_list: List[Path]):
         self.title = str(list(map(lambda file: file.name, files_list)))
@@ -215,6 +214,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.figure.clear()
         self.graph.draw()
         self.f1_score_frame.grid_forget()
+        self.f1_score_frame.clear_frame()
         self.flow_selection_label.grid_forget()
         self.flow_selection.grid_forget()
 

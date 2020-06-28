@@ -1,15 +1,9 @@
-from tkinter import ttk
-from tkinter import *
-import tkinter as tk
 from tkinter import filedialog
-import matplotlib
-import threading
+
 from gui.graph_frame import *
+from misc.output import Progress
 
 matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 
 LARGE_FONT = ("Verdana", 12)
 
@@ -62,19 +56,19 @@ class PcapClassificationPage(ttk.Frame):
         self.pcap_values = []
         self.pcap_lables = []
         self.controller = controller
+        self.progress = Progress()
+        self.progress_text = StringVar('')
 
         progress_bar_frame = ttk.Frame(self, padding=(5, 5, 5, 5), width=200)
-        self.progress_bar = ttk.Progressbar(progress_bar_frame, orient=HORIZONTAL, length=200,
-                                            mode='indeterminate')
-        self.pcap_label = ttk.Label(progress_bar_frame, font=LARGE_FONT, anchor="center",
-                                    textvariable=self.pcap_file_label_variable)
+        self.progress_bar = ttk.Label(progress_bar_frame, font=LARGE_FONT, anchor="center",
+                                      textvariable=self.progress_text)
 
-        self.graph = FlowPicGraphFrame(self)
+        self.graph = FlowPicGraphFrame(self, self.progress)
         self.graph.grid(column=1, row=1, columnspan=4, rowspan=4)
 
         title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="File Classification")
 
-        pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file,)
+        pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file, )
         back_button = ttk.Button(self, width=24, text="Back",
                                  command=lambda: self.on_back_button_click())
 
@@ -91,9 +85,7 @@ class PcapClassificationPage(ttk.Frame):
             return
         self.pcap_file_label_variable.set("Classifying files")
         # Show Classifying animation
-        self.pcap_label.grid(column=2, row=6, columnspan=2)
         self.progress_bar.grid(column=2, row=7, columnspan=2)
-        self.progress_bar.start(15)
         # Begin classifying process
         threading.Thread(target=lambda: self.graph.classify_pcap_file(self.pcap_file_path)).start()
 
@@ -101,10 +93,11 @@ class PcapClassificationPage(ttk.Frame):
 
     def check_classify_progress(self):
         try:
+            self.progress_text.set(self.progress.get())
             result = result_queue.get(0)
             if result == COMPLETED:
+                self.progress_text.set('')
                 self.progress_bar.grid_forget()
-                self.pcap_label.grid_forget()
                 self.graph.draw_graphs()
             else:
                 pass
@@ -112,9 +105,7 @@ class PcapClassificationPage(ttk.Frame):
             self.controller.after(100, self.check_classify_progress)
 
     def on_back_button_click(self):
-        self.progress_bar.stop()
         self.progress_bar.grid_forget()
-        self.pcap_label.grid_forget()
         self.graph.clear_graphs()
         self.controller.show_frame(StartPage)
 
