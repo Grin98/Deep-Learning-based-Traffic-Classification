@@ -40,6 +40,8 @@ class StatisticsFrame(ttk.Frame):
             if f1_score is not None:
                 f1_score *= 100
                 text += f'{self.categories[index]}: {f1_score:.1f}%\n'
+            else:
+                text += f'{self.categories[index]}: None\n'
         self.f1_value_text.set(text)
         self.f1_value.pack()
 
