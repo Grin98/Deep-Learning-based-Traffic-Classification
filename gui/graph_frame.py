@@ -16,6 +16,7 @@ from classification.clasifiers import PcapClassifier, FlowCsvClassifier
 from misc.data_classes import ClassifiedFlow
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
+from gui.statistics_frame import StatisticsFrame
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -47,8 +48,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.min_time = 0
         self.flows_map = {}
 
-        self.f1_score_text = StringVar()
-        self.f1_score_label = ttk.Label(self, font=LARGE_FONT, anchor="center", textvariable=self.f1_score_text)
+        self.f1_score_frame = StatisticsFrame(self, self.categories)
         self.figure = plt.figure(figsize=(6, 7), dpi=100)
         self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=100)
         self.graph = FigureCanvasTkAgg(self.figure, self)
@@ -116,7 +116,7 @@ class FlowPicGraphFrame(ttk.Frame):
         graph.set_title("Classification for " + str(flow.flow.five_tuple))
 
         self.graph._tkcanvas.grid_forget()
-        self.f1_score_label.grid_forget()
+        self.f1_score_frame.grid_forget()
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
         self.return_button.grid(column=0, row=0, sticky=W)
         self._create_graph(graph, labels, x, y_axis)
@@ -126,8 +126,7 @@ class FlowPicGraphFrame(ttk.Frame):
     def _on_return_click(self):
         self.graph_per_flow._tkcanvas.grid_forget()
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
-        if self.f1_score_text.get() != "":
-            self.f1_score_label.grid(column=3, row=1, columnspan=2)
+        self.f1_score_frame.grid(column=4, row=1, columnspan=2)
         self.flow_selection.set('')
         self.return_button.grid_forget()
 
@@ -176,17 +175,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         return self.categories, x, bandwidth_per_category
 
-    def _f1_score(self, actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
-        actual_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
-        analyzed_flows_preds = list(map(lambda f: self.categories.index(f.flow.app), analyzed_flows_by_categories))
-        existing_labels: List = np.unique(actual_flows_preds).tolist()
 
-        total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
-        per_class_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average=None, labels=existing_labels)
-        per_class_f1 = [per_class_f1[existing_labels.index(label)] if label in existing_labels else None for label in
-                        labels]
-
-        return total_f1, per_class_f1
 
     def classify_pcap_file(self, files_list: List[Path]):
         self.title = str(list(map(lambda file: file.name, files_list)))
@@ -215,14 +204,7 @@ class FlowPicGraphFrame(ttk.Frame):
                           enumerate(flows_data)}
         categories_by_int = list(map(lambda category: self.categories.index(category), self.categories))
         if len(csv_flows_data) > 0:
-            total_f1, per_class_F1 = self._f1_score(csv_flows_data, csv_flows_data, categories_by_int)
-            total_f1 *= 100
-            f1_text = f'F1 Score:\n\nTotal: {total_f1:.1f}%\n'
-            for index, f1_score in enumerate(per_class_F1):
-                if f1_score is not None:
-                    f1_score *= 100
-                    f1_text += f'{self.categories[index]}: {f1_score:.1f}%\n'
-            self.f1_score_text.set(f1_text)
+            self.f1_score_frame.calculate_f1_score(csv_flows_data, csv_flows_data, categories_by_int)
 
         self._create_combobox()
         self._generate_predicted_graph(labels, x, y_axis)
@@ -232,14 +214,13 @@ class FlowPicGraphFrame(ttk.Frame):
         self._on_return_click()
         self.figure.clear()
         self.graph.draw()
-        self.f1_score_label.grid_forget()
+        self.f1_score_frame.grid_forget()
         self.flow_selection_label.grid_forget()
         self.flow_selection.grid_forget()
 
     def draw_graphs(self):
         self.figure.subplots_adjust(hspace=0.5)
         self.graph.draw()
-        if self.f1_score_text.get() != "":
-            self.f1_score_label.grid(column=3, row=1, columnspan=2)
+        self.f1_score_frame.grid(column=4, row=1, columnspan=2)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
