@@ -12,9 +12,17 @@ from heapq import nlargest
 
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.processors import BasicProcessor, get_dir_items
-from misc.constatns import PACKET_SIZE_LIMIT
+from misc.constants import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
 from misc.output import Progress
+from misc.constants import PROFILE
+
+
+class StatisticalDataFileCapture(pyshark.FileCapture):
+    def get_parameters(self, packet_count=None):
+        params = super(pyshark.FileCapture, self).get_parameters(packet_count=packet_count)
+        params += ['-C', PROFILE]
+        return params
 
 
 class PcapParser:
@@ -36,29 +44,34 @@ class PcapParser:
 
         self.progress.counter_title('parsed packets').set_counter(0)
         packet_streams = {}
-        capture = pyshark.FileCapture(str(file), keep_packets=True)
+        display_filter = 'ip and ' \
+                         'udp.port != 53 and ' \
+                         'not ipv6 and ' \
+                         'not igmp and ' \
+                         'not icmp and ' \
+                         'udp.port != 123'
+        capture = StatisticalDataFileCapture(str(file),
+                                             keep_packets=True,
+                                             only_summaries=True,
+                                             display_filter=display_filter)
         for i, packet in enumerate(capture):
             if i % 500 == 0:
                 self.progress.set_counter(i)
 
-            if self._is_undesired_packet(packet):
-                continue
-
-            packet_meta = self._extract_packet_meta(packet)
-            transport = packet.transport_layer
+            packet_meta = ( packet._fields['Time'],  packet._fields['Length'])
             five_tuple = (
-                packet.ip.src,
-                packet[transport].srcport,
-                packet.ip.dst,
-                packet[transport].dstport,
-                transport
+                packet._fields['Source'],
+                packet._fields['SrcPort'],
+                packet._fields['Destination'],
+                packet._fields['DstPort'],
+                packet._fields['Protocol']
             )
 
             if five_tuple in packet_streams:
                 packet_streams[five_tuple].append(packet_meta)
             else:
                 packet_streams[five_tuple] = [packet_meta]
-        pcap_start_time = float(capture[0].sniff_timestamp)
+        pcap_start_time = float(capture[0]._fields['Time'])
         capture.close()
 
         if n is None:

@@ -3,15 +3,16 @@ from pyshark.packet.packet import Packet
 from collections import deque
 from typing import Tuple
 from misc.data_classes import Block
+from misc.constants import PROFILE
 import itertools
 import datetime
 import logging
 
-BLOCK_LENGTH = 60
-BLOCK_INTERVAL = 15
+BLOCK_LENGTH = 12
+BLOCK_INTERVAL = 3
 # TODO: CHANGE LOGGING LEVEL FROM [logging.DEBUG] TO [logging.INFO] TO STOP DEBUG MESSAGES!!!
-# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
-logging.basicConfig(filename='example_live_capture.txt', format='%(asctime)s %(message)s', level=logging.DEBUG)
+# logging.basicConfig(filename='example_live_capture.txt', format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 
 class NonPromiscuousLiveCapture(LiveCapture):
@@ -26,6 +27,7 @@ class NonPromiscuousLiveCapture(LiveCapture):
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
         params += ['-p']
+        params += ['-C', PROFILE]
         return params
 
 
@@ -149,7 +151,7 @@ class LiveCaptureProvider:
     def __init__(self):
         # only_summaries flag is important! contains packet size and arrival time (relative to capture start)
         # TODO: see if we need to add more capture filters
-        capture_filter = 'not arp and ' \
+        capture_filter = 'ip and ' \
                          'port not 53 and ' \
                          'not broadcast and ' \
                          'not ip6 and ' \
@@ -157,13 +159,17 @@ class LiveCaptureProvider:
                          'not icmp and ' \
                          'port not 123'
 
-        self.capture = NonPromiscuousLiveCapture(capture_filter=capture_filter)
+        self.capture = NonPromiscuousLiveCapture(capture_filter=capture_filter, only_summaries=True)
+        self.capture.set_debug()
         self.queue = deque()
         self.absolute_start_time = None
         self.absolute_current_time = None
         self.relative_time = None
         self.sliding_window_advancements = 0
         self.flows_manager = FlowsManager()
+
+    def packet_callback2(self, packet):
+        logging.debug(packet)
 
     def packet_callback(self, packet):
         """
@@ -182,6 +188,8 @@ class LiveCaptureProvider:
 
         # logging.debug(f'absolute start time: {self.absolute_start_time}\nabsolute current time: '
         #               f'{self.absolute_current_time}\nrelative time: {self.relative_time}')
+
+        # logging.debug(packet)
 
         self.advance_sliding_window_if_needed()
 
@@ -227,7 +235,7 @@ class LiveCaptureProvider:
     def start_capture(self):
         # self.capture.load_packets(timeout=10)
         # for packet in self.capture:
-        self.capture.apply_on_packets(self.packet_callback)
+        self.capture.apply_on_packets(self.packet_callback2)
 
     def stop_capture(self):
         """

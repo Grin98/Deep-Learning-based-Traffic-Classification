@@ -5,7 +5,7 @@ from math import ceil
 from typing import Sequence, NamedTuple
 from abc import ABC, abstractmethod
 
-from misc.constatns import PACKET_SIZE_LIMIT, BLOCK_DELTA, BLOCK_DURATION
+from misc.constants import PACKET_SIZE_LIMIT, BLOCK_DELTA, BLOCK_DURATION
 from misc.data_classes import Flow, Block
 from misc.utils import *
 

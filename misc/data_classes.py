@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import NamedTuple, List, Tuple, Sequence, Any
 import numpy as np
 
-from misc.constatns import PACKET_SIZE_LIMIT
+from misc.constants import PACKET_SIZE_LIMIT
 
 
 class Flow(NamedTuple):
