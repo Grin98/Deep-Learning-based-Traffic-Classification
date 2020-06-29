@@ -1,3 +1,4 @@
+import tkinter
 from tkinter import filedialog
 
 from gui.graph_frame import *
@@ -76,6 +77,7 @@ class PcapClassificationPage(ttk.Frame):
         back_button.grid(column=0, row=8, columnspan=2)
         title_label.grid(column=2, row=0, columnspan=2)
         progress_bar_frame.grid(column=2, row=6, columnspan=2)
+
 
     def upload_pcap_file(self):
         self.graph.clear_graphs()

@@ -1,3 +1,4 @@
+import csv
 import itertools
 from collections import Counter
 from math import floor
@@ -49,13 +50,18 @@ class C:
 
 if __name__ == '__main__':
 
-    p = Progress()
-    p.progress_title('classifying file').progress_sub_title('sub').counter_title('packets').set_counter(400)
-    print(p)
+    cat = 'voip'
+    file = Path(f'tagged_flows_reg/{cat}.csv')
+    flows = []
+    with file.open(newline='') as f_in:
+        data = csv.reader(f_in, delimiter=',')
+        for i, row in enumerate(data):
+            if i == 100:
+                break
+            f = Flow.create_from_row(row)
+            flows.append(f)
 
-    p.reset()
-    print(p)
-
+    PcapParser.write_flow_rows(Path(f'example/{cat}.csv'), flows)
 
     # y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
     # pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]

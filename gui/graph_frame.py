@@ -27,7 +27,7 @@ result_queue = queue.Queue()
 COMPLETED = "completed"
 TIME_INTERVAL = 15
 BLOCK_INTERVAL = 15
-FLOWS_TO_CLASSIFY = 3
+FLOWS_TO_CLASSIFY = 20
 PCAP_KEY = "p"
 CSV_KEY = "c"
 BYTES_IN_KB = 1024
@@ -157,9 +157,6 @@ class FlowPicGraphFrame(ttk.Frame):
             np.arange(0, classified_flow.flow.times[-1],
                       BLOCK_INTERVAL))
         bandwidth_per_category = [[] for _ in self.categories]
-
-        print(classified_flow.flow.times)
-        print(x)
 
         for window_index, time_window in enumerate(x):
             min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)

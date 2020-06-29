@@ -1,4 +1,5 @@
 import sys
+from typing import Sequence, List
 
 
 class Logger:
@@ -58,3 +59,14 @@ class Progress:
 
     def __str__(self):
         return self.get()
+
+    @staticmethod
+    def pad_5tuple(five_tuple: List[str]) -> str:
+        total_len = sum([len(item) for item in five_tuple])
+        max_len = (15 * 2) + (2 * 5) + 3
+        diff = max_len - total_len
+        if diff > 0:
+            left = '_' * (diff // 2)
+            right = '_' * (diff - (diff // 2))
+            return left + str(five_tuple) + right
+        return str(five_tuple)

@@ -37,6 +37,12 @@ class Classifier:
         return pred, probabilities
 
     def classify_multiple_flows(self, flows: Sequence[Flow]) -> Sequence[ClassifiedFlow]:
+        # res = []
+        # for i, f in enumerate(flows):
+        #     if i == 150:
+        #         break
+        #     res.append(self.classify_flow(f))
+        # return res
         return [self.classify_flow(f) for f in flows]
 
     def classify_flow(self, f: Flow) -> ClassifiedFlow:
@@ -79,10 +85,11 @@ class PcapClassifier:
         self.parser = PcapParser(self.progress)
 
     def classify_file(self, file: Path, num_flows_to_classify: int) -> Sequence[ClassifiedFlow]:
-        self.progress.progress_title(f'parsing pcap file {str(file.name)}')
+        self.progress.reset()
+        self.progress.progress_title(f'parsing file {str(file.name)}')
         flows = self.parser.parse_file(file, num_flows_to_classify)
         self.progress.reset()
-        self.progress.progress_title(f'classifying pcap file {str(file.name)}')
+        self.progress.progress_title(f'classifying file {str(file.name)}')
         return self.classifier.classify_multiple_flows(flows)
 
     def classify_multiple_files(self, files: Sequence[Path], num_flows_to_classify: int = 1) -> List[ClassifiedFlow]:
@@ -108,9 +115,11 @@ class FlowCsvClassifier:
         self.processor = BasicProcessor()
 
     def classify_file(self, file: Path) -> Sequence[ClassifiedFlow]:
-        self.progress.progress_title(f'parsing csv file {str(file)}')
+        self.progress.reset()
+        self.progress.progress_title(f'parsing file {str(file.name)}')
         flows = self.processor.process_file_to_flows(file)
-        self.progress.progress_title(f'classifying {str(file)}')
+        self.progress.reset()
+        self.progress.progress_title(f'classifying {str(file.name)}')
         return self.classifier.classify_multiple_flows(flows)
 
     def classify_multiple_files(self, files: Sequence[Path]) -> List[ClassifiedFlow]:
