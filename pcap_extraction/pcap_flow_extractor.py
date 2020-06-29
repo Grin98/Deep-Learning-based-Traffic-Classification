@@ -50,11 +50,14 @@ class PcapParser:
                          'not igmp and ' \
                          'not icmp and ' \
                          'udp.port != 123'
+
+        print('opening pcap file')
         capture = StatisticalDataFileCapture(str(file),
                                              keep_packets=True,
                                              only_summaries=True,
                                              display_filter=display_filter)
         for i, packet in enumerate(capture):
+            print(packet)
             if i % 500 == 0:
                 self.progress.set_counter(i)
 
