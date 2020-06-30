@@ -36,8 +36,10 @@ class Progress:
         self._counter_title = title
         return self
 
-    def set_counter(self, x: int):
-        self._counter = x
+    def set_counter(self, x: int, total: int = sys.maxsize):
+        self._counter = round(x * 100 / total, 2)
+        if self._counter > 100:
+            self._counter = 100
 
     def get(self):
         if not self._progress_title:
@@ -47,7 +49,7 @@ class Progress:
         if self._progress_sub_title:
             progress = f'{progress}\n{self._progress_sub_title}'
         if self._counter_title:
-            progress = f'{progress}\n{self._counter_title}: {self._counter}'
+            progress = f'{progress}\n{self._counter_title}: {self._counter}%'
 
         return progress
 
