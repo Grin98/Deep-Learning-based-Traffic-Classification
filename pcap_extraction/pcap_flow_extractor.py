@@ -18,13 +18,6 @@ from misc.output import Progress
 from misc.constants import PROFILE
 
 
-class StatisticalDataFileCapture(pyshark.FileCapture):
-    def get_parameters(self, packet_count=None):
-        params = super(pyshark.FileCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-C', PROFILE]
-        return params
-
-
 class PcapParser:
 
     def __init__(self, progress=Progress()):
@@ -45,23 +38,20 @@ class PcapParser:
         self.progress.counter_title('parsed packets').set_counter(0)
         packet_streams = {}
         display_filter = 'ip and ' \
-                         'udp.port != 53 and ' \
-                         'not ipv6 and ' \
-                         'not igmp and ' \
+                         'not dns and ' \
                          'not icmp and ' \
-                         'udp.port != 123'
-
-        print('opening pcap file')
-        capture = StatisticalDataFileCapture(str(file),
-                                             keep_packets=True,
-                                             only_summaries=True,
-                                             display_filter=display_filter)
+                         'not igmp and ' \
+                         'not ntp ' \
+                         'and not stun'
+        capture = pyshark.FileCapture(str(file),
+                                      custom_parameters={"-C": PROFILE},
+                                      display_filter=display_filter,
+                                      only_summaries=True)
         for i, packet in enumerate(capture):
-            print(packet)
             if i % 500 == 0:
                 self.progress.set_counter(i)
 
-            packet_meta = ( packet._fields['Time'],  packet._fields['Length'])
+            packet_meta = ( float(packet._fields['Time']),  int(packet._fields['Length']))
             five_tuple = (
                 packet._fields['Source'],
                 packet._fields['SrcPort'],
