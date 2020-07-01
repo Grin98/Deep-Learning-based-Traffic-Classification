@@ -1,7 +1,8 @@
+import os
+import re
+import subprocess as sp
 from pyshark import LiveCapture
-from pyshark.packet.packet import Packet
 from collections import deque
-from typing import Tuple
 from misc.data_classes import Block
 from misc.constants import PROFILE
 import itertools
@@ -137,7 +138,7 @@ class FlowsManager:
             else:
                 logging.debug(f'skipping flow {flow}, which only exists for {time_flow_lives} seconds')
         logging.debug(f'number of RELEVANT blocks created during window slide: {len(batch)}')
-        logging.debug(f'number of IRRELEVANT mapped during window slide: {len(self.flows) - len(batch)}')
+        logging.debug(f'number of IRRELEVANT flows mapped during window slide: {len(self.flows) - len(batch)}')
         return batch
 
 
@@ -159,6 +160,7 @@ class LiveCaptureProvider:
                          'not icmp and ' \
                          'port not 123'
 
+        print(self.get_net_interfaces())
         self.capture = NonPromiscuousLiveCapture(capture_filter=capture_filter, only_summaries=True)
         self.capture.set_debug()
         self.queue = deque()
@@ -181,27 +183,25 @@ class LiveCaptureProvider:
         The new [packet] capture's metadata is stored: 5-tuple for the flow and sample of [packet]'s arrival time and
         size are added to the flow.
         """
+
+        packet_sample = (float(packet._fields['Time']), int(packet._fields['Length']))
+
         if self.absolute_start_time is None:
-            self.absolute_start_time = float(packet.sniff_timestamp)
-        self.absolute_current_time = float(packet.sniff_timestamp)
+            self.absolute_start_time = packet_sample[0]
+        self.absolute_current_time = packet_sample[0]
         self.relative_time = self.absolute_current_time - self.absolute_start_time
-
-        # logging.debug(f'absolute start time: {self.absolute_start_time}\nabsolute current time: '
-        #               f'{self.absolute_current_time}\nrelative time: {self.relative_time}')
-
-        # logging.debug(packet)
 
         self.advance_sliding_window_if_needed()
 
-        transport = packet.transport_layer
         flow = (
-            packet['ip'].src,
-            packet[transport].srcport,
-            packet['ip'].dst,
-            packet[transport].dstport,
-            transport
+            packet._fields['Source'],
+            packet._fields['SrcPort'],
+            packet._fields['Destination'],
+            packet._fields['DstPort'],
+            packet._fields['Protocol']
         )
-        self.flows_manager.add_sample(flow, self._extract_packet_meta(packet), self.absolute_current_time)
+
+        self.flows_manager.add_sample(flow, packet_sample, self.absolute_current_time)
 
     def advance_sliding_window_if_needed(self):
         """
@@ -229,13 +229,22 @@ class LiveCaptureProvider:
         # self.queue.clear()
 
     @staticmethod
-    def _extract_packet_meta(packet: Packet) -> Tuple[float, int]:
-        return float(packet.sniff_timestamp), int(packet['ip'].len)
+    def get_net_interfaces():
+        cmd_line = ["dumpcap", "-D"]
+        output = sp.check_output(cmd_line).decode('utf-8')
+        print(output)
+        data = re.findall(r'(.+?):\s*([\s\S]+?)(?=\n[\S]|$)', output)
+        infos_dict = {i[0]: i[1] for i in data}
+        for key in infos_dict:
+            if 'Interface #' in key:
+                iface_infos = re.findall(r'\s*(.+?) = (.+)\n', infos_dict[key])
+                infos_dict[key] = {i[0]: i[1] for i in iface_infos}
+        return infos_dict
 
     def start_capture(self):
         # self.capture.load_packets(timeout=10)
         # for packet in self.capture:
-        self.capture.apply_on_packets(self.packet_callback2)
+        self.capture.apply_on_packets(self.packet_callback)
 
     def stop_capture(self):
         """
