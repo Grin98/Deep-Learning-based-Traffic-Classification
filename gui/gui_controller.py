@@ -24,12 +24,12 @@ class GuiController(Tk):
         for f in (StartPage, PcapClassificationPage, LiveClassificationPage):
             frame = f(container, self)
             self.frames[f] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
         frame = self.frames[cont]
+        frame.grid(row=0, column=0, sticky="nsew")
         frame.tkraise()
 
 
@@ -106,6 +106,7 @@ class PcapClassificationPage(ttk.Frame):
     def on_back_button_click(self):
         self.progress_bar.grid_forget()
         self.graph.clear_graphs()
+        self.grid_forget()
         self.controller.show_frame(StartPage)
 
 
