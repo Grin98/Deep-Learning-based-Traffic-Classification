@@ -52,6 +52,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self.f1_score_frame = StatisticsFrame(self, self.categories)
         self.figure = plt.figure(figsize=(6, 7), dpi=100)
         self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=100)
+        self.figure.tight_layout()
+        self.figure_per_flow.tight_layout()
         self.graph = FigureCanvasTkAgg(self.figure, self)
         self.graph_per_flow = FigureCanvasTkAgg(self.figure_per_flow, self)
         self.flow_selection = ttk.Combobox(self, width=50)
