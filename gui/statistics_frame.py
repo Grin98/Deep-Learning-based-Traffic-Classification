@@ -19,8 +19,8 @@ class StatisticsFrame(ttk.Frame):
         self.f1_value = ttk.Label(self, textvariable=self.f1_value_text, font=LARGE_FONT)
 
     def _f1_score(self, actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
-        actual_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
-        analyzed_flows_preds = list(map(lambda f: self.categories.index(f.flow.app), analyzed_flows_by_categories))
+        analyzed_flows_preds = list(map(lambda f: f.pred, actual_flows_by_categories))
+        actual_flows_preds = list(map(lambda f: self.categories.index(f.flow.app), analyzed_flows_by_categories))
         existing_labels: List = np.unique(actual_flows_preds).tolist()
 
         total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
