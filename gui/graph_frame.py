@@ -37,7 +37,7 @@ LARGE_FONT = ("Verdana", 12)
 class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent, progress: Progress):
-        ttk.Frame.__init__(self, parent, padding=(30, 30, 30, 30))
+        ttk.Frame.__init__(self, parent)
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../model'
@@ -50,10 +50,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self.flows_map = {}
 
         self.f1_score_frame = StatisticsFrame(self, self.categories)
-        self.figure = plt.figure(figsize=(6, 7), dpi=100)
-        self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=100)
-        self.figure.tight_layout()
-        self.figure_per_flow.tight_layout()
+        self.figure = plt.figure(figsize=(6, 6), dpi=80)
+        self.figure_per_flow = plt.figure(figsize=(6, 6), dpi=80)
         self.graph = FigureCanvasTkAgg(self.figure, self)
         self.graph_per_flow = FigureCanvasTkAgg(self.figure_per_flow, self)
         self.flow_selection = ttk.Combobox(self, width=50)
@@ -124,6 +122,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.return_button.grid(column=0, row=0, sticky=W)
         self._create_graph(graph, labels, x, y_axis)
         graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=len(labels))
+        self.figure_per_flow.tight_layout()
         self.graph_per_flow.draw()
 
     def _on_return_click(self):
@@ -219,6 +218,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def draw_graphs(self):
         self.figure.subplots_adjust(hspace=0.5)
+        self.figure.tight_layout()
         self.graph.draw()
         self.f1_score_frame.grid(column=4, row=1, columnspan=3)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)

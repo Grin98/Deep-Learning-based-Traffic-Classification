@@ -65,7 +65,7 @@ class PcapClassificationPage(ttk.Frame):
                                       textvariable=self.progress_text)
 
         self.graph = FlowPicGraphFrame(self, self.progress)
-        self.graph.grid(column=1, row=1, columnspan=4, rowspan=4)
+        self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
 
         title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="File Classification")
 
