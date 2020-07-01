@@ -37,7 +37,7 @@ LARGE_FONT = ("Verdana", 12)
 class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent, progress: Progress):
-        ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
+        ttk.Frame.__init__(self, parent, padding=(30, 30, 30, 30))
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         model_checkpoint = '../model'
@@ -121,13 +121,13 @@ class FlowPicGraphFrame(ttk.Frame):
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
         self.return_button.grid(column=0, row=0, sticky=W)
         self._create_graph(graph, labels, x, y_axis)
-        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), shadow=True, ncol=len(labels))
+        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=len(labels))
         self.graph_per_flow.draw()
 
     def _on_return_click(self):
         self.graph_per_flow._tkcanvas.grid_forget()
         self.graph._tkcanvas.grid(column=0, row=1, columnspan=3)
-        self.f1_score_frame.grid(column=4, row=1, columnspan=2)
+        self.f1_score_frame.grid(column=4, row=1, columnspan=3)
         self.flow_selection.set('')
         self.return_button.grid_forget()
 
@@ -218,6 +218,6 @@ class FlowPicGraphFrame(ttk.Frame):
     def draw_graphs(self):
         self.figure.subplots_adjust(hspace=0.5)
         self.graph.draw()
-        self.f1_score_frame.grid(column=4, row=1, columnspan=2)
+        self.f1_score_frame.grid(column=4, row=1, columnspan=3)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)

@@ -33,7 +33,7 @@ class StatisticsFrame(ttk.Frame):
     def calculate_f1_score(self, actual_flows_by_categories, analyzed_flows_by_categories, labels: List[int]):
         total_f1, per_class_f1 = self._f1_score(actual_flows_by_categories, analyzed_flows_by_categories, labels)
         total_f1 *= 100
-        self.title.pack()
+        self.title.grid(row=0, column=0, columnspan=2)
         text = self.f1_value_text.get()
         text += f'{total_f1:.1f}%\n'
         for index, f1_score in enumerate(per_class_f1):
@@ -43,7 +43,7 @@ class StatisticsFrame(ttk.Frame):
             else:
                 text += f'{self.categories[index]}: None\n'
         self.f1_value_text.set(text)
-        self.f1_value.pack()
+        self.f1_value.grid(row=1, column=0, columnspan=2)
 
     def clear_frame(self):
         self.title.pack_forget()
