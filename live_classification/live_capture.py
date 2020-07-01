@@ -1,5 +1,3 @@
-import os
-import re
 import subprocess as sp
 from pyshark import LiveCapture
 from collections import deque
@@ -7,6 +5,7 @@ from misc.data_classes import Block
 from misc.constants import PROFILE
 import itertools
 import datetime
+import time
 import logging
 
 BLOCK_LENGTH = 12
@@ -150,8 +149,10 @@ class LiveCaptureProvider:
     """
 
     def __init__(self):
-        # only_summaries flag is important! contains packet size and arrival time (relative to capture start)
-        # TODO: see if we need to add more capture filters
+        interfaces = self.get_net_interfaces()
+        print("interfaces: ", interfaces)
+
+        # TODO: see if we can find more capture filters to add
         capture_filter = 'ip and ' \
                          'port not 53 and ' \
                          'not broadcast and ' \
@@ -160,9 +161,23 @@ class LiveCaptureProvider:
                          'not icmp and ' \
                          'port not 123'
 
-        print(self.get_net_interfaces())
-        self.capture = NonPromiscuousLiveCapture(capture_filter=capture_filter, only_summaries=True)
+        # TODO: allow users to enable/disable the option to create a pcap for this live capture.
+        # RECOMMEND: KEEP THIS AT FALSE!
+        save_to_file = False
+        output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
+
+        if save_to_file:
+            self.capture = NonPromiscuousLiveCapture(interface=interfaces,
+                                                     only_summaries=True,
+                                                     capture_filter=capture_filter,
+                                                     output_file=output_file)
+        else:
+            self.capture = NonPromiscuousLiveCapture(interface=interfaces,
+                                                     only_summaries=True,
+                                                     capture_filter=capture_filter)
+
         self.capture.set_debug()
+
         self.queue = deque()
         self.absolute_start_time = None
         self.absolute_current_time = None
@@ -232,14 +247,7 @@ class LiveCaptureProvider:
     def get_net_interfaces():
         cmd_line = ["dumpcap", "-D"]
         output = sp.check_output(cmd_line).decode('utf-8')
-        print(output)
-        data = re.findall(r'(.+?):\s*([\s\S]+?)(?=\n[\S]|$)', output)
-        infos_dict = {i[0]: i[1] for i in data}
-        for key in infos_dict:
-            if 'Interface #' in key:
-                iface_infos = re.findall(r'\s*(.+?) = (.+)\n', infos_dict[key])
-                infos_dict[key] = {i[0]: i[1] for i in iface_infos}
-        return infos_dict
+        return [line[line.find("(") + 1:line.find(")")] for line in output.splitlines()]
 
     def start_capture(self):
         # self.capture.load_packets(timeout=10)
