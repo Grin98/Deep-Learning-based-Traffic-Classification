@@ -67,15 +67,12 @@ class PcapClassificationPage(ttk.Frame):
         self.graph = FlowPicGraphFrame(self, self.progress)
         self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
 
-        title_label = ttk.Label(self, font=LARGE_FONT, anchor="center", text="File Classification")
-
         pcap_button = ttk.Button(self, text="Upload files", width=24, command=self.upload_pcap_file, )
         back_button = ttk.Button(self, width=24, text="Back",
                                  command=lambda: self.on_back_button_click())
 
         pcap_button.grid(column=4, row=8, columnspan=2)
         back_button.grid(column=0, row=8, columnspan=2)
-        title_label.grid(column=2, row=0, columnspan=2)
         progress_bar_frame.grid(column=2, row=6, columnspan=2)
 
 
@@ -115,17 +112,17 @@ class PcapClassificationPage(ttk.Frame):
 class StartPage(ttk.Frame):
 
     def __init__(self, parent, controller):
-        ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
+        ttk.Frame.__init__(self, parent)
         title_label = ttk.Label(self, text="Traffic Classification", font=LARGE_FONT)
         title_label.pack(pady=10, padx=10)
 
         pcap_class_button = ttk.Button(self, text="File Classification",
-                                       command=lambda: controller.show_frame(PcapClassificationPage))
-        pcap_class_button.pack(side=RIGHT)
+                                       command=lambda: controller.show_frame(PcapClassificationPage), width=50)
+        pcap_class_button.pack(pady=5, padx=5)
 
         live_class_button = ttk.Button(self, text="Live Classification",
-                                       command=lambda: controller.show_frame(LiveClassificationPage))
-        live_class_button.pack(side=LEFT)
+                                       command=lambda: controller.show_frame(LiveClassificationPage), width=50)
+        live_class_button.pack(pady=5, padx=5)
 
 
 if __name__ == '__main__':
