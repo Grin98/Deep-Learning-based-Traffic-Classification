@@ -39,7 +39,8 @@ class FlowPicGraphFrame(ttk.Frame):
     def __init__(self, parent, progress: Progress):
         ttk.Frame.__init__(self, parent)
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
+        self.classifier_categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
+        self.all_categories = self.classifier_categories + ['unknown']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
         self.pcap_classifier = PcapClassifier(model, device, progress=progress)
@@ -49,7 +50,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.min_time = 0
         self.flows_map = {}
 
-        self.f1_score_frame = StatisticsFrame(self, self.categories)
+        self.f1_score_frame = StatisticsFrame(self, self.all_categories)
         self.figure = plt.figure(figsize=(7, 7), dpi=80)
         self.figure_per_flow = plt.figure(figsize=(7, 7), dpi=80)
         self.graph = FigureCanvasTkAgg(self.figure, self)
@@ -92,8 +93,8 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def _generate_actual_graph(self, files, flows_data: List[ClassifiedFlow]):
         flows_data = [flow for flow in flows_data if flow.flow.times[-1] > TIME_INTERVAL]
-        flows_by_categories = [[] for _ in self.categories]
-        [flows_by_categories[self.categories.index(flow.flow.app)].append(flow) for flow in flows_data]
+        flows_by_categories = [[] for _ in self.all_categories]
+        [flows_by_categories[self.all_categories.index(flow.flow.app)].append(flow) for flow in flows_data]
 
         labels, x, y_axis = self._extract_graph_values(flows_by_categories)
 
@@ -104,7 +105,7 @@ class FlowPicGraphFrame(ttk.Frame):
     def _create_combobox(self):
 
         self.flow_selection["values"] = list(
-            map(lambda item: f'{item[0]}({self.categories[item[1].pred]})', self.flows_map.items()))
+            map(lambda item: f'{item[0]}({self.all_categories[item[1].pred]})', self.flows_map.items()))
 
     def _on_flow_select(self, event):
         self.figure_per_flow.clear()
@@ -140,7 +141,7 @@ class FlowPicGraphFrame(ttk.Frame):
         self.min_time = np.min(flows_by_start_time)
         self.max_time = np.max(flows_by_end_time)
         x = list(np.arange(self.min_time, self.max_time, TIME_INTERVAL))
-        flows = [[] for _ in self.categories]
+        flows = [[] for _ in self.all_categories]
         for index, flows_by_categories in enumerate(flows_data):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
@@ -151,13 +152,13 @@ class FlowPicGraphFrame(ttk.Frame):
 
         flows = [(np.array(flow) * 8 / BYTES_IN_KB) / TIME_INTERVAL for flow in flows]
 
-        return self.categories, x, flows
+        return self.all_categories, x, flows
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
         x = list(
             np.arange(0, classified_flow.flow.times[-1],
                       BLOCK_INTERVAL))
-        bandwidth_per_category = [[] for _ in self.categories]
+        bandwidth_per_category = [[] for _ in self.classifier_categories]
 
         for window_index, time_window in enumerate(x):
             min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)
@@ -165,14 +166,14 @@ class FlowPicGraphFrame(ttk.Frame):
             times = np.array(classified_flow.flow.times)
             sizes = np.array(classified_flow.flow.sizes)
             size_in_bits = np.sum(sizes[((time_window <= times) & (times < time_window + BLOCK_INTERVAL))]) * 8
-            prob_sum = np.array([0.0] * len(self.categories))
+            prob_sum = np.array([0.0] * len(self.classifier_categories))
             for block in classified_flow.classified_blocks[min_index:max_index + 1]:
                 prob_sum += block.probabilities
             prob_sum /= (max_index + 1) - min_index
             for index, bandwidth_list in enumerate(bandwidth_per_category):
                 bandwidth_list.append(prob_sum[index] * ((size_in_bits / BYTES_IN_KB) / BLOCK_INTERVAL))
 
-        return self.categories, x, bandwidth_per_category
+        return self.classifier_categories, x, bandwidth_per_category
 
     def classify_pcap_file(self, files_list: List[Path]):
         self.title = str(list(map(lambda file: file.name, files_list)))
@@ -192,14 +193,14 @@ class FlowPicGraphFrame(ttk.Frame):
             flows_data += self.pcap_classifier.classify_multiple_files(pcap_files, FLOWS_TO_CLASSIFY)
 
         flows_data = [flow for flow in flows_data if flow.flow.times[-1] > TIME_INTERVAL]
-        flows_by_categories = [[] for _ in self.categories]
+        flows_by_categories = [[] for _ in self.all_categories]
         [flows_by_categories[flow.pred].append(flow) for flow in flows_data]
         labels, x, y_axis = self._extract_graph_values(flows_by_categories)
 
         self.flows_map = {f'{index}: {str(classified_flow.flow.five_tuple)}': classified_flow for
                           index, classified_flow in
                           enumerate(flows_data)}
-        categories_by_int = list(map(lambda category: self.categories.index(category), self.categories))
+        categories_by_int = list(map(lambda category: self.all_categories.index(category), self.all_categories))
         if len(csv_flows_data) > 0:
             self.f1_score_frame.calculate_f1_score(csv_flows_data, csv_flows_data, categories_by_int)
 

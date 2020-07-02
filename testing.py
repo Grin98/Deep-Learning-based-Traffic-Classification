@@ -63,13 +63,17 @@ if __name__ == '__main__':
     #
     # PcapParser.write_flow_rows(Path(f'example/{cat}.csv'), flows)
 
-    y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
+    y = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+         2,
+         1]
     pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
-    ls = np.unique(y).tolist()
-    tot = f1_score(y, pred, average='weighted', labels=ls)
-    pc = f1_score(y, pred, average=None, labels=ls)
-    print(tot)
-    print(pc)
+    c = Counter(y)
+    print(Classifier.get_pred(c))
+    # ls = np.unique(y).tolist()
+    # tot = f1_score(y, pred, average='weighted', labels=ls)
+    # pc = f1_score(y, pred, average=None, labels=ls)
+    # print(tot)
+    # print(pc)
     exit()
 
 

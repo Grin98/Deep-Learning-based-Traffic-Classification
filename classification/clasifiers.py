@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from flowpic_dataset.processors import BasicProcessor
+from misc.constants import UNKNOWN_THRESHOLD
 from misc.data_classes import ClassifiedBlock, Flow, ClassifiedFlow
 from misc.output import Progress
 from model.flow_pic_model import FlowPicModel
@@ -50,7 +51,7 @@ class Classifier:
     def classify_flow(self, f: Flow) -> ClassifiedFlow:
         ds = BlocksDataSet.from_flows([f])
         distribution, classified_blocks = self.classify_dataset(ds)
-        pred = distribution.most_common(1)[0][0]
+        pred = self.get_pred(distribution)
         return ClassifiedFlow(f, pred, classified_blocks)
 
     def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 128):
@@ -67,6 +68,19 @@ class Classifier:
             classified_blocks += [ClassifiedBlock(ds.get_block(j * batch_size + i), pred[i], prob[i]) for i in range(len(pred))]
 
         return cnt, classified_blocks
+
+    @staticmethod
+    def get_pred(dist: Counter):
+        common = dist.most_common(n=2)
+        if len(common) == 1:
+            return common[0][0]
+
+        c1, c2 = common
+        ratio = c2[1] / c1[1]
+        print(c1, c2, ratio)
+        if ratio > UNKNOWN_THRESHOLD:
+            return -1
+        return c1[0]
 
 
 class PcapClassifier:
