@@ -50,23 +50,29 @@ class C:
 
 if __name__ == '__main__':
 
-    cat = 'voip'
-    file = Path(f'tagged_flows_reg/{cat}.csv')
-    flows = []
-    with file.open(newline='') as f_in:
-        data = csv.reader(f_in, delimiter=',')
-        for i, row in enumerate(data):
-            if i == 100:
-                break
-            f = Flow.create_from_row(row)
-            flows.append(f)
+    # cat = 'voip'
+    # file = Path(f'tagged_flows_reg/{cat}.csv')
+    # flows = []
+    # with file.open(newline='') as f_in:
+    #     data = csv.reader(f_in, delimiter=',')
+    #     for i, row in enumerate(data):
+    #         if i == 100:
+    #             break
+    #         f = Flow.create_from_row(row)
+    #         flows.append(f)
+    #
+    # PcapParser.write_flow_rows(Path(f'example/{cat}.csv'), flows)
 
-    PcapParser.write_flow_rows(Path(f'example/{cat}.csv'), flows)
+    y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
+    pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
+    ls = np.unique(y).tolist()
+    tot = f1_score(y, pred, average='weighted', labels=ls)
+    pc = f1_score(y, pred, average=None, labels=ls)
+    print(tot)
+    print(pc)
+    exit()
 
-    # y = [1, 3, 1, 2, 3, 2, 1, 3, 3]
-    # pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
-    # # a = f1_score(y, pred, average='weighted', labels=np.unique(y))
-    # a = f1_score(y, pred, average=None, labels=[0, 1, 2, 3, 4])
+
     # _, b = FlowPicGraphFrame.f1_score(y, pred, labels=[0, 1, 2, 3, 4])
     # print(a, b)
     # exit()
