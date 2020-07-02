@@ -92,6 +92,8 @@ class PcapParser:
     def get_pcap_metadata(filepath):
         cmd_args = ["-c", "-z", "-i"]
         cmd_line = ["capinfos"] + cmd_args + [os.path.expanduser(str(filepath))]
+        print(os.environ)
+        print(cmd_line)
         output = sp.check_output(cmd_line).decode('utf-8')
         data = re.findall(r'(.+?):\s*([\s\S]+?)(?=\n[\S]|$)', output)
         infos_dict = {i[0]: i[1] for i in data}
