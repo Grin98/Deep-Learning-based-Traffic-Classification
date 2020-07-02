@@ -15,6 +15,7 @@ from model.flow_pic_model import FlowPicModel
 from misc.utils import load_model, set_seed
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
+LOADING_BAR_UPDATE_INTERVAL = 2
 
 class Classifier:
     def __init__(self, model, device, seed: int = 42, progress=Progress()):
@@ -37,16 +38,16 @@ class Classifier:
         return pred, probabilities
 
     def classify_multiple_flows(self, flows: Sequence[Flow]) -> Sequence[ClassifiedFlow]:
-        # res = []
-        # for i, f in enumerate(flows):
-        #     if i == 150:
-        #         break
-        #     res.append(self.classify_flow(f))
-        # return res
-        return [self.classify_flow(f) for f in flows]
+        self.progress.counter_title('classified flows').set_counter(0)
+        num_flows = len(flows)
+        res = []
+        for i, f in enumerate(flows):
+            if i % LOADING_BAR_UPDATE_INTERVAL == 0:
+                self.progress.set_counter(i, num_flows)
+            res.append(self.classify_flow(f))
+        return res
 
     def classify_flow(self, f: Flow) -> ClassifiedFlow:
-        self.progress.progress_sub_title(f'classifying {f.five_tuple}')
         ds = BlocksDataSet.from_flows([f])
         distribution, classified_blocks = self.classify_dataset(ds)
         pred = distribution.most_common(1)[0][0]
