@@ -77,7 +77,6 @@ class PcapParser:
                 packet_streams[five_tuple].append(packet_meta)
             else:
                 packet_streams[five_tuple] = [packet_meta]
-        pcap_start_time = float(capture[0]._fields['Time'])
         capture.close()
 
         if n is None:
@@ -85,7 +84,7 @@ class PcapParser:
         else:
             max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
 
-        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple], pcap_start_time)
+        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple])
                 for five_tuple in max_five_tuples]
 
     @staticmethod
@@ -116,10 +115,9 @@ class PcapParser:
         return int(quantity)
 
     @staticmethod
-    def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]], pcap_start_time: float):
+    def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
         times, sizes = zip(*stream)
-        pcap_relative_start_time = times[0] - pcap_start_time
-        return Flow.create('app', five_tuple, times, sizes, pcap_relative_start_time=pcap_relative_start_time)
+        return Flow.create('app', five_tuple, times[0], times, sizes)
 
     @staticmethod
     def write_flow_rows(file: Path, flows: Sequence[Flow]):

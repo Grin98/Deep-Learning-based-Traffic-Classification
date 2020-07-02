@@ -12,7 +12,6 @@ class Flow(NamedTuple):
     num_packets: int
     times: np.ndarray
     sizes: np.ndarray
-    pcap_relative_start_time: float = 0
 
     @classmethod
     def create_from_row(cls, row: List[str]):
@@ -23,15 +22,14 @@ class Flow(NamedTuple):
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
         sizes = row[(num_packets + off_set + 1):]  # +1 because there is an empty cell between times and sizes
-        return cls.create(app, five_tuple, times, sizes, start_time, 0)
+        return cls.create(app, five_tuple, start_time, times, sizes)
 
     @classmethod
     def create(cls, app: str,
                five_tuple: Sequence,
+               start_time: float,
                times: Sequence,
                sizes: Sequence,
-               start_time: float = None,
-               pcap_relative_start_time: float = None
                ):
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
@@ -40,12 +38,9 @@ class Flow(NamedTuple):
         times = times[mask]
         sizes = sizes[mask] - 1
         num_packets = len(times)
+        times -= start_time
 
-        if start_time is None:
-            start_time = times[0]
-            times -= start_time
-
-        return Flow(app, list(five_tuple), start_time, num_packets, times, sizes, pcap_relative_start_time=pcap_relative_start_time)
+        return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
 
     def convert_to_row(self):
         """

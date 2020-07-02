@@ -134,8 +134,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self.return_button.grid_forget()
 
     def _extract_graph_values(self, flows_data):
-        flows_by_start_time = [flow.flow.pcap_relative_start_time for flow_list in flows_data for flow in flow_list]
-        flows_by_end_time = [flow.flow.pcap_relative_start_time + flow.flow.times[-1] for flow_list in flows_data for
+        flows_by_start_time = [flow.flow.start_time for flow_list in flows_data for flow in flow_list]
+        flows_by_end_time = [flow.flow.start_time + flow.flow.times[-1] for flow_list in flows_data for
                              flow in flow_list]
 
         self.min_time = np.min(flows_by_start_time)
@@ -145,8 +145,8 @@ class FlowPicGraphFrame(ttk.Frame):
         for index, flows_by_categories in enumerate(flows_data):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time >= start_time) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.pcap_relative_start_time < start_time + TIME_INTERVAL))])
+                                                                   classified_flow.flow.times + classified_flow.flow.start_time >= start_time) & (
+                                                                   classified_flow.flow.times + classified_flow.flow.start_time < start_time + TIME_INTERVAL))])
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
