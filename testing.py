@@ -19,7 +19,7 @@ from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, Cros
 from gui.graph_frame import FlowPicGraphFrame
 from misc.data_classes import Flow
 from misc.output import Logger, Progress
-from misc.utils import show_flow_pic, is_file, Timer, load_model
+from misc.utils import show_flow_pic, is_file, Timer, load_model, get_dir_items
 from model.flow_pic_model import FlowPicModel
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
@@ -50,6 +50,20 @@ class C:
 
 if __name__ == '__main__':
 
+    dir_path = Path('pcaps_folder')  # TODO replace with you folder path
+    pcaps = list(get_dir_items(dir_path))
+    tot = len(pcaps)
+    with Path('names').open(mode='w+') as out:
+        for i, f in enumerate(pcaps):
+            print(f'{i}/{tot}')
+            name = f.stem
+            if 'vpn' in name or 'tor' in name or 'email' in name:
+                continue
+
+            print(f'{name}, {f.stat().st_size / 1000}', file=out)
+    print('done')
+
+
     # cat = 'voip'
     # file = Path(f'tagged_flows_reg/{cat}.csv')
     # flows = []
@@ -63,12 +77,12 @@ if __name__ == '__main__':
     #
     # PcapParser.write_flow_rows(Path(f'example/{cat}.csv'), flows)
 
-    y = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-         2,
-         1]
-    pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
-    c = Counter(y)
-    print(Classifier.get_pred(c))
+    # y = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    #      2,
+    #      1]
+    # pred = [1, 2, 1, 2, 3, 1, 1, 1, 2]
+    # c = Counter(y)
+    # print(Classifier.get_pred(c))
     # ls = np.unique(y).tolist()
     # tot = f1_score(y, pred, average='weighted', labels=ls)
     # pc = f1_score(y, pred, average=None, labels=ls)
