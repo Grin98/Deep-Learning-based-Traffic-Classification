@@ -39,6 +39,7 @@ class LiveClassificationFrame(ttk.Frame):
         self.all_categories = self.classifier_categories + ['unknown']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
+
         # TODO add correct model
 
         # Graph initialization
