@@ -1,7 +1,10 @@
+import threading
 import tkinter
 from tkinter import filedialog
 
 from gui.graph_frame import *
+from gui.interface_selection_frame import InterfaceSelectionFrame
+from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
 
 matplotlib.use("TkAgg")
@@ -37,14 +40,52 @@ class LiveClassificationPage(ttk.Frame):
 
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
-        title_label = ttk.Label(self, text="Live Classification", font=LARGE_FONT)
-        title_label.grid(column=2, row=0, columnspan=2)
+        self.controller = controller
 
-        live_button = ttk.Button(self, text="Start Live Capturing", width=24)
-        back_button = ttk.Button(self, width=24, text="Back",
-                                 command=lambda: controller.show_frame(StartPage))
-        live_button.grid(column=4, row=6, columnspan=2)
+        self.title_label = ttk.Label(self, text="Live Classification", font=LARGE_FONT)
+        self.title_label.grid(column=3, row=0, sticky=W + E)
+
+        self.live_button = ttk.Button(self, text="Start Live Capturing", width=24, command=self._on_capture_click)
+        self.live_button.state(["disabled"])
+        self.live_button.grid(column=4, row=6, columnspan=2)
+
+        back_button = ttk.Button(self, width=24, text="Back", command=lambda: self.on_back_button_click())
         back_button.grid(column=0, row=6, columnspan=2)
+
+        self.stop_button = ttk.Button(self, text="Stop", width=24, command=self._on_stop_click)
+
+        self.interface_selection = InterfaceSelectionFrame(self, self.live_button)
+        self.interface_selection.grid(column=1, row=1, columnspan=4, rowspan=2, sticky=W + E + N + S)
+        self.graph = LiveClassificationFrame(self)
+
+    def on_back_button_click(self):
+        if self.stop_button.winfo_viewable():
+            self._on_stop_click()
+        self.graph.clear()
+        self.graph.grid_forget()
+        self.grid_forget()
+        self.title_label.grid(column=3, row=0, sticky=W + E)
+        self.interface_selection.clear()
+        self.interface_selection.grid(column=1, row=1, columnspan=4, rowspan=2, sticky=W + E + N + S)
+        self.live_button.state(["disabled"])
+        self.controller.show_frame(StartPage)
+
+    def _on_capture_click(self):
+        interface = self.interface_selection.selected_interface
+
+        self.interface_selection.clear()
+        self.interface_selection.grid_forget()
+        self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
+
+        self.graph.begin_live_classification(interface)
+
+        self.live_button.grid_forget()
+        self.stop_button.grid(column=4, row=6, columnspan=2)
+
+    def _on_stop_click(self):
+        self.graph.stop()
+        self.stop_button.grid_forget()
+        self.live_button.grid(column=4, row=6, columnspan=2)
 
 
 class PcapClassificationPage(ttk.Frame):
@@ -74,7 +115,6 @@ class PcapClassificationPage(ttk.Frame):
         pcap_button.grid(column=4, row=8, columnspan=2)
         back_button.grid(column=0, row=8, columnspan=2)
         progress_bar_frame.grid(column=2, row=6, columnspan=2)
-
 
     def upload_pcap_file(self):
         self.graph.clear_graphs()

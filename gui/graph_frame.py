@@ -1,37 +1,28 @@
-from collections import Sequence
-from pathlib import Path
-from tkinter import ttk
-from tkinter import *
 import queue
-import threading
-import itertools
 from itertools import groupby
+from pathlib import Path
+from tkinter import *
+from tkinter import ttk
 from typing import List
+
 import matplotlib
-import time
 import numpy as np
-from sklearn.metrics import f1_score
 import torch
+
 from classification.clasifiers import PcapClassifier, FlowCsvClassifier
+from gui.statistics_frame import StatisticsFrame
+from misc.constants import TIME_INTERVAL, BLOCK_INTERVAL, BYTES_IN_KB, FLOWS_TO_CLASSIFY, PCAP_KEY, CSV_KEY, COMPLETED
 from misc.data_classes import ClassifiedFlow
 from misc.output import Progress
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
-from gui.statistics_frame import StatisticsFrame
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 result_queue = queue.Queue()
-COMPLETED = "completed"
-TIME_INTERVAL = 15
-BLOCK_INTERVAL = 15
-FLOWS_TO_CLASSIFY = 20
-PCAP_KEY = "p"
-CSV_KEY = "c"
-BYTES_IN_KB = 1024
-LARGE_FONT = ("Verdana", 12)
+
 
 
 class FlowPicGraphFrame(ttk.Frame):
