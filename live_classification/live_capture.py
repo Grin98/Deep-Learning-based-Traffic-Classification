@@ -13,6 +13,7 @@ BLOCK_INTERVAL = 3
 # TODO: CHANGE LOGGING LEVEL FROM [logging.DEBUG] TO [logging.INFO] TO STOP DEBUG MESSAGES!!!
 # logging.basicConfig(filename='example_live_capture.txt', format='%(asctime)s %(message)s', level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 
 class NonPromiscuousLiveCapture(LiveCapture):
