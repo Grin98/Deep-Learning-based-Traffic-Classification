@@ -49,20 +49,22 @@ class C:
 
 
 if __name__ == '__main__':
+    list1 = [1, 1, 1, 1]
+    list2 = [1, 1, 1, 1, 1]
+    print(np.sum(list(itertools.chain.from_iterable([list1, list2]))))
 
-    dir_path = Path('pcaps_folder')  # TODO replace with you folder path
-    pcaps = list(get_dir_items(dir_path))
-    tot = len(pcaps)
-    with Path('names').open(mode='w+') as out:
-        for i, f in enumerate(pcaps):
-            print(f'{i}/{tot}')
-            name = f.stem
-            if 'vpn' in name or 'tor' in name or 'email' in name:
-                continue
-
-            print(f'{name}, {f.stat().st_size / 1000}', file=out)
-    print('done')
-
+    # dir_path = Path('pcaps_folder')  # TODO replace with you folder path
+    # pcaps = list(get_dir_items(dir_path))
+    # tot = len(pcaps)
+    # with Path('names').open(mode='w+') as out:
+    #     for i, f in enumerate(pcaps):
+    #         print(f'{i}/{tot}')
+    #         name = f.stem
+    #         if 'vpn' in name or 'tor' in name or 'email' in name:
+    #             continue
+    #
+    #         print(f'{name}, {f.stat().st_size / 1000}', file=out)
+    # print('done')
 
     # cat = 'voip'
     # file = Path(f'tagged_flows_reg/{cat}.csv')
@@ -89,7 +91,6 @@ if __name__ == '__main__':
     # print(tot)
     # print(pc)
     exit()
-
 
     # _, b = FlowPicGraphFrame.f1_score(y, pred, labels=[0, 1, 2, 3, 4])
     # print(a, b)

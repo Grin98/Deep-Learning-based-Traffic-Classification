@@ -2,14 +2,12 @@ import subprocess as sp
 from pyshark import LiveCapture
 from collections import deque
 from misc.data_classes import Block
-from misc.constants import PROFILE
+from misc.constants import PROFILE, BLOCK_DURATION, BLOCK_INTERVAL
 import itertools
 import datetime
 import time
 import logging
 
-BLOCK_LENGTH = 12
-BLOCK_INTERVAL = 3
 # TODO: CHANGE LOGGING LEVEL FROM [logging.DEBUG] TO [logging.INFO] TO STOP DEBUG MESSAGES!!!
 # logging.basicConfig(filename='example_live_capture.txt', format='%(asctime)s %(message)s', level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
@@ -56,7 +54,7 @@ class FlowData:
         """
         # these are windows with the samples from the flow during the last: [0,15], [15,30], [30,45] and [45,60]
         # seconds. self.head refers to the "most recent" window, and every *previous* index modulo 4 will be the next
-        self.window_samples = [[] for _ in range(BLOCK_LENGTH // BLOCK_INTERVAL)]
+        self.window_samples = [[] for _ in range(BLOCK_DURATION // BLOCK_INTERVAL)]
         self.head = 0
         self.window_samples[self.head].append(sample)
         self.absolute_start_time = absolute_start_time
@@ -132,7 +130,7 @@ class FlowsManager:
         batch = []
         for flow, flow_data in self.flows.items():
             time_flow_lives = current_absolute_time - flow_data.absolute_start_time
-            if time_flow_lives >= BLOCK_LENGTH:
+            if time_flow_lives >= BLOCK_DURATION and len(flow_data) is not 0:
                 logging.debug(f'pushing flow {flow}, which exists for {time_flow_lives} seconds')
                 batch.append((flow, flow_data.to_block()))
             else:
@@ -228,7 +226,7 @@ class LiveCaptureProvider:
         while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
             pre_update = datetime.datetime.now()
             self.sliding_window_advancements += 1
-            if self.sliding_window_advancements >= BLOCK_LENGTH // BLOCK_INTERVAL:
+            if self.sliding_window_advancements >= BLOCK_DURATION // BLOCK_INTERVAL:
                 self.push_flows()
             self.flows_manager.advance_sliding_window()
             post_update = datetime.datetime.now()
