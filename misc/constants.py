@@ -2,7 +2,7 @@
 BLOCK_DURATION = 60  # in seconds
 BLOCK_DELTA = 15  # in seconds
 PACKET_SIZE_LIMIT = 1500  # in Bytes
-UNKNOWN_THRESHOLD = 0.85
+UNKNOWN_THRESHOLD = 0.7
 
 PROFILE = 'LiveCaptureStatisticsSummary'
 
@@ -19,4 +19,5 @@ FLOWS_TO_CLASSIFY = 20
 PCAP_KEY = "p"
 CSV_KEY = "c"
 BYTES_IN_KB = 1024
+BYTES_IN_BITS = 8
 LARGE_FONT = ("Verdana", 12)

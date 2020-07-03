@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score
 import torch
 from classification.clasifiers import Classifier
 from flowpic_dataset.dataset import BlocksDataSet
-from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL, BYTES_IN_KB
+from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL, BYTES_IN_KB, BYTES_IN_BITS
 from misc.data_classes import ClassifiedFlow
 from misc.output import Progress
 from misc.utils import load_model
@@ -25,7 +25,7 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-blocks_queue = queue.Queue()
+action_queue = queue.Queue()
 LIVE_CAPTURE_QUEUE_CHECK_INTERVAL = 100
 
 
@@ -45,8 +45,6 @@ class LiveClassificationFrame(ttk.Frame):
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
         self.classifier = Classifier(model, device)
-
-        # TODO add correct model
 
         # Graph initialization
         self.graph_frame = ttk.Frame(self, padding=(5, 5, 5, 5))
@@ -86,7 +84,7 @@ class LiveClassificationFrame(ttk.Frame):
 
         graph.set_xlabel("time in seconds")
         graph.set_ylabel("Kbps")
-        graph.set_xlim(x[0], x[-1])
+        graph.set_xlim(0, x[-1])
         graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=len(labels))
 
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
@@ -148,8 +146,8 @@ class LiveClassificationFrame(ttk.Frame):
         batch = self.live_capture.queue.pop()
         blocks = [block for (_, block) in batch]
         blocks_ds = BlocksDataSet.from_blocks(blocks)
-        count, classified_blocks = self.classifier.classify_dataset(blocks_ds)
-        assert count == len(blocks)
+        print(blocks_ds)
+        _, classified_blocks = self.classifier.classify_dataset(blocks_ds)
 
         results = zip([flow for (flow, _) in batch], [classified_block for classified_block in classified_blocks])
         for (flow, block) in results:
@@ -160,16 +158,45 @@ class LiveClassificationFrame(ttk.Frame):
 
         self.blocks_in_intervals.append(classified_blocks)
         labels, x, y_axis = self._extract_graph_values()
-
+        self.figure.clear()
+        self._generate_predicted_graph(labels, x, y_axis)
         self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
 
     def _extract_graph_values(self):
-        x = [np.arange(BLOCK_DURATION, BLOCK_DURATION + BLOCK_INTERVAL * (len(self.blocks_in_intervals) - 1),
-                       BLOCK_INTERVAL)]
-        blocks_by_categories = [[] for _ in self.all_categories]
-        for classified_block in self.blocks_in_intervals:
-            blocks_by_categories[classified_block.pred].append(classified_block)
-        y = [[] for _ in self.all_categories]
+        x = list(np.arange(BLOCK_DURATION, BLOCK_DURATION + BLOCK_INTERVAL * (len(self.blocks_in_intervals)),
+                       BLOCK_INTERVAL))
+        x = [0] + x
+        y = [[0] for _ in self.all_categories]
+        for interval_index, classified_block_list in enumerate(self.blocks_in_intervals):
+            blocks_by_categories = [[] for _ in self.all_categories]
+            for classified_block in classified_block_list:
+                blocks_by_categories[classified_block.pred].append(classified_block)
+            for index, blocks_list in enumerate(blocks_by_categories):
+                if interval_index is 0:
+                    bandwidth = np.sum(list(itertools.chain.from_iterable([np.array(classified_block.block.data)[:, 1] for classified_block in blocks_list])))
+                    bandwidth = (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / BLOCK_DURATION
+                    y[index].append(bandwidth)
+                else:
+                    bandwidth = np.sum(list(itertools.chain.from_iterable(
+                        [np.array(classified_block.block.data)[:, 1][(np.array(classified_block.block.data)[:, 0] > classified_block.block.start_time) &
+                                                           (np.array(classified_block.block.data)[:, 0] <= classified_block.block.start_time + BLOCK_INTERVAL)]
+                         for classified_block in blocks_list])))
+                    bandwidth = (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / BLOCK_INTERVAL
+                    y[index].append(bandwidth)
+        return self.all_categories, x, y
+
+    def _generate_predicted_graph(self, labels, x, y_axis):
+        predicted_graph = self.figure.add_subplot(111)
+        predicted_graph.set_title("Predicted Categories Bandwidth")
+        self._create_graph(predicted_graph, labels, x, y_axis)
+        self.draw_graph()
+
+    def draw_graph(self):
+        self.figure.subplots_adjust(hspace=0.5)
+        self.figure.tight_layout()
+        self.graph.draw()
+        self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
+        self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
 
     def stop(self):
         pass

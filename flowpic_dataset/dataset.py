@@ -59,6 +59,7 @@ class BlocksDataSet(Dataset):
     @classmethod
     def from_blocks(cls, blocks: Sequence[Block], global_label=0):
         start_times, _, data = zip(*blocks)
+        print(blocks)
         labels = np.array([global_label] * len(data))
 
         return BlocksDataSet(data, labels, start_times)
