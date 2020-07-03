@@ -12,18 +12,22 @@ import time
 import numpy as np
 from sklearn.metrics import f1_score
 import torch
-from classification.clasifiers import PcapClassifier, FlowCsvClassifier
-from misc.constants import BLOCK_INTERVAL, BYTES_IN_KB
+from classification.clasifiers import Classifier
+from flowpic_dataset.dataset import BlocksDataSet
+from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL, BYTES_IN_KB
 from misc.data_classes import ClassifiedFlow
 from misc.output import Progress
 from misc.utils import load_model
 from model.flow_pic_model import FlowPicModel
+from live_classification.live_capture import LiveCaptureProvider
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 blocks_queue = queue.Queue()
+LIVE_CAPTURE_QUEUE_CHECK_INTERVAL = 100
+
 
 class LiveClassificationFrame(ttk.Frame):
     def __init__(self, parent):
@@ -32,6 +36,7 @@ class LiveClassificationFrame(ttk.Frame):
         self.max_time = 0
         self.min_time = 0
         self.flows_map = {}
+        self.blocks_in_intervals = []
 
         # Model initialization
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -39,6 +44,7 @@ class LiveClassificationFrame(ttk.Frame):
         self.all_categories = self.classifier_categories + ['unknown']
         model_checkpoint = '../model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
+        self.classifier = Classifier(model, device)
 
         # TODO add correct model
 
@@ -128,8 +134,42 @@ class LiveClassificationFrame(ttk.Frame):
         self.flow_selection.set('')
         self.return_button.grid_forget()
 
-    def begin_live_classification(self, interface):
-        pass
+    def begin_live_classification(self, interfaces):
+        self.live_capture = LiveCaptureProvider(interfaces)
+        self.live_capture_thread = threading.Thread(target=lambda: self.live_capture.start_capture())
+        self.live_capture_thread.start()
+        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
+
+    def check_live_capture_queue(self):
+        if len(self.live_capture.queue) is 0:
+            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
+            return
+
+        batch = self.live_capture.queue.pop()
+        blocks = [block for (_, block) in batch]
+        blocks_ds = BlocksDataSet.from_blocks(blocks)
+        count, classified_blocks = self.classifier.classify_dataset(blocks_ds)
+        assert count == len(blocks)
+
+        results = zip([flow for (flow, _) in batch], [classified_block for classified_block in classified_blocks])
+        for (flow, block) in results:
+            if self.flows_map.__contains__(flow):
+                self.flows_map[flow].append(block)
+            else:
+                self.flows_map[flow] = [block]
+
+        self.blocks_in_intervals.append(classified_blocks)
+        labels, x, y_axis = self._extract_graph_values()
+
+        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
+
+    def _extract_graph_values(self):
+        x = [np.arange(BLOCK_DURATION, BLOCK_DURATION + BLOCK_INTERVAL * (len(self.blocks_in_intervals) - 1),
+                       BLOCK_INTERVAL)]
+        blocks_by_categories = [[] for _ in self.all_categories]
+        for classified_block in self.blocks_in_intervals:
+            blocks_by_categories[classified_block.pred].append(classified_block)
+        y = [[] for _ in self.all_categories]
 
     def stop(self):
         pass

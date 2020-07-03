@@ -71,13 +71,13 @@ class LiveClassificationPage(ttk.Frame):
         self.controller.show_frame(StartPage)
 
     def _on_capture_click(self):
-        interface = self.interface_selection.selected_interface
+        interfaces = self.interface_selection.selected_interface
 
         self.interface_selection.clear()
         self.interface_selection.grid_forget()
         self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
 
-        self.graph.begin_live_classification(interface)
+        self.graph.begin_live_classification(interfaces)
 
         self.live_button.grid_forget()
         self.stop_button.grid(column=4, row=6, columnspan=2)

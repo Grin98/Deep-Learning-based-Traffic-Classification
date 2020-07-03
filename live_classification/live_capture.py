@@ -86,7 +86,7 @@ class FlowData:
 
     def to_block(self):
         """
-        :return: a 2-tuple of (flow 5-tuple, block of last 60 secs)
+        :return: a block of the last 60 secs
         """
         return Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
                      num_packets=self.__len__(),
@@ -148,10 +148,7 @@ class LiveCaptureProvider:
     Each time a flow is created - all subscribers will be notified
     """
 
-    def __init__(self):
-        interfaces = self.get_net_interfaces()
-        print("interfaces: ", interfaces)
-
+    def __init__(self, interfaces):
         # TODO: see if we can find more capture filters to add
         capture_filter = 'ip and ' \
                          'port not 53 and ' \
@@ -262,6 +259,6 @@ class LiveCaptureProvider:
 
 
 if __name__ == '__main__':
-    live = LiveCaptureProvider()
+    live = LiveCaptureProvider(LiveCaptureProvider.get_net_interfaces())
     live.start_capture()
     # live.stop_capture()
