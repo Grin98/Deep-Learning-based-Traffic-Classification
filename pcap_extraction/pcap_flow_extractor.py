@@ -13,9 +13,6 @@ import subprocess as sp
 from pyshark.packet.packet import Packet
 from heapq import nlargest
 
-from flowpic_dataset.dataset import BlocksDataSet
-from flowpic_dataset.processors import BasicProcessor, get_dir_items
-from misc.constants import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
 from misc.output import Progress
 from misc.constants import PROFILE, CAPINFOS_AVG_PACKET_SIZE, CAPINFOS_BIT_RATE, CAPINFOS_PACKET_COUNT
@@ -152,19 +149,20 @@ class PcapParser:
 
 
 if __name__ == '__main__':
-    # pcap = Path('../pcaps/scpDown2.pcap')
-    # csv = Path('../parsed_flows/scpDown2.csv')
-    # flows = PcapParser().parse_file(pcap, n=1)
+    pcap = Path('pcaps/FTP_long_1.pcapng')
+    out_csv = Path('parsed-flows/FTP_long_1.csv')
+    flows = PcapParser().parse_file(pcap, n=1)
+    PcapParser.write_flow_rows(out_csv, flows)
     # flows = BasicProcessor().process_file_to_flows(csv)
     # print(flows[0].num_packets, flows[0].times, flows[0].sizes)
     # exit()
-    d = Path('../pcaps')
-    parser = PcapParser()
-    t = len(get_dir_items(d))
-    for i, f in enumerate(get_dir_items(d)):
-        print(f'{i} / {t}')
-        flows = parser.parse_file(f, n=1)
-        parser.write_flow_rows(Path(f'../parsed_flows/{f.stem}.csv'), flows)
+    # d = Path('../pcaps')
+    # parser = PcapParser()
+    # t = len(get_dir_items(d))
+    # for i, f in enumerate(get_dir_items(d)):
+    #     print(f'{i} / {t}')
+    #     flows = parser.parse_file(f, n=1)
+    #     parser.write_flow_rows(Path(f'../parsed_flows/{f.stem}.csv'), flows)
 
     # dss = [BlocksDataSet.from_flows([f]) for f in flows]
     # for ds in dss:
