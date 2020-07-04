@@ -87,12 +87,13 @@ class FlowData:
         :return: a block of the last 60 secs
         """
 
-        print("with head: ", (self.head + 1) % len(self.window_samples))
+        print(f"for flow that started at {self.absolute_start_time} with head: {(self.head + 1) % len(self.window_samples)}")
         for i in _anti_clockwise_crange((self.head + 1) % len(self.window_samples),
                          len(self.window_samples)):
             if len(self.window_samples[i]) != 0:
                 print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
-        # print(f"last timestamp: {self.window_samples[(self.head - 1) % len(self.window_samples)][0][-1]}")
+        if len(self.window_samples[self.head]) > 0:
+            print(f"last timestamp: {self.window_samples[self.head][-1][0]}", end='')
         print()
 
         block = Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
@@ -141,7 +142,7 @@ class FlowsManager:
         batch = []
         for flow, flow_data in self.flows.items():
             time_flow_lives = current_absolute_time - flow_data.absolute_start_time
-            if time_flow_lives >= BLOCK_DURATION and len(flow_data) > 0:
+            if time_flow_lives > BLOCK_DURATION - BLOCK_INTERVAL and len(flow_data) > 0:
                 logging.debug(f'pushing flow {flow}, which exists for {time_flow_lives} seconds')
                 batch.append((flow, flow_data.to_block()))
             else:
@@ -191,9 +192,7 @@ class LiveCaptureProvider:
         self.relative_time = None
         self.sliding_window_advancements = 0
         self.flows_manager = FlowsManager()
-
-    def packet_callback2(self, packet):
-        logging.debug(packet)
+        self.window_lock = threading.Lock()
 
     def packet_callback(self, packet):
         """
@@ -213,8 +212,9 @@ class LiveCaptureProvider:
         self.absolute_current_time = packet_sample[0]
         self.relative_time = self.absolute_current_time - self.absolute_start_time
 
-        while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
-            self.advance_sliding_window()
+        with self.window_lock:
+            while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
+                self.advance_sliding_window()
 
         flow = (
             packet._fields['Source'],
@@ -237,7 +237,8 @@ class LiveCaptureProvider:
         """
         pre_update = datetime.datetime.now()
         self.sliding_window_advancements += 1
-        self.push_flows()
+        if self.relative_time >= BLOCK_DURATION:
+            self.push_flows()
         self.flows_manager.advance_sliding_window()
         post_update = datetime.datetime.now()
         logging.debug(f'\ntime it took to push all flows and/or advance window: {post_update - pre_update}\n')
