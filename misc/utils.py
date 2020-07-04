@@ -1,4 +1,5 @@
 import csv
+import itertools
 import os
 from math import floor
 from multiprocessing import Lock
@@ -15,7 +16,7 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
 from misc.constants import BLOCK_DURATION, PACKET_SIZE_LIMIT
-from misc.data_classes import Flow
+from misc.data_classes import Flow, ClassifiedBlock
 from misc.output import Logger
 
 
@@ -162,3 +163,14 @@ def write_flows(writable, flows: Sequence[Flow]):
     else:
         writable.writerows(rows)
 
+
+def get_block_sizes_array(classified_block: ClassifiedBlock):
+    return np.array(classified_block.block.data)[:, 1]
+
+
+def get_block_times_array(classified_block: ClassifiedBlock):
+    return np.array(classified_block.block.data)[:, 0]
+
+
+def chain_list_of_tuples(l):
+    return list(itertools.chain.from_iterable(l))

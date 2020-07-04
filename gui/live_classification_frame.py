@@ -15,9 +15,9 @@ import torch
 from classification.clasifiers import Classifier
 from flowpic_dataset.dataset import BlocksDataSet
 from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL, BYTES_IN_KB, BYTES_IN_BITS
-from misc.data_classes import ClassifiedFlow
+from misc.data_classes import ClassifiedFlow, ClassifiedBlock
 from misc.output import Progress
-from misc.utils import load_model
+from misc.utils import load_model, chain_list_of_tuples, get_block_sizes_array, get_block_times_array
 from model.flow_pic_model import FlowPicModel
 from live_classification.live_capture import LiveCaptureProvider
 
@@ -84,10 +84,20 @@ class LiveClassificationFrame(ttk.Frame):
 
         graph.set_xlabel("time in seconds")
         graph.set_ylabel("Kbps")
-        graph.set_xlim(0, x[-1])
+        graph.set_xlim(x[0], x[-1])
         graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=len(labels))
 
+    @staticmethod
+    def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval):
+        return (get_block_times_array(classified_block) > time_interval-BLOCK_INTERVAL) & \
+               (get_block_times_array(classified_block) <= time_interval)
+
+    @staticmethod
+    def _calculate_bandwidth(bandwidth, time_interval):
+        return (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / time_interval
+
     def _extract_flow_values(self, classified_flow: ClassifiedFlow):
+        # TODO need to fix so it will work with blocks
         x = list(
             np.arange(0, classified_flow.flow.times[-1],
                       BLOCK_INTERVAL))
@@ -132,57 +142,36 @@ class LiveClassificationFrame(ttk.Frame):
         self.flow_selection.set('')
         self.return_button.grid_forget()
 
-    def begin_live_classification(self, interfaces):
-        self.live_capture = LiveCaptureProvider(interfaces)
-        self.live_capture_thread = threading.Thread(target=lambda: self.live_capture.start_capture())
-        self.live_capture_thread.start()
-        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
-
-    def check_live_capture_queue(self):
-        if len(self.live_capture.queue) is 0:
-            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
-            return
-
-        batch = self.live_capture.queue.pop()
-        blocks = [block for (_, block) in batch]
-        blocks_ds = BlocksDataSet.from_blocks(blocks)
-        print(blocks_ds)
-        _, classified_blocks = self.classifier.classify_dataset(blocks_ds)
-
-        results = zip([flow for (flow, _) in batch], [classified_block for classified_block in classified_blocks])
-        for (flow, block) in results:
-            if self.flows_map.__contains__(flow):
-                self.flows_map[flow].append(block)
-            else:
-                self.flows_map[flow] = [block]
-
-        self.blocks_in_intervals.append(classified_blocks)
-        labels, x, y_axis = self._extract_graph_values()
-        self.figure.clear()
-        self._generate_predicted_graph(labels, x, y_axis)
-        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self.check_live_capture_queue)
-
     def _extract_graph_values(self):
-        x = list(np.arange(BLOCK_DURATION, BLOCK_DURATION + BLOCK_INTERVAL * (len(self.blocks_in_intervals)),
-                       BLOCK_INTERVAL))
-        x = [0] + x
-        y = [[0] for _ in self.all_categories]
-        for interval_index, classified_block_list in enumerate(self.blocks_in_intervals):
-            blocks_by_categories = [[] for _ in self.all_categories]
-            for classified_block in classified_block_list:
-                blocks_by_categories[classified_block.pred].append(classified_block)
-            for index, blocks_list in enumerate(blocks_by_categories):
-                if interval_index is 0:
-                    bandwidth = np.sum(list(itertools.chain.from_iterable([np.array(classified_block.block.data)[:, 1] for classified_block in blocks_list])))
-                    bandwidth = (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / BLOCK_DURATION
-                    y[index].append(bandwidth)
-                else:
-                    bandwidth = np.sum(list(itertools.chain.from_iterable(
-                        [np.array(classified_block.block.data)[:, 1][(np.array(classified_block.block.data)[:, 0] > classified_block.block.start_time) &
-                                                           (np.array(classified_block.block.data)[:, 0] <= classified_block.block.start_time + BLOCK_INTERVAL)]
-                         for classified_block in blocks_list])))
-                    bandwidth = (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / BLOCK_INTERVAL
-                    y[index].append(bandwidth)
+        x = list(np.arange(BLOCK_INTERVAL, BLOCK_DURATION + BLOCK_INTERVAL * (len(self.blocks_in_intervals)),
+                           BLOCK_INTERVAL))
+        y = [[] for _ in self.all_categories]
+        for time_interval in x:
+            print("time: ", time_interval)
+            interval = max(int((time_interval - BLOCK_DURATION) / BLOCK_INTERVAL), 0)
+            for index, blocks_list in enumerate(self.blocks_in_intervals[interval]):
+                bandwidth = np.sum(chain_list_of_tuples(
+                        [get_block_sizes_array(classified_block)[self._get_classified_block_mask(classified_block, time_interval)]
+                         for classified_block in blocks_list]))
+
+                bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)
+                y[index].append(bandwidth)
+
+        # for interval_index, blocks_by_categories in enumerate(self.blocks_in_intervals):
+        #     for index, blocks_list in enumerate(blocks_by_categories):
+        #         if interval_index is 0:
+        #             bandwidth = np.sum(chain_list_of_tuples(
+        #                 [get_block_sizes_array(classified_block) for classified_block in blocks_list]))
+        #             bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_DURATION)
+        #             y[index].append(bandwidth)
+        #         else:
+        #             bandwidth = np.sum(chain_list_of_tuples(
+        #                     [get_block_sizes_array(classified_block)[self._get_classified_block_mask(classified_block)]
+        #                      for classified_block in blocks_list]))
+        #
+        #             bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)
+        #             y[index].append(bandwidth)
+
         return self.all_categories, x, y
 
     def _generate_predicted_graph(self, labels, x, y_axis):
@@ -191,9 +180,44 @@ class LiveClassificationFrame(ttk.Frame):
         self._create_graph(predicted_graph, labels, x, y_axis)
         self.draw_graph()
 
+    def _check_live_capture_queue(self):
+        if len(self.live_capture.queue) is 0:
+            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+            return
+
+        batch = self.live_capture.queue.pop()
+        flows, blocks = zip(*batch)
+        blocks_ds = BlocksDataSet.from_blocks(blocks)
+        print(blocks_ds)
+        _, classified_blocks = self.classifier.classify_dataset(blocks_ds)
+
+        results = zip(flows, classified_blocks)
+        for (flow, block) in results:
+            if self.flows_map.__contains__(flow):
+                self.flows_map[flow].append(block)
+            else:
+                self.flows_map[flow] = [block]
+
+        blocks_by_categories = [[] for _ in self.all_categories]
+        for classified_block in classified_blocks:
+            blocks_by_categories[classified_block.pred].append(classified_block)
+
+        self.blocks_in_intervals.append(blocks_by_categories)
+        labels, x, y_axis = self._extract_graph_values()
+
+        self.figure.clear()
+        self._generate_predicted_graph(labels, x, y_axis)
+
+        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+
+    def begin_live_classification(self, interfaces):
+        self.live_capture = LiveCaptureProvider(interfaces)
+        self.live_capture_thread = threading.Thread(target=lambda: self.live_capture.start_capture())
+        self.live_capture_thread.start()
+        self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+
     def draw_graph(self):
         self.figure.subplots_adjust(hspace=0.5)
-        self.figure.tight_layout()
         self.graph.draw()
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)

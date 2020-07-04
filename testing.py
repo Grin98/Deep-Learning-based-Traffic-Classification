@@ -17,6 +17,7 @@ from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
 from gui.graph_frame import FlowPicGraphFrame
+from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL
 from misc.data_classes import Flow
 from misc.output import Logger, Progress
 from misc.utils import show_flow_pic, is_file, Timer, load_model, get_dir_items
@@ -51,12 +52,19 @@ class C:
 
 if __name__ == '__main__':
 
-    a = Path('pcaps/aim_chat_3a.pcap')
-    b = Path('pcaps/aim_chat_3b.pcap')
-    o = Path('del.csv')
-    p = PcapAggregator()
-    p.aggregate(o, [a, b], [2, 3], [['chat_a1', 'chat_a2'], 'chat_b1'])
-    exit()
+    # a = Path('pcaps/aim_chat_3a.pcap')
+    # b = Path('pcaps/aim_chat_3b.pcap')
+    # o = Path('del.csv')
+    # p = PcapAggregator()
+    # p.aggregate(o, [a, b], [2, 3], [['chat_a1', 'chat_a2'], 'chat_b1'])
+    # exit()
+    x = list(np.arange(0, BLOCK_DURATION + BLOCK_INTERVAL * 5,
+                       BLOCK_INTERVAL))
+
+    for time_interval in x[1:]:
+        print("time: ", time_interval)
+        interval = max(int((time_interval-BLOCK_DURATION)/BLOCK_INTERVAL), 0)
+        print("interval to look at:", interval)
 
     # dir_path = Path('pcaps_folder')  # TODO replace with you folder path
     # pcaps = list(get_dir_items(dir_path))
