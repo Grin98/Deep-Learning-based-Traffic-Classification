@@ -3,6 +3,7 @@ from pyshark import LiveCapture
 from collections import deque
 from misc.data_classes import Block
 from misc.constants import PROFILE, BLOCK_DURATION, BLOCK_INTERVAL
+import threading
 import itertools
 import datetime
 import time
@@ -10,7 +11,7 @@ import logging
 
 # TODO: CHANGE LOGGING LEVEL FROM [logging.DEBUG] TO [logging.INFO] TO STOP DEBUG MESSAGES!!!
 # logging.basicConfig(filename='example_live_capture.txt', format='%(asctime)s %(message)s', level=logging.DEBUG)
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 
@@ -30,15 +31,14 @@ class NonPromiscuousLiveCapture(LiveCapture):
         return params
 
 
-def _anti_clockwise_crange(start, end, modulo):
+def _anti_clockwise_crange(start, modulo):
     """
     A generator for an anti-clockwise cyclic range
     :param start: number of steps anti-clockwise from 0 to start at
-    :param end: number of steps anti-clockwise from 0 to end at
     :param modulo: the number of steps in the cycle
     """
-    for i in range(end - start):
-        yield (modulo - start + i) % modulo
+    for i in range(modulo):
+        yield (start + i) % modulo
 
 
 class FlowData:
@@ -47,7 +47,7 @@ class FlowData:
     The class handles sliding window shifts very quickly by maintaining a cyclic ring buffer.
     """
 
-    def __init__(self, sample, absolute_start_time):
+    def __init__(self, sample):
         """
         :param sample: a 2-tuple of (arrival_time, packet_size)
         :param absolute_start_time: timestamp of the first packet in the flow
@@ -57,7 +57,7 @@ class FlowData:
         self.window_samples = [[] for _ in range(BLOCK_DURATION // BLOCK_INTERVAL)]
         self.head = 0
         self.window_samples[self.head].append(sample)
-        self.absolute_start_time = absolute_start_time
+        self.absolute_start_time = sample[0]
         self.alive_intervals = 0
 
     def add_sample(self, sample):
@@ -75,8 +75,7 @@ class FlowData:
         track of how much relative time to add to the start of this flow
         :return: reference to self, after shifting window
         """
-        self.window_samples[(self.head + len(self.window_samples) - 1) % len(self.window_samples)].clear()
-        self.head = (self.head - 1) % len(self.window_samples)
+        self.head = (self.head + 1) % len(self.window_samples)
         self.alive_intervals += 1
         return self
 
@@ -87,10 +86,21 @@ class FlowData:
         """
         :return: a block of the last 60 secs
         """
-        return Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
+
+        print("with head: ", (self.head + 1) % len(self.window_samples))
+        for i in _anti_clockwise_crange((self.head + 1) % len(self.window_samples),
+                         len(self.window_samples)):
+            if len(self.window_samples[i]) != 0:
+                print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
+        print(f"last timestamp: {self.window_samples[i][0][(self.head - 1) % len(self.window_samples)]}")
+
+        block = Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
                      num_packets=self.__len__(),
                      data=list(itertools.chain.from_iterable(self.window_samples[i] for i in _anti_clockwise_crange(
-                         self.head, self.head + len(self.window_samples), len(self.window_samples)))))
+                         (self.head + 1) % len(self.window_samples),
+                         len(self.window_samples)))))
+        self.window_samples[(self.head + 1) % len(self.window_samples)].clear()
+        return block
 
 
 class FlowsManager:
@@ -108,9 +118,9 @@ class FlowsManager:
         """
         self.flows = {flow: flow_data.advance_sliding_window()
                       for flow, flow_data in self.flows.items()
-                      if len(flow_data) is not 0}
+                      if len(flow_data) > 0}
 
-    def add_sample(self, flow, sample, absolute_timestamp):
+    def add_sample(self, flow, sample):
         """
         Adds [flow] to the map of all recorded flows with an initial sample of [sample] and an start time of
         [absolute_timestamp].
@@ -119,7 +129,7 @@ class FlowsManager:
         if flow in self.flows:
             self.flows[flow].add_sample(sample)
         else:
-            self.flows[flow] = FlowData(sample, absolute_start_time=absolute_timestamp)
+            self.flows[flow] = FlowData(sample)
 
     def compose_new_batch(self, current_absolute_time):
         """
@@ -130,7 +140,7 @@ class FlowsManager:
         batch = []
         for flow, flow_data in self.flows.items():
             time_flow_lives = current_absolute_time - flow_data.absolute_start_time
-            if time_flow_lives >= BLOCK_DURATION and len(flow_data) is not 0:
+            if time_flow_lives >= BLOCK_DURATION and len(flow_data) > 0:
                 logging.debug(f'pushing flow {flow}, which exists for {time_flow_lives} seconds')
                 batch.append((flow, flow_data.to_block()))
             else:
@@ -202,7 +212,8 @@ class LiveCaptureProvider:
         self.absolute_current_time = packet_sample[0]
         self.relative_time = self.absolute_current_time - self.absolute_start_time
 
-        self.advance_sliding_window_if_needed()
+        while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
+            self.advance_sliding_window()
 
         flow = (
             packet._fields['Source'],
@@ -212,25 +223,23 @@ class LiveCaptureProvider:
             packet._fields['Protocol']
         )
 
-        self.flows_manager.add_sample(flow, packet_sample, self.absolute_current_time)
+        self.flows_manager.add_sample(flow, packet_sample)
 
-    def advance_sliding_window_if_needed(self):
+    def advance_sliding_window(self):
         """
-        Advances the sliding window as many times as needed based on the last packet capture's timestamp.
+        Advances the sliding window once.
         One window step = [BLOCK_INTERVAL] seconds.
 
-        - In the vast majority of cases, since there are frequent packet captures, we will not advance the window at all
+        - For the majority of packets, since there are frequent packet captures, we will not advance the window at all
         - Other cases we will advance the window by one step
-        - Very rarely (e.g. in case of no internet connection), we will advance the window by more than one step
+        - Very rarely (e.g. in case of internet disconnection), we will advance the window by more than one step
         """
-        while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
-            pre_update = datetime.datetime.now()
-            self.sliding_window_advancements += 1
-            if self.sliding_window_advancements >= BLOCK_DURATION // BLOCK_INTERVAL:
-                self.push_flows()
-            self.flows_manager.advance_sliding_window()
-            post_update = datetime.datetime.now()
-            logging.debug(f'\ntime it took to push all flows and/or advance window: {post_update - pre_update}\n')
+        pre_update = datetime.datetime.now()
+        self.sliding_window_advancements += 1
+        self.push_flows()
+        self.flows_manager.advance_sliding_window()
+        post_update = datetime.datetime.now()
+        logging.debug(f'\ntime it took to push all flows and/or advance window: {post_update - pre_update}\n')
 
     def push_flows(self):
         """

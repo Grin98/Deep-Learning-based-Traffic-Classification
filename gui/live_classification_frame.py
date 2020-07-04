@@ -147,8 +147,8 @@ class LiveClassificationFrame(ttk.Frame):
                            BLOCK_INTERVAL))
         y = [[] for _ in self.all_categories]
         for time_interval in x:
-            print("time: ", time_interval)
             interval = max(int((time_interval - BLOCK_DURATION) / BLOCK_INTERVAL), 0)
+            print(f"time: {time_interval}, interval: {interval}")
             for index, blocks_list in enumerate(self.blocks_in_intervals[interval]):
                 bandwidth = np.sum(chain_list_of_tuples(
                         [get_block_sizes_array(classified_block)[self._get_classified_block_mask(classified_block, time_interval)]
@@ -181,14 +181,17 @@ class LiveClassificationFrame(ttk.Frame):
         self.draw_graph()
 
     def _check_live_capture_queue(self):
-        if len(self.live_capture.queue) is 0:
+        if len(self.live_capture.queue) == 0:
             self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
             return
 
         batch = self.live_capture.queue.pop()
+        if len(batch) == 0:
+            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+            return
+
         flows, blocks = zip(*batch)
         blocks_ds = BlocksDataSet.from_blocks(blocks)
-        print(blocks_ds)
         _, classified_blocks = self.classifier.classify_dataset(blocks_ds)
 
         results = zip(flows, classified_blocks)
