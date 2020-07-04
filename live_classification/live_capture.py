@@ -171,7 +171,7 @@ class LiveCaptureProvider:
 
         # TODO: allow users to enable/disable the option to create a pcap for this live capture.
         # RECOMMEND: KEEP THIS AT FALSE!
-        save_to_file = False
+        save_to_file = True
         output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
 
         if save_to_file:

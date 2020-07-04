@@ -1,21 +1,16 @@
 import os
 import re
-from os.path import splitext
 from pathlib import Path
 from typing import Tuple, Sequence
 
-import numpy as np
 import pyshark
-import csv
 import subprocess as sp
 
 
 from pyshark.packet.packet import Packet
 from heapq import nlargest
 
-from flowpic_dataset.dataset import BlocksDataSet
-from flowpic_dataset.processors import BasicProcessor, get_dir_items
-from misc.constants import PACKET_SIZE_LIMIT
+from flowpic_dataset.processors import get_dir_items
 from misc.data_classes import Flow
 from misc.output import Progress
 from misc.constants import PROFILE, CAPINFOS_AVG_PACKET_SIZE, CAPINFOS_BIT_RATE, CAPINFOS_PACKET_COUNT
@@ -60,30 +55,32 @@ class PcapParser:
                                       custom_parameters={"-C": PROFILE},
                                       display_filter=display_filter,
                                       only_summaries=True)
-        for i, packet in enumerate(capture):
-            if i % LOADING_BAR_UPDATE_INTERVAL == 0:
-                self.progress.set_counter(i, packet_count)
+        try:
+            for i, packet in enumerate(capture):
+                if i % LOADING_BAR_UPDATE_INTERVAL == 0:
+                    self.progress.set_counter(i, packet_count)
 
-            packet_meta = (float(packet._fields['Time']),  int(packet._fields['Length']))
-            five_tuple = (
-                packet._fields['Source'],
-                packet._fields['SrcPort'],
-                packet._fields['Destination'],
-                packet._fields['DstPort'],
-                packet._fields['Protocol']
-            )
+                packet_meta = (float(packet._fields['Time']),  int(packet._fields['Length']))
+                five_tuple = (
+                    packet._fields['Source'],
+                    packet._fields['SrcPort'],
+                    packet._fields['Destination'],
+                    packet._fields['DstPort'],
+                    packet._fields['Protocol']
+                )
 
-            if five_tuple in packet_streams:
-                packet_streams[five_tuple].append(packet_meta)
-            else:
-                packet_streams[five_tuple] = [packet_meta]
-        capture.close()
+                if five_tuple in packet_streams:
+                    packet_streams[five_tuple].append(packet_meta)
+                else:
+                    packet_streams[five_tuple] = [packet_meta]
+            capture.close()
+        except pyshark.capture.capture.TSharkCrashException as error:
+            print(error, "\nNote: the pcap file might be corrupted, so the classifier will work with what it could get")
 
         if n is None:
             max_five_tuples = list(packet_streams.keys())
         else:
             max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
-
         return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple])
                 for five_tuple in max_five_tuples]
 
@@ -91,7 +88,11 @@ class PcapParser:
     def get_pcap_metadata(filepath):
         cmd_args = ["-c", "-z", "-i"]
         cmd_line = ["capinfos"] + cmd_args + [os.path.expanduser(str(filepath))]
-        output = sp.check_output(cmd_line).decode('utf-8')
+        try:
+            output = sp.check_output(cmd_line).decode('utf-8')
+        except sp.CalledProcessError as error:
+            output = error.output.decode('utf-8')
+
         data = re.findall(r'(.+?):\s*([\s\S]+?)(?=\n[\S]|$)', output)
         infos_dict = {i[0]: i[1] for i in data}
         for key in infos_dict:
