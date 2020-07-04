@@ -117,7 +117,7 @@ class PcapParser:
     @staticmethod
     def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
         times, sizes = zip(*stream)
-        return Flow.create('app', five_tuple, times[0], times, sizes)
+        return Flow.create('app', five_tuple, times[0], times, sizes, normelize=True)
 
     @staticmethod
     def write_flow_rows(file: Path, flows: Sequence[Flow]):

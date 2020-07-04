@@ -22,7 +22,7 @@ class Flow(NamedTuple):
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
         sizes = row[(num_packets + off_set + 1):]  # +1 because there is an empty cell between times and sizes
-        return cls.create(app, five_tuple, start_time, times, sizes)
+        return cls.create(app, five_tuple, start_time, times, sizes, normelize=False)
 
     @classmethod
     def create(cls, app: str,
@@ -30,6 +30,7 @@ class Flow(NamedTuple):
                start_time: float,
                times: Sequence,
                sizes: Sequence,
+               normelize: bool
                ):
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
@@ -38,7 +39,8 @@ class Flow(NamedTuple):
         times = times[mask]
         sizes = sizes[mask] - 1
         num_packets = len(times)
-        times -= start_time
+        if normelize:
+            times -= start_time
 
         return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
 
