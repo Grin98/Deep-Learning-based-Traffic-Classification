@@ -10,6 +10,7 @@ PROFILE = 'LiveCaptureStatisticsSummary'
 CAPINFOS_PACKET_COUNT = "Number of packets"
 CAPINFOS_BIT_RATE = "Data bit rate"
 CAPINFOS_AVG_PACKET_SIZE = "Average packet size"
+CAPINFOS_CAPTURE_DURATION = "Capture duration"
 
 # GUI Constants
 COMPLETED = "completed"
