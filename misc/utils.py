@@ -1,9 +1,10 @@
+import csv
 import os
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
 from time import time
-from typing import List, Sequence, Tuple
+from typing import List, Sequence, Tuple, overload
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -14,6 +15,7 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import WeightedRandomSampler
 
 from misc.constants import BLOCK_DURATION, PACKET_SIZE_LIMIT
+from misc.data_classes import Flow
 from misc.output import Logger
 
 
@@ -143,3 +145,20 @@ def _create_pre_trained_model(model_class, model_state: dict, model_init_params:
         m.to(device)
     m.load_state_dict(model_state)
     return m
+
+
+def write_flows(writable, flows: Sequence[Flow]):
+    """
+    writes flows to a file
+    :param writable: either a path to a file or an object with writerows method
+    :param flows: the flows to write to a file
+    """
+
+    rows = [f.convert_to_row() for f in flows]
+    if isinstance(writable, Path):
+        with writable.open(mode='w+', newline='') as out:
+            writer = csv.writer(out, delimiter=',')
+            writer.writerows(rows)
+    else:
+        writable.writerows(rows)
+

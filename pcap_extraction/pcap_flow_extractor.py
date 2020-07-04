@@ -19,7 +19,7 @@ from misc.constants import PACKET_SIZE_LIMIT
 from misc.data_classes import Flow
 from misc.output import Progress
 from misc.constants import PROFILE, CAPINFOS_AVG_PACKET_SIZE, CAPINFOS_BIT_RATE, CAPINFOS_PACKET_COUNT
-
+from misc.utils import write_flows
 
 LOADING_BAR_UPDATE_INTERVAL = 500
 
@@ -120,13 +120,6 @@ class PcapParser:
         return Flow.create('app', five_tuple, times[0], times, sizes, normelize=True)
 
     @staticmethod
-    def write_flow_rows(file: Path, flows: Sequence[Flow]):
-        with file.open(mode='w+', newline='') as out:
-            writer = csv.writer(out, delimiter=',')
-            for f in flows:
-                writer.writerow(f.convert_to_row())
-
-    @staticmethod
     def _is_undesired_packet(packet: Packet) -> bool:
         if packet.transport_layer is None:
             return True
@@ -164,7 +157,7 @@ if __name__ == '__main__':
     for i, f in enumerate(get_dir_items(d)):
         print(f'{i} / {t}')
         flows = parser.parse_file(f, n=1)
-        parser.write_flow_rows(Path(f'../parsed_flows/{f.stem}.csv'), flows)
+        write_flows(Path(f'../parsed_flows/{f.stem}.csv'), flows)
 
     # dss = [BlocksDataSet.from_flows([f]) for f in flows]
     # for ds in dss:

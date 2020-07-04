@@ -21,6 +21,7 @@ from misc.data_classes import Flow
 from misc.output import Logger, Progress
 from misc.utils import show_flow_pic, is_file, Timer, load_model, get_dir_items
 from model.flow_pic_model import FlowPicModel
+from pcap_extraction.pcap_aggregation import PcapAggregator
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
@@ -49,9 +50,13 @@ class C:
 
 
 if __name__ == '__main__':
-    list1 = [1, 1, 1, 1]
-    list2 = [1, 1, 1, 1, 1]
-    print(np.sum(list(itertools.chain.from_iterable([list1, list2]))))
+
+    a = Path('pcaps/aim_chat_3a.pcap')
+    b = Path('pcaps/aim_chat_3b.pcap')
+    o = Path('del.csv')
+    p = PcapAggregator()
+    p.aggregate(o, [a, b], [2, 3], [['chat_a1', 'chat_a2'], 'chat_b1'])
+    exit()
 
     # dir_path = Path('pcaps_folder')  # TODO replace with you folder path
     # pcaps = list(get_dir_items(dir_path))

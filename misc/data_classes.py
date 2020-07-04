@@ -53,6 +53,10 @@ class Flow(NamedTuple):
               list(self.times) + [' '] + list(self.sizes + 1)
         return row
 
+    @staticmethod
+    def change_app(flow, app: str) -> Flow:
+        return Flow.create(app, flow.five_tuple, flow.start_time, flow.times, flow.sizes)
+
 
 class Block(NamedTuple):
     start_time: float
