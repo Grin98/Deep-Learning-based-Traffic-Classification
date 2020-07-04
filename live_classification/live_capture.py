@@ -92,7 +92,8 @@ class FlowData:
                          len(self.window_samples)):
             if len(self.window_samples[i]) != 0:
                 print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
-        print(f"last timestamp: {self.window_samples[(self.head - 1) % len(self.window_samples)][0][-1]}")
+        # print(f"last timestamp: {self.window_samples[(self.head - 1) % len(self.window_samples)][0][-1]}")
+        print()
 
         block = Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
                      num_packets=self.__len__(),
