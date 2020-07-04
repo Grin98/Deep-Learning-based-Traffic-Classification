@@ -8,6 +8,24 @@ from misc.utils import write_flows
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
+d = dict(
+    chat='chat',
+    video='video',
+    voip='voip',
+    file='file_transfer',
+    netflix='video',
+    audio='voip',
+    ftps='file_transfer',
+    scp='file_transfer',
+    sftp='file_transfer',
+    spotify='voip',
+    torrent='file_transfer',
+    vimeo='video',
+    youtube='video',
+    html='browsing'
+)
+
+
 class PcapAggregator:
     def __init__(self, progress=Progress()):
         self.progress = progress
