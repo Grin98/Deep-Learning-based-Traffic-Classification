@@ -80,7 +80,7 @@ class Block(NamedTuple):
     @classmethod
     def create_from_stream(cls, start_time: float, data: List[Tuple[float, int]]):
         """
-        This method meant to be used on data from a raw stream and from Flow (where it has already been processed).
+        This method meant to be used on data from a raw stream and not from Flow (where it has already been processed).
         Mainly used in live_capture.
 
         :param start_time: the start time of the block

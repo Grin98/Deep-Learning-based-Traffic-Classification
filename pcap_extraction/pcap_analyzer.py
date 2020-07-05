@@ -96,6 +96,9 @@ class PcapAnalyzer:
         capture.close()
 
     def write_chosen_flows(self, writable, flow_indices: Sequence[int], labels: str):
+        if len(flow_indices) != len(set(flow_indices)):
+            raise Exception("there are duplicate indices")
+
         flows = [self._create_flow_from_meta(five_tuple, flow_meta, label)
                  for i, ((five_tuple, flow_meta), label) in enumerate(zip(list(self.flows), labels))
                  if i+1 in flow_indices]
