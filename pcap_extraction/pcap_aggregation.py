@@ -8,6 +8,7 @@ from misc.utils import write_flows, get_dir_items, get_dir_pcaps
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 d = dict(
+    html='browsing',
     chat='chat',
     video='video',
     voip='voip',
@@ -20,7 +21,6 @@ d = dict(
     spotify='voip',
     torrent='file_transfer',
     vimeo='video',
-    html='browsing',
     youtube='video'
 )
 
@@ -54,7 +54,7 @@ class PcapAggregator:
             print(f"{file.stat().st_size / gb:.2f}GB is too large {file}")
             return None
 
-        name = file.stem
+        name = file.stem.lower()
         for key in d.keys():
             if key in name:
                 return d[key]
