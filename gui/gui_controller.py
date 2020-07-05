@@ -72,12 +72,12 @@ class LiveClassificationPage(ttk.Frame):
 
     def _on_capture_click(self):
         interfaces = self.interface_selection.selected_interface
-
+        save_to_file = True if self.interface_selection.save_to_file == 1 else False
         self.interface_selection.clear()
         self.interface_selection.grid_forget()
         self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
 
-        self.graph.begin_live_classification(interfaces)
+        self.graph.begin_live_classification(interfaces, save_to_file)
 
         self.live_button.grid_forget()
         self.stop_button.grid(column=4, row=6, columnspan=2)
