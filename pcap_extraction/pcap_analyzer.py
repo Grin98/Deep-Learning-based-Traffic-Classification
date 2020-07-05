@@ -1,8 +1,14 @@
 import re
 import subprocess as sp
 import os
+from collections import OrderedDict
+from pathlib import Path
+from typing import Tuple, Sequence
+
 from pyshark import FileCapture
 from misc.constants import *
+from misc.data_classes import Flow
+from misc.utils import write_flows
 
 
 class FlowMetadata:
@@ -42,7 +48,7 @@ class FlowMetadata:
 
 
 class PcapAnalyzer:
-    def __init__(self, pcap_file, prediction=None):
+    def __init__(self, pcap_file: Path, prediction=None):
         self.display_filter = 'ip and ' \
                               'not dns and ' \
                               'not icmp and ' \
@@ -62,8 +68,7 @@ class PcapAnalyzer:
         self.extract_flows_map()
         pcap_meta = self.get_pcap_metadata(self.pcap_file)
 
-        self.flows = {flow: flow_metadata for flow, flow_metadata in
-                      sorted(self.flows.items(), key=lambda entry: -entry[1].total_packet_data)}
+        self.flows = OrderedDict(sorted(self.flows.items(), key=lambda entry: -entry[1].total_packet_data))
         output = f"{pcap_meta}\n"
         for (flow, flow_metadata) in self.flows.items():
             output += f"{flow}  :  {flow_metadata.describe(pcap_meta)}\n"
@@ -89,6 +94,18 @@ class PcapAnalyzer:
             else:
                 self.flows[flow] = FlowMetadata(packet_meta)
         capture.close()
+
+    def write_chosen_flows(self, writable, flow_indices: Sequence[int], labels: str):
+        flows = [self._create_flow_from_meta(five_tuple, flow_meta, label)
+                 for i, ((five_tuple, flow_meta), label) in enumerate(zip(list(self.flows), labels))
+                 if i+1 in flow_indices]
+
+        write_flows(writable, flows)
+
+    @staticmethod
+    def _create_flow_from_meta(five_tuple: Tuple, flow_meta: FlowMetadata, label):
+        times, sizes = zip(*flow_meta.total_packet_data)
+        return Flow.create(label, five_tuple, flow_meta.start_time, times, sizes)
 
     @staticmethod
     def get_pcap_metadata(filepath):
