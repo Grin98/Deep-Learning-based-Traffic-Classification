@@ -263,7 +263,6 @@ class LiveCaptureProvider:
 
         try:
             for packet in self.capture.sniff_continuously():
-                print("1", end='')
                 if self.terminate:
                     break
                 self.packet_callback(packet)
