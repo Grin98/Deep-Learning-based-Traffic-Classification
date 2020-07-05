@@ -1,5 +1,5 @@
 import subprocess as sp
-from tkinter import ttk
+from tkinter import ttk, IntVar
 
 import matplotlib
 
@@ -11,6 +11,7 @@ class InterfaceSelectionFrame(ttk.Frame):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
 
         self.selected_interface = ""
+        self.save_to_file = IntVar()
 
         self.capture_button = capture_button
 
@@ -21,6 +22,8 @@ class InterfaceSelectionFrame(ttk.Frame):
         self.interface_selection.bind("<<ComboboxSelected>>", self._on_interface_select)
         self.interface_selection["values"] = self._get_net_interfaces()
         self.interface_selection.pack()
+
+        ttk.Checkbutton(self, text="Save capture to file", variable=self.save_to_file, onvalue=1, offvalue=0).pack()
 
     @staticmethod
     def _get_net_interfaces():
@@ -34,3 +37,4 @@ class InterfaceSelectionFrame(ttk.Frame):
 
     def clear(self):
         self.interface_selection.set('')
+        self.save_to_file.set(0)

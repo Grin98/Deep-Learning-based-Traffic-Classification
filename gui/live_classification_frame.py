@@ -1,16 +1,10 @@
-from collections import Sequence
-from pathlib import Path
 from tkinter import ttk
 from tkinter import *
 import queue
 import threading
-import itertools
-from itertools import groupby
-from typing import List
 import matplotlib
 import time
 import numpy as np
-from sklearn.metrics import f1_score
 import torch
 from classification.clasifiers import Classifier
 from flowpic_dataset.dataset import BlocksDataSet
@@ -89,7 +83,7 @@ class LiveClassificationFrame(ttk.Frame):
 
     @staticmethod
     def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval):
-        return (get_block_times_array(classified_block) > time_interval-BLOCK_INTERVAL) & \
+        return (get_block_times_array(classified_block) > time_interval - BLOCK_INTERVAL) & \
                (get_block_times_array(classified_block) <= time_interval)
 
     @staticmethod
@@ -151,8 +145,9 @@ class LiveClassificationFrame(ttk.Frame):
             print(f"time: {time_interval}, interval: {interval}")
             for index, blocks_list in enumerate(self.blocks_in_intervals[interval]):
                 bandwidth = np.sum(chain_list_of_tuples(
-                        [get_block_sizes_array(classified_block)[self._get_classified_block_mask(classified_block, time_interval)]
-                         for classified_block in blocks_list]))
+                    [get_block_sizes_array(classified_block)[
+                         self._get_classified_block_mask(classified_block, time_interval)]
+                     for classified_block in blocks_list]))
 
                 bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)
                 y[index].append(bandwidth)
@@ -213,7 +208,7 @@ class LiveClassificationFrame(ttk.Frame):
 
         self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
 
-    def begin_live_classification(self, interfaces):
+    def begin_live_classification(self, interfaces, save_to_file):
         self.live_capture = LiveCaptureProvider(interfaces)
         self.live_capture_thread = threading.Thread(target=lambda: self.live_capture.start_capture())
         self.live_capture_thread.start()
@@ -222,11 +217,12 @@ class LiveClassificationFrame(ttk.Frame):
     def draw_graph(self):
         self.figure.subplots_adjust(hspace=0.5)
         self.graph.draw()
-        self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
-        self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
 
     def stop(self):
-        pass
+        self.flow_selection["values"] = list(
+            map(lambda item: f'{item[0]}', self.flows_map.items()))
+        self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
+        self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
 
     def clear(self):
         self._on_return_click()
