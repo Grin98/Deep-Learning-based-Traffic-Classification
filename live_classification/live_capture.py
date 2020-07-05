@@ -82,25 +82,29 @@ class FlowData:
     def __len__(self):
         return sum(len(window) for window in self.window_samples)
 
-    def to_block(self):
+    def to_block(self, num_slides):
         """
         :return: a block of the last 60 secs
         """
 
-        print(f"for flow that started at {self.absolute_start_time} with head: {(self.head + 1) % len(self.window_samples)}")
+        print(f"for flow that started at {self.absolute_start_time} with head: "
+              f"{(self.head + 1) % len(self.window_samples)} for block that starts at: "
+              f"{num_slides * BLOCK_INTERVAL - BLOCK_DURATION}")
         for i in _anti_clockwise_crange((self.head + 1) % len(self.window_samples),
-                         len(self.window_samples)):
+                                        len(self.window_samples)):
             if len(self.window_samples[i]) != 0:
                 print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
         if len(self.window_samples[self.head]) > 0:
             print(f"last timestamp: {self.window_samples[self.head][-1][0]}", end='')
         print()
 
-        block = Block(start_time=self.absolute_start_time + self.alive_intervals * BLOCK_INTERVAL,
-                     num_packets=self.__len__(),
-                     data=list(itertools.chain.from_iterable(self.window_samples[i] for i in _anti_clockwise_crange(
-                         (self.head + 1) % len(self.window_samples),
-                         len(self.window_samples)))))
+        block = Block.create_from_stream(start_time=
+                                         num_slides * BLOCK_INTERVAL - BLOCK_DURATION,
+                                         data=list(itertools.chain.from_iterable(
+                                             self.window_samples[i] for i in _anti_clockwise_crange(
+                                                 (self.head + 1) % len(self.window_samples),
+                                                 len(self.window_samples))))
+                                         )
         self.window_samples[(self.head + 1) % len(self.window_samples)].clear()
         return block
 
@@ -133,7 +137,7 @@ class FlowsManager:
         else:
             self.flows[flow] = FlowData(sample)
 
-    def compose_new_batch(self, current_absolute_time):
+    def compose_new_batch(self, current_absolute_time, num_slides):
         """
         :return: list of 2-tuples of (flow 5-tuple, block of last 60 secs), for all flows in the map that exist at least
         [BLOCK_LENGTH] seconds
@@ -144,7 +148,7 @@ class FlowsManager:
             time_flow_lives = current_absolute_time - flow_data.absolute_start_time
             if time_flow_lives > BLOCK_DURATION - BLOCK_INTERVAL and len(flow_data) > 0:
                 logging.debug(f'pushing flow {flow}, which exists for {time_flow_lives} seconds')
-                batch.append((flow, flow_data.to_block()))
+                batch.append((flow, flow_data.to_block(num_slides)))
             else:
                 logging.debug(f'skipping flow {flow}, which only exists for {time_flow_lives} seconds')
         logging.debug(f'number of RELEVANT blocks created during window slide: {len(batch)}')
@@ -234,16 +238,16 @@ class LiveCaptureProvider:
         pre_update = datetime.datetime.now()
         self.sliding_window_advancements += 1
         if self.relative_time >= BLOCK_DURATION:
-            self.push_flows()
+            self.push_flows(self.sliding_window_advancements)
         self.flows_manager.advance_sliding_window()
         post_update = datetime.datetime.now()
         logging.debug(f'\ntime it took to push all flows and/or advance window: {post_update - pre_update}\n')
 
-    def push_flows(self):
+    def push_flows(self, num_slides):
         """
         Pushes a new block for each flow in the map that has lived for at least [BLOCK_LENGTH] seconds
         """
-        self.queue.append(self.flows_manager.compose_new_batch(self.absolute_current_time))
+        self.queue.append(self.flows_manager.compose_new_batch(self.absolute_current_time, num_slides))
         # self.queue.clear()
 
     @staticmethod
