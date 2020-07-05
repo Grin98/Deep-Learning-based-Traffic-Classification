@@ -43,6 +43,10 @@ def build_pic(stream: Sequence[Tuple[float, int]]):
     x_axis_to_second_ratio = pic_width * 1.0 / stream_duration
     packets[:, 0] *= x_axis_to_second_ratio
     packets = np.floor(packets)
+    max_x = np.max(packets[0])
+    max_y = np.max(packets[1])
+    if max_x > pic_width or max_y > pic_height:
+        raise Exception(f'Packets are out of range of histogram max_x={max_x}, max_y={max_y}')
     hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1],
                                 bins=[range(pic_width + 1), range(pic_height + 1)])
 

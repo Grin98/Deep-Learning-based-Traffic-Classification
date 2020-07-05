@@ -118,7 +118,7 @@ class PcapParser:
     @staticmethod
     def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
         times, sizes = zip(*stream)
-        return Flow.create('app', five_tuple, times[0], times, sizes, normelize=True)
+        return Flow.create('app', five_tuple, times[0], times, sizes, normalize=True)
 
     @staticmethod
     def _is_undesired_packet(packet: Packet) -> bool:

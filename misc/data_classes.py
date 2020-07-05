@@ -22,7 +22,7 @@ class Flow(NamedTuple):
         off_set = 8  # meta data occupies first 8 indices
         times = row[off_set:(num_packets + off_set)]
         sizes = row[(num_packets + off_set + 1):]  # +1 because there is an empty cell between times and sizes
-        return cls.create(app, five_tuple, start_time, times, sizes, normelize=False)
+        return cls.create(app, five_tuple, start_time, times, sizes)
 
     @classmethod
     def create(cls, app: str,
@@ -30,7 +30,7 @@ class Flow(NamedTuple):
                start_time: float,
                times: Sequence,
                sizes: Sequence,
-               normelize: bool
+               normalize: bool = False
                ):
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
@@ -39,7 +39,7 @@ class Flow(NamedTuple):
         times = times[mask]
         sizes = sizes[mask] - 1
         num_packets = len(times)
-        if normelize:
+        if normalize:
             times -= start_time
 
         return Flow(app, list(five_tuple), start_time, num_packets, times, sizes)
@@ -49,7 +49,7 @@ class Flow(NamedTuple):
         :return: returns the flow as a list in a format for saving it in a csv file
         """
         # self.sizes + 1 because when flow is created it subtracts 1 from sizes
-        row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] +\
+        row = [self.app] + self.five_tuple + [self.start_time, self.num_packets] + \
               list(self.times) + [' '] + list(self.sizes + 1)
         return row
 
@@ -64,7 +64,7 @@ class Block(NamedTuple):
     data: List[Tuple[float, int]]
 
     @classmethod
-    def create(cls, row: List[str]):
+    def create_from_row(cls, row: List[str]):
         start_time = float(row[0])
         num_packets = int(row[1])
         off_set = 2  # meta data occupies first indices
@@ -77,12 +77,30 @@ class Block(NamedTuple):
 
         return Block(start_time, num_packets, list(zip(times, sizes)))
 
-    @staticmethod
-    def normalize(b: Block, by_start_time: bool):
-        times, sizes = zip(*b.data)
-        start = b.start_time if by_start_time else times[0]
-        times = [t - start for t in times]
-        return Block(b.start_time, b.num_packets, list(zip(times, sizes)))
+    @classmethod
+    def create_from_stream(cls, start_time: float, data: List[Tuple[float, int]]):
+        """
+        This method meant to be used on data from a raw stream and from Flow (where it has already been processed).
+        Mainly used in live_capture.
+
+        :param start_time: the start time of the block
+        :param data: a list of tuples where the first is the arriavle time of a packet and the second one is the
+                packet size
+        :param normalize: in case the time of the packets is not between 0 and BLOCK_DURATION the start_time will
+                be subtracted from all the time values of the packets in data
+        :return: a new Block object
+        """
+        times, sizes = zip(*data)
+        times = np.array(times, dtype=float)
+        sizes = np.array(sizes, dtype=int)
+
+        mask = sizes <= PACKET_SIZE_LIMIT
+        times = times[mask]
+        sizes = sizes[mask] - 1
+        num_packets = len(times)
+        times -= start_time
+
+        return Block(start_time, num_packets, list(zip(times.tolist(), sizes.tolist())))
 
     def convert_to_row(self):
         """
@@ -140,4 +158,3 @@ class FitResult(NamedTuple):
     test_loss: List[float]
     test_acc: List[float]
     test_f1: List[float]
-
