@@ -5,11 +5,14 @@ import tkinter
 from string import Template
 from tkinter import filedialog
 from timeit import Timer
+
+from gui.analyzer_options_frame import AnalyzerOptions
 from gui.graph_frame import *
 from gui.interface_selection_frame import InterfaceSelectionFrame
 from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
 from misc.utils import strfdelta
+from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
 
@@ -29,7 +32,7 @@ class GuiController(Tk):
 
         self.frames = {}
 
-        for f in (StartPage, PcapClassificationPage, LiveClassificationPage):
+        for f in (StartPage, PcapClassificationPage, LiveClassificationPage, AnalyzerPage):
             frame = f(container, self)
             self.frames[f] = frame
 
@@ -170,6 +173,56 @@ class PcapClassificationPage(ttk.Frame):
         self.controller.show_frame(StartPage)
 
 
+class AnalyzerPage(ttk.Frame):
+    def __init__(self, parent, controller):
+        ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
+
+        self.controller = controller
+
+        self.main_frame = ttk.Frame(self, padding=(5, 5, 5, 5), borderwidth=1, relief='sunken')
+        self.main_frame.pack(side=TOP, fill="both", expand=True)
+
+        self.title_label = ttk.Label(self.main_frame, text="Label Captured Traffic", font=LARGE_FONT)
+        self.title_label.pack(side=TOP, pady=10)
+
+        self.options_frame = AnalyzerOptions(self)
+
+        merge_button = ttk.Button(self.main_frame, text="Merge CSVs", width=30)
+        merge_button.pack(side=LEFT, padx=10, pady=20)
+        analyze_button = ttk.Button(self.main_frame, text="Show PCAP Flow Analysis", width=30,
+                                    command=lambda: self._upload_pcap_file(self.options_frame.on_analyze_click))
+        analyze_button.pack(side=LEFT, padx=10, pady=20)
+        dominant_button = ttk.Button(self.main_frame, text="Label Dominant Flow in PCAP", width=30,
+                                     command=lambda: self._upload_pcap_file(self.options_frame.on_dominant_click))
+        dominant_button.pack(side=LEFT, padx=10, pady=20)
+
+        self.back_button = ttk.Button(self, width=24, text="Back", command=lambda: self.on_back_button_click())
+        self.back_button.pack(side=BOTTOM)
+
+        self.return_button = ttk.Button(self, width=24, text="Return", command=lambda: self.on_return_button_click())
+
+    def _upload_pcap_file(self, func):
+        filepath = filedialog.askopenfilename()
+        if filepath == '':
+            return
+        self.main_frame.pack_forget()
+        self.options_frame.update_file(filepath)
+        self.options_frame.pack(side=TOP, fill="both", expand=True)
+        self.return_button.pack(side=BOTTOM, pady=20)
+        self.back_button.pack_forget()
+        func()
+
+    def on_return_button_click(self):
+        self.main_frame.pack(side=TOP)
+        self.options_frame.pack_forget()
+        self.back_button.pack(side=BOTTOM)
+        self.return_button.pack_forget()
+
+    def on_back_button_click(self):
+        self.grid_forget()
+        self.controller.show_frame(StartPage)
+
+
 class StartPage(ttk.Frame):
 
     def __init__(self, parent, controller):
@@ -184,6 +237,10 @@ class StartPage(ttk.Frame):
         live_class_button = ttk.Button(self, text="Live Classification",
                                        command=lambda: controller.show_frame(LiveClassificationPage), width=50)
         live_class_button.pack(pady=5, padx=5)
+
+        analyzer_button = ttk.Button(self, text="Label Captured Traffic",
+                                     command=lambda: controller.show_frame(AnalyzerPage), width=50)
+        analyzer_button.pack(pady=5, padx=5)
 
 
 if __name__ == '__main__':
