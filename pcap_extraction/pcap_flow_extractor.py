@@ -41,6 +41,7 @@ class PcapParser:
         display_filter = 'ip and ' \
                          'not dns and ' \
                          'not icmp and ' \
+                         'not icmpv6 and ' \
                          'not igmp and ' \
                          'not ntp ' \
                          'and not stun'

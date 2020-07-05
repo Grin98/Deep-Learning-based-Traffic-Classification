@@ -4,9 +4,8 @@ from typing import Sequence, Iterable
 
 from misc.data_classes import Flow
 from misc.output import Progress
-from misc.utils import write_flows
+from misc.utils import write_flows, get_dir_items, get_dir_pcaps
 from pcap_extraction.pcap_flow_extractor import PcapParser
-
 
 d = dict(
     chat='chat',
@@ -21,8 +20,8 @@ d = dict(
     spotify='voip',
     torrent='file_transfer',
     vimeo='video',
-    youtube='video',
-    html='browsing'
+    html='browsing',
+    youtube='video'
 )
 
 
@@ -43,9 +42,25 @@ class PcapAggregator:
             writer = csv.writer(f, delimiter=',')
 
             for pcap, n, label in zip(pcaps, ns, labels):
+                print(pcap.name)
                 flows = parser.parse_file(pcap, n)
                 flows = self._label_flows(flows, label)
                 write_flows(writer, flows)
+
+    @staticmethod
+    def get_file_label(file: Path):
+        gb = 1e9
+        if (file.stat().st_size / gb) > 1:
+            print(f"{file.stat().st_size / gb:.2f}GB is too large {file}")
+            return None
+
+        name = file.stem
+        for key in d.keys():
+            if key in name:
+                return d[key]
+
+        print(f"don't know how to classify {file}")
+        return None
 
     @staticmethod
     def _label_flows(flows, label):
@@ -55,3 +70,12 @@ class PcapAggregator:
             raise Exception("number of labels isn't equal to the number of flows")
 
         return [Flow.change_app(f, app) for f, app in zip(flows, apps)]
+
+
+if __name__ == '__main__':
+    files = get_dir_pcaps(Path('../pcaps'))
+    a = PcapAggregator()
+    files, labels = zip(*[(file, a.get_file_label(file)) for file in files if a.get_file_label(file) is not None])
+    ns = [1] * len(files)
+    out = Path('out.csv')
+    a.aggregate(out, files, ns, labels)

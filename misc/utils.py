@@ -92,6 +92,10 @@ def get_dir_csvs(dir_path: Path):
     return list(dir_path.glob('*.csv'))
 
 
+def get_dir_pcaps(dir_path: Path):
+    return list(dir_path.glob('*.pcap')) + list(dir_path.glob('*.pcapng'))
+
+
 def create_dir(dir_: Path):
     if not dir_.exists():
         dir_.mkdir(parents=True, exist_ok=True)
