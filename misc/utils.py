@@ -4,6 +4,7 @@ import os
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
+from string import Template
 from time import time
 from typing import List, Sequence, Tuple, overload
 
@@ -182,3 +183,18 @@ def get_block_times_array(classified_block: ClassifiedBlock):
 
 def chain_list_of_tuples(l):
     return list(itertools.chain.from_iterable(l))
+
+
+class DeltaTemplate(Template):
+    delimiter = "%"
+
+
+def strfdelta(tdelta, fmt):
+    d = {"D": tdelta.days}
+    hours, rem = divmod(tdelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    d["H"] = '{:02d}'.format(hours)
+    d["M"] = '{:02d}'.format(minutes)
+    d["S"] = '{:02d}'.format(seconds)
+    t = DeltaTemplate(fmt)
+    return t.substitute(**d)

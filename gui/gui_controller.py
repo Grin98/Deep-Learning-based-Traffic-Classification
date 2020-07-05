@@ -1,15 +1,20 @@
+from datetime import datetime
 import threading
+import time
 import tkinter
+from string import Template
 from tkinter import filedialog
-
+from timeit import Timer
 from gui.graph_frame import *
 from gui.interface_selection_frame import InterfaceSelectionFrame
 from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
+from misc.utils import strfdelta
 
 matplotlib.use("TkAgg")
 
 LARGE_FONT = ("Verdana", 12)
+CLOCK_INTERVAL = 1000
 
 
 class GuiController(Tk):
@@ -42,12 +47,16 @@ class LiveClassificationPage(ttk.Frame):
         ttk.Frame.__init__(self, parent, padding=(12, 12, 12, 12))
         self.controller = controller
 
+        self.stop_clock = False
+
         self.title_label = ttk.Label(self, text="Live Classification", font=LARGE_FONT)
         self.title_label.grid(column=3, row=0, sticky=W + E)
 
         self.live_button = ttk.Button(self, text="Start Live Capturing", width=24, command=self._on_capture_click)
         self.live_button.state(["disabled"])
         self.live_button.grid(column=4, row=6, columnspan=2)
+
+        self.clock_label = ttk.Label(self, text="", font=LARGE_FONT)
 
         back_button = ttk.Button(self, width=24, text="Back", command=lambda: self.on_back_button_click())
         back_button.grid(column=0, row=6, columnspan=2)
@@ -76,13 +85,24 @@ class LiveClassificationPage(ttk.Frame):
         self.interface_selection.clear()
         self.interface_selection.grid_forget()
         self.graph.grid(column=1, row=1, columnspan=5, rowspan=5, sticky=W + E + N + S)
+        self.time_of_start = datetime.now()
+        self.clock_label.grid(row=6, column=2, columnspan=2)
+        self._update_clock()
+        self.after(CLOCK_INTERVAL, self._update_clock)
 
         self.graph.begin_live_classification(interfaces, save_to_file)
 
         self.live_button.grid_forget()
         self.stop_button.grid(column=4, row=6, columnspan=2)
 
+    def _update_clock(self):
+        if not self.stop_clock:
+            now = datetime.now() - self.time_of_start
+            self.clock_label.configure(text=strfdelta(now, '%H:%M:%S'))
+            self.after(1000, self._update_clock)
+
     def _on_stop_click(self):
+        self.stop_clock = True
         self.graph.stop()
         self.stop_button.grid_forget()
         self.live_button.grid(column=4, row=6, columnspan=2)
