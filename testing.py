@@ -64,6 +64,8 @@ if __name__ == '__main__':
     for time_interval in x[1:]:
         print("time: ", time_interval)
         interval = max(int((time_interval-BLOCK_DURATION)/BLOCK_INTERVAL), 0)
+        mask = time_interval-(BLOCK_INTERVAL*interval)
+        print("mask: ", mask)
         print("interval to look at:", interval)
 
     # dir_path = Path('pcaps_folder')  # TODO replace with you folder path

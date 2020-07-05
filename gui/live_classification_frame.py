@@ -82,9 +82,9 @@ class LiveClassificationFrame(ttk.Frame):
         graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=len(labels))
 
     @staticmethod
-    def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval):
-        return (get_block_times_array(classified_block) > time_interval - BLOCK_INTERVAL) & \
-               (get_block_times_array(classified_block) <= time_interval)
+    def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval, interval):
+        mask = time_interval - (BLOCK_INTERVAL * interval)
+        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL)
 
     @staticmethod
     def _calculate_bandwidth(bandwidth, time_interval):
@@ -146,26 +146,11 @@ class LiveClassificationFrame(ttk.Frame):
             for index, blocks_list in enumerate(self.blocks_in_intervals[interval]):
                 bandwidth = np.sum(chain_list_of_tuples(
                     [get_block_sizes_array(classified_block)[
-                         self._get_classified_block_mask(classified_block, time_interval)]
+                         self._get_classified_block_mask(classified_block, time_interval, interval)]
                      for classified_block in blocks_list]))
 
                 bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)
                 y[index].append(bandwidth)
-
-        # for interval_index, blocks_by_categories in enumerate(self.blocks_in_intervals):
-        #     for index, blocks_list in enumerate(blocks_by_categories):
-        #         if interval_index is 0:
-        #             bandwidth = np.sum(chain_list_of_tuples(
-        #                 [get_block_sizes_array(classified_block) for classified_block in blocks_list]))
-        #             bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_DURATION)
-        #             y[index].append(bandwidth)
-        #         else:
-        #             bandwidth = np.sum(chain_list_of_tuples(
-        #                     [get_block_sizes_array(classified_block)[self._get_classified_block_mask(classified_block)]
-        #                      for classified_block in blocks_list]))
-        #
-        #             bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)
-        #             y[index].append(bandwidth)
 
         return self.all_categories, x, y
 
