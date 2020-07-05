@@ -1,5 +1,5 @@
 import subprocess as sp
-from pyshark import LiveCapture
+from pyshark import LiveCapture, capture
 from collections import deque
 from misc.data_classes import Block
 from misc.constants import PROFILE, BLOCK_DURATION, BLOCK_INTERVAL
@@ -87,16 +87,16 @@ class FlowData:
         :return: a block of the last 60 secs
         """
 
-        print(f"for flow that started at {self.absolute_start_time} with head: "
-              f"{(self.head + 1) % len(self.window_samples)} for block that starts at: "
-              f"{num_slides * BLOCK_INTERVAL - BLOCK_DURATION}")
-        for i in _anti_clockwise_crange((self.head + 1) % len(self.window_samples),
-                                        len(self.window_samples)):
-            if len(self.window_samples[i]) != 0:
-                print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
-        if len(self.window_samples[self.head]) > 0:
-            print(f"last timestamp: {self.window_samples[self.head][-1][0]}", end='')
-        print()
+        # print(f"for flow that started at {self.absolute_start_time} with head: "
+        #       f"{(self.head + 1) % len(self.window_samples)} for block that starts at: "
+        #       f"{num_slides * BLOCK_INTERVAL - BLOCK_DURATION}")
+        # for i in _anti_clockwise_crange((self.head + 1) % len(self.window_samples),
+        #                                 len(self.window_samples)):
+        #     if len(self.window_samples[i]) != 0:
+        #         print(f"win{i} 1st timestamp: {self.window_samples[i][0][0]} ; ", end='')
+        # if len(self.window_samples[self.head]) > 0:
+        #     print(f"last timestamp: {self.window_samples[self.head][-1][0]}", end='')
+        # print()
 
         block = Block.create_from_stream(start_time=
                                          num_slides * BLOCK_INTERVAL - BLOCK_DURATION,
@@ -173,9 +173,9 @@ class LiveCaptureProvider:
                          'not icmp and ' \
                          'port not 123'
 
-        output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
         # RECOMMEND: KEEP THIS AT FALSE!
         if save_to_file:
+            output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
             self.capture = NonPromiscuousLiveCapture(interface=interfaces,
                                                      only_summaries=True,
                                                      capture_filter=capture_filter,
@@ -193,6 +193,7 @@ class LiveCaptureProvider:
         self.sliding_window_advancements = 0
         self.flows_manager = FlowsManager()
         self.window_lock = threading.Lock()
+        self.terminate = False
 
     def packet_callback(self, packet):
         """
@@ -259,16 +260,25 @@ class LiveCaptureProvider:
     def start_capture(self):
         # self.capture.load_packets(timeout=10)
         # for packet in self.capture:
-        self.capture.apply_on_packets(self.packet_callback)
+
+        try:
+            for packet in self.capture.sniff_continuously():
+                print("1", end='')
+                if self.terminate:
+                    break
+                self.packet_callback(packet)
+        except capture.capture.TSharkCrashException as error:
+            print(error)
+
+        # self.capture.apply_on_packets(self.packet_callback)
 
     def stop_capture(self):
         """
-        TODO: change the overall structure of control over the live capture so that stopping actually does anything here
+        TODO: make sure that this actually terminates the packet capture processes
         """
-        self.capture.close()
+        self.terminate = True
 
 
 if __name__ == '__main__':
     live = LiveCaptureProvider(LiveCaptureProvider.get_net_interfaces())
     live.start_capture()
-    # live.stop_capture()

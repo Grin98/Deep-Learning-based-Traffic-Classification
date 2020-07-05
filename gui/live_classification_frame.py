@@ -194,7 +194,7 @@ class LiveClassificationFrame(ttk.Frame):
         self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
 
     def begin_live_classification(self, interfaces, save_to_file):
-        self.live_capture = LiveCaptureProvider(interfaces)
+        self.live_capture = LiveCaptureProvider(interfaces, save_to_file)
         self.live_capture_thread = threading.Thread(target=lambda: self.live_capture.start_capture())
         self.live_capture_thread.start()
         self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
@@ -204,6 +204,7 @@ class LiveClassificationFrame(ttk.Frame):
         self.graph.draw()
 
     def stop(self):
+        self.live_capture.stop_capture()
         self.flow_selection["values"] = list(
             map(lambda item: f'{item[0]}', self.flows_map.items()))
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
