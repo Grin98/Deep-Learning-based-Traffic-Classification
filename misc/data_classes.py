@@ -77,6 +77,13 @@ class Block(NamedTuple):
 
         return Block(start_time, num_packets, list(zip(times, sizes)))
 
+    @staticmethod
+    def normalize(b: Block, by_start_time: bool):
+        times, sizes = zip(*b.data)
+        start = b.start_time if by_start_time else times[0]
+        times = [t - start for t in times]
+        return Block(b.start_time, b.num_packets, list(zip(times, sizes)))
+
     def convert_to_row(self):
         """
         :return: returns the block as a list in a format for saving it in a csv file
