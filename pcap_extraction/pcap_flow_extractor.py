@@ -39,6 +39,7 @@ class PcapParser:
         self.progress.counter_title('parsed packets').set_counter(0)
         packet_streams = {}
         display_filter = 'ip and ' \
+                         'not ipv6 and ' \
                          'not dns and ' \
                          'not icmp and ' \
                          'not icmpv6 and ' \
