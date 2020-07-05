@@ -84,7 +84,7 @@ class LiveClassificationFrame(ttk.Frame):
     @staticmethod
     def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval, interval):
         mask = time_interval - (BLOCK_INTERVAL * interval)
-        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL) & (get_block_times_array(classified_block) <= mask)
+        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL) & (get_block_times_array(classified_block) < mask)
 
     @staticmethod
     def _calculate_bandwidth(bandwidth, time_interval):
