@@ -33,6 +33,8 @@ class InterfaceSelectionFrame(ttk.Frame):
 
     def _on_interface_select(self, event):
         self.selected_interface = self.interface_selection.get()
+        if self.selected_interface == self.interface_selection["values"][0]:
+            self.selected_interface = self._get_net_interfaces()
         self.capture_button.state(["!disabled"])
 
     def clear(self):
