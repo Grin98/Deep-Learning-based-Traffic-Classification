@@ -159,7 +159,7 @@ class LiveCaptureProvider:
     Each time a flow is created - all subscribers will be notified
     """
 
-    def __init__(self, interfaces):
+    def __init__(self, interfaces, save_to_file=False):
         # TODO: see if we can find more capture filters to add
         capture_filter = 'ip and ' \
                          'port not 53 and ' \
@@ -169,11 +169,8 @@ class LiveCaptureProvider:
                          'not icmp and ' \
                          'port not 123'
 
-        # TODO: allow users to enable/disable the option to create a pcap for this live capture.
-        # RECOMMEND: KEEP THIS AT FALSE!
-        save_to_file = True
         output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
-
+        # RECOMMEND: KEEP THIS AT FALSE!
         if save_to_file:
             self.capture = NonPromiscuousLiveCapture(interface=interfaces,
                                                      only_summaries=True,
@@ -185,7 +182,6 @@ class LiveCaptureProvider:
                                                      capture_filter=capture_filter)
 
         self.capture.set_debug()
-
         self.queue = deque()
         self.absolute_start_time = None
         self.absolute_current_time = None

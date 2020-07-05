@@ -26,7 +26,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 action_queue = queue.Queue()
-LIVE_CAPTURE_QUEUE_CHECK_INTERVAL = 100
+LIVE_CAPTURE_QUEUE_CHECK_INTERVAL = 1000
 
 
 class LiveClassificationFrame(ttk.Frame):
