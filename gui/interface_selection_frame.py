@@ -20,7 +20,7 @@ class InterfaceSelectionFrame(ttk.Frame):
 
         self.interface_selection = ttk.Combobox(self, width=50)
         self.interface_selection.bind("<<ComboboxSelected>>", self._on_interface_select)
-        self.interface_selection["values"] = self._get_net_interfaces()
+        self.interface_selection["values"] = ["Capture on all interfaces"]+self._get_net_interfaces()
         self.interface_selection.pack()
 
         ttk.Checkbutton(self, text="Save capture to file", variable=self.save_to_file, onvalue=1, offvalue=0).pack()
@@ -29,7 +29,7 @@ class InterfaceSelectionFrame(ttk.Frame):
     def _get_net_interfaces():
         cmd_line = ["dumpcap", "-D"]
         output = sp.check_output(cmd_line).decode('utf-8')
-        return ["Capture on all interfaces"]+[line[line.find("(") + 1:line.find(")")] for line in output.splitlines()]
+        return [line[line.find("(") + 1:line.find(")")] for line in output.splitlines()]
 
     def _on_interface_select(self, event):
         self.selected_interface = self.interface_selection.get()
