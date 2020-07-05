@@ -22,3 +22,4 @@ CSV_KEY = "c"
 BYTES_IN_KB = 1024
 BYTES_IN_BITS = 8
 LARGE_FONT = ("Verdana", 12)
+LABEL_LIST= ['browsing', 'chat', 'file_transfer', 'video', 'voip']
