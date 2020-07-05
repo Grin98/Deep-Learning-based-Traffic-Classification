@@ -73,7 +73,7 @@ class PcapAggregator:
 
 
 if __name__ == '__main__':
-    files = get_dir_pcaps(Path('../pcaps'))
+    files = get_dir_pcaps(Path('../../PCAPS'))
     a = PcapAggregator()
     files, labels = zip(*[(file, a.get_file_label(file)) for file in files if a.get_file_label(file) is not None])
     ns = [1] * len(files)
