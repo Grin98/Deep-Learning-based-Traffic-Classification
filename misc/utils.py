@@ -4,6 +4,7 @@ import os
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
+from string import Template
 from time import time
 from typing import List, Sequence, Tuple, overload
 
@@ -43,8 +44,8 @@ def build_pic(stream: Sequence[Tuple[float, int]]):
     x_axis_to_second_ratio = pic_width * 1.0 / stream_duration
     packets[:, 0] *= x_axis_to_second_ratio
     packets = np.floor(packets)
-    max_x = np.max(packets[0])
-    max_y = np.max(packets[1])
+    max_x = np.max(packets[:, 0])
+    max_y = np.max(packets[:, 1])
     if max_x > pic_width or max_y > pic_height:
         raise Exception(f'Packets are out of range of histogram max_x={max_x}, max_y={max_y}')
     hist, _, _ = np.histogram2d(x=packets[:, 0], y=packets[:, 1],
@@ -178,3 +179,18 @@ def get_block_times_array(classified_block: ClassifiedBlock):
 
 def chain_list_of_tuples(l):
     return list(itertools.chain.from_iterable(l))
+
+
+class DeltaTemplate(Template):
+    delimiter = "%"
+
+
+def strfdelta(tdelta, fmt):
+    d = {"D": tdelta.days}
+    hours, rem = divmod(tdelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    d["H"] = '{:02d}'.format(hours)
+    d["M"] = '{:02d}'.format(minutes)
+    d["S"] = '{:02d}'.format(seconds)
+    t = DeltaTemplate(fmt)
+    return t.substitute(**d)
