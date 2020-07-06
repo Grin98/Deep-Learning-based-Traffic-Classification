@@ -50,14 +50,13 @@ class FlowData:
     def __init__(self, sample):
         """
         :param sample: a 2-tuple of (arrival_time, packet_size)
-        :param absolute_start_time: timestamp of the first packet in the flow
         """
         # these are windows with the samples from the flow during the last: [0,15], [15,30], [30,45] and [45,60]
         # seconds. self.head refers to the "most recent" window, and every *previous* index modulo 4 will be the next
         self.window_samples = [[] for _ in range(BLOCK_DURATION // BLOCK_INTERVAL)]
         self.head = 0
         self.window_samples[self.head].append(sample)
-        self.absolute_start_time = sample[0]
+        self.start_time = sample[0]
         self.alive_intervals = 0
 
     def add_sample(self, sample):
@@ -128,8 +127,7 @@ class FlowsManager:
 
     def add_sample(self, flow, sample):
         """
-        Adds [flow] to the map of all recorded flows with an initial sample of [sample] and an start time of
-        [absolute_timestamp].
+        Adds [flow] to the map of all recorded flows with an initial sample of [sample].
         If [flow] is already mapped to some data stream - the new sample will be added to that stream instead
         """
         if flow in self.flows:
@@ -137,15 +135,16 @@ class FlowsManager:
         else:
             self.flows[flow] = FlowData(sample)
 
-    def compose_new_batch(self, current_absolute_time, num_slides):
+    def compose_new_batch(self, current_time, num_slides):
         """
+        :param current_time: the current time for flows' start to be compared to
+        :param num_slides: amount of window slides so far in this capture
         :return: list of 2-tuples of (flow 5-tuple, block of last 60 secs), for all flows in the map that exist at least
         [BLOCK_LENGTH] seconds
-        :param current_absolute_time: the current time for flows' start to be compared to
         """
         batch = []
         for flow, flow_data in self.flows.items():
-            time_flow_lives = current_absolute_time - flow_data.absolute_start_time
+            time_flow_lives = current_time - flow_data.start_time
             if time_flow_lives > BLOCK_DURATION - BLOCK_INTERVAL and len(flow_data) > 0:
                 logging.debug(f'pushing flow {flow}, which exists for {time_flow_lives} seconds')
                 batch.append((flow, flow_data.to_block(num_slides)))
@@ -187,8 +186,6 @@ class LiveCaptureProvider:
 
         self.capture.set_debug()
         self.queue = deque()
-        self.absolute_start_time = None
-        self.absolute_current_time = None
         self.relative_time = None
         self.sliding_window_advancements = 0
         self.flows_manager = FlowsManager()
@@ -207,11 +204,7 @@ class LiveCaptureProvider:
         """
 
         packet_sample = (float(packet._fields['Time']), int(packet._fields['Length']))
-
-        if self.absolute_start_time is None:
-            self.absolute_start_time = packet_sample[0]
-        self.absolute_current_time = packet_sample[0]
-        self.relative_time = self.absolute_current_time - self.absolute_start_time
+        self.relative_time = packet_sample[0]
 
         with self.window_lock:
             while self.relative_time >= (self.sliding_window_advancements + 1) * BLOCK_INTERVAL:
@@ -248,7 +241,7 @@ class LiveCaptureProvider:
         """
         Pushes a new block for each flow in the map that has lived for at least [BLOCK_LENGTH] seconds
         """
-        self.queue.append(self.flows_manager.compose_new_batch(self.absolute_current_time, num_slides))
+        self.queue.append(self.flows_manager.compose_new_batch(self.relative_time, num_slides))
         # self.queue.clear()
 
     @staticmethod
