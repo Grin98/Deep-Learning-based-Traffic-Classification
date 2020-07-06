@@ -80,7 +80,7 @@ class LiveClassificationFrame(ttk.Frame):
         graph.set_xlabel("time in seconds")
         graph.set_ylabel("Kbps")
         graph.set_xlim(x[0], x[-1])
-        graph.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=len(labels))
+        graph.legend(loc='upper center', bbox_to_anchor=(0.48, -0.07), shadow=True, ncol=len(labels))
 
     @staticmethod
     def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval, interval):
