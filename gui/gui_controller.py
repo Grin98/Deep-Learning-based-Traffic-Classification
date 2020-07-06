@@ -3,7 +3,7 @@ import threading
 import time
 import tkinter
 from string import Template
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from timeit import Timer
 
 from gui.analyzer_options_frame import AnalyzerOptions
@@ -12,6 +12,7 @@ from gui.interface_selection_frame import InterfaceSelectionFrame
 from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
 from misc.utils import strfdelta
+from pcap_extraction.pcap_aggregation import PcapAggregator
 from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
@@ -187,7 +188,7 @@ class AnalyzerPage(ttk.Frame):
 
         self.options_frame = AnalyzerOptions(self)
 
-        merge_button = ttk.Button(self.main_frame, text="Merge CSVs", width=30)
+        merge_button = ttk.Button(self.main_frame, text="Merge CSVs", width=30, command=self._on_merge_click)
         merge_button.pack(side=LEFT, padx=10, pady=20)
         analyze_button = ttk.Button(self.main_frame, text="Show PCAP Flow Analysis", width=30,
                                     command=lambda: self._upload_pcap_file(self.options_frame.on_analyze_click))
@@ -222,6 +223,15 @@ class AnalyzerPage(ttk.Frame):
         self.grid_forget()
         self.controller.show_frame(StartPage)
 
+    def _on_merge_click(self):
+        files = [Path(file) for file in filedialog.askopenfilenames()]
+        if not files:
+            return
+
+        dir_ = files[0].parent
+        out_file = dir_/'merged.csv'
+        PcapAggregator().merge_csvs(out_file, files)
+        messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
 
 class StartPage(ttk.Frame):
 

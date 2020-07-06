@@ -79,7 +79,6 @@ class PcapAggregator:
     @staticmethod
     def _label_flows(flows, label):
         apps = label if (isinstance(label, list) or isinstance(label, tuple)) else [label] * len(flows)
-        print(apps)
         if len(apps) != len(flows):
             raise Exception("number of labels isn't equal to the number of flows")
 

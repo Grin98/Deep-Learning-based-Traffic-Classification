@@ -3,7 +3,7 @@ import numpy as np
 import subprocess as sp
 import threading
 from pathlib import Path
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 from tkinter import *
 import matplotlib
 
@@ -62,6 +62,7 @@ class DominantFlowOnlyOption(ttk.Frame):
     def _on_generate_click(self):
         out_file = Path(filedialog.asksaveasfilename(initialfile=f'{self.master.file.stem}_{self.selected_label}.csv'))
         PcapAggregator().write_pcap_flows(out_file, self.master.file, 1, self.selected_label)
+        messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
 
     def _on_label_select(self, event):
         self.selected_label = self.label_options.get()
@@ -107,6 +108,7 @@ class FlowAnalyze(ttk.Frame):
         indices = list(itertools.chain.from_iterable(indices))
         labels = list(itertools.chain.from_iterable(labels))
         self.master.analyzer.write_chosen_flows(out_file, indices, labels)
+        messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
 
     def fill_list(self, l):
         info_list = l[0].split(',')
