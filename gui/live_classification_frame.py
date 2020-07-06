@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 
 action_queue = queue.Queue()
 LIVE_CAPTURE_QUEUE_CHECK_INTERVAL = 1000
+UPDATE_GRAPH = "update"
 
 
 class LiveClassificationFrame(ttk.Frame):
@@ -84,7 +85,8 @@ class LiveClassificationFrame(ttk.Frame):
     @staticmethod
     def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval, interval):
         mask = time_interval - (BLOCK_INTERVAL * interval)
-        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL) & (get_block_times_array(classified_block) < mask)
+        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL) & (
+                get_block_times_array(classified_block) < mask)
 
     @staticmethod
     def _calculate_bandwidth(bandwidth, time_interval):
@@ -158,18 +160,8 @@ class LiveClassificationFrame(ttk.Frame):
         predicted_graph = self.figure.add_subplot(111)
         predicted_graph.set_title("Predicted Categories Bandwidth")
         self._create_graph(predicted_graph, labels, x, y_axis)
-        self.draw_graph()
 
-    def _check_live_capture_queue(self):
-        if len(self.live_capture.queue) == 0:
-            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
-            return
-
-        batch = self.live_capture.queue.pop()
-        if len(batch) == 0:
-            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
-            return
-
+    def _process_blocks(self, batch):
         flows, blocks = zip(*batch)
         blocks_ds = BlocksDataSet.from_blocks(blocks)
         _, classified_blocks = self.classifier.classify_dataset(blocks_ds)
@@ -190,7 +182,30 @@ class LiveClassificationFrame(ttk.Frame):
 
         self.figure.clear()
         self._generate_predicted_graph(labels, x, y_axis)
+        action_queue.put(UPDATE_GRAPH)
 
+    def check_classify_progress(self):
+        try:
+            result = action_queue.get(0)
+            if result == UPDATE_GRAPH:
+                self.draw_graph()
+            else:
+                pass
+        except queue.Empty:
+            self.after(100, self.check_classify_progress)
+
+    def _check_live_capture_queue(self):
+        if len(self.live_capture.queue) == 0:
+            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+            return
+
+        batch = self.live_capture.queue.pop()
+        if len(batch) == 0:
+            self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
+            return
+        threading.Thread(target=lambda: self._process_blocks(batch)).start()
+
+        self.after(100, self.check_classify_progress)
         self.after(LIVE_CAPTURE_QUEUE_CHECK_INTERVAL, self._check_live_capture_queue)
 
     def begin_live_classification(self, interfaces, save_to_file):
