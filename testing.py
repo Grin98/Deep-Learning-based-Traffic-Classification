@@ -52,6 +52,8 @@ class C:
 
 if __name__ == '__main__':
 
+    print(type(int(' 4')))
+    exit()
     # a = Path('pcaps/aim_chat_3a.pcap')
     # b = Path('pcaps/aim_chat_3b.pcap')
     # o = Path('del.csv')

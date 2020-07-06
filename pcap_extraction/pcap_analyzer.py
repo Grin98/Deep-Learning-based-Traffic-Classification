@@ -9,6 +9,7 @@ from pyshark import FileCapture
 from misc.constants import *
 from misc.data_classes import Flow
 from misc.utils import write_flows
+from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
 class FlowMetadata:
@@ -16,6 +17,17 @@ class FlowMetadata:
         self.start_time = self.end_time = packet_meta[0]
         self.total_packet_data = packet_meta[1]
         self.total_packet_amount = 1
+        self.flow = None
+
+    @classmethod
+    def create(cls, flow: Flow):
+        fmd = FlowMetadata((0, 0))
+        fmd.flow = flow
+        fmd.start_time = flow.start_time
+        fmd.end_time = flow.times[-1] + flow.start_time
+        fmd.total_packet_data = sum(flow.sizes)
+        fmd.total_packet_amount = len(flow.times)
+        return fmd
 
     def add_sample(self, packet_meta):
         self.end_time = packet_meta[0]
@@ -35,16 +47,16 @@ class FlowMetadata:
 
     def __str__(self):
         return f"TIME ALIVE: {self.get_time_alive()}, " \
-               f"PACKET_COUNT: {self.total_packet_amount}, " \
-               f"THROUGHPUT: {self.get_throughput()}"
+            f"PACKET_COUNT: {self.total_packet_amount}, " \
+            f"THROUGHPUT: {self.get_throughput()}"
 
     def describe(self, pcap_meta):
         pcap_packet_count, pcap_throughput, pcap_avg_packet_size, pcap_capture_duration = \
             pcap_meta[CAPINFOS_PACKET_COUNT], pcap_meta[CAPINFOS_BIT_RATE], \
             pcap_meta[CAPINFOS_AVG_PACKET_SIZE], pcap_meta[CAPINFOS_CAPTURE_DURATION]
         return f"TIME ALIVE: {self.get_time_alive()} ({round((self.get_time_alive() / pcap_capture_duration) * 100, 2)}%), " \
-               f"PACKET_COUNT: {self.total_packet_amount} ({round((self.total_packet_amount / pcap_packet_count) * 100, 2)}%), " \
-               f"THROUGHPUT: {self.get_throughput()} ({round((self.get_throughput() / pcap_throughput) * 100, 2)}%)"
+            f"PACKET_COUNT: {self.total_packet_amount} ({round((self.total_packet_amount / pcap_packet_count) * 100,2)}%), " \
+            f"THROUGHPUT: {self.get_throughput()} ({round((self.get_throughput() / pcap_throughput) * 100, 2)}%)"
 
 
 class PcapAnalyzer:
@@ -68,47 +80,28 @@ class PcapAnalyzer:
         self.extract_flows_map()
         pcap_meta = self.get_pcap_metadata(self.pcap_file)
 
-        self.flows = OrderedDict(sorted(self.flows.items(), key=lambda entry: -entry[1].total_packet_data))
+        self.flows = OrderedDict(
+            sorted(self.flows.items(), key=lambda entry: entry[1].total_packet_amount, reverse=True))
         output = f"{pcap_meta}\n"
         for (flow, flow_metadata) in self.flows.items():
             output += f"{flow}  :  {flow_metadata.describe(pcap_meta)}\n"
         return output
 
     def extract_flows_map(self):
-        capture = FileCapture(str(self.pcap_file),
-                              custom_parameters=self.custom_parameters,
-                              display_filter=self.display_filter,
-                              only_summaries=True)
-        for packet in capture:
-            packet_meta = (float(packet._fields['Time']), int(packet._fields['Length']))
-            flow = (
-                packet._fields['Source'],
-                packet._fields['SrcPort'],
-                packet._fields['Destination'],
-                packet._fields['DstPort'],
-                packet._fields['Protocol']
-            )
-
-            if flow in self.flows:
-                self.flows[flow].add_sample(packet_meta)
-            else:
-                self.flows[flow] = FlowMetadata(packet_meta)
-        capture.close()
+        parser = PcapParser()
+        flows = parser.parse_file(self.pcap_file)
+        for flow in flows:
+            self.flows[str(flow.five_tuple)] = FlowMetadata.create(flow)
 
     def write_chosen_flows(self, writable, flow_indices: Sequence[int], labels: str):
         if len(flow_indices) != len(set(flow_indices)):
             raise Exception("there are duplicate indices")
 
-        flows = [self._create_flow_from_meta(five_tuple, flow_meta, label)
-                 for i, ((five_tuple, flow_meta), label) in enumerate(zip(list(self.flows), labels))
-                 if i+1 in flow_indices]
+        flows = list(self.flows.values())
+        flows = [Flow.change_app(flows[i - 1].flow, label)
+                 for i, label in zip(flow_indices, labels)]
 
         write_flows(writable, flows)
-
-    @staticmethod
-    def _create_flow_from_meta(five_tuple: Tuple, flow_meta: FlowMetadata, label):
-        times, sizes = zip(*flow_meta.total_packet_data)
-        return Flow.create(label, five_tuple, flow_meta.start_time, times, sizes)
 
     @staticmethod
     def get_pcap_metadata(filepath):

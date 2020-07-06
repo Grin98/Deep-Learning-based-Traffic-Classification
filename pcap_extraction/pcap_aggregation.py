@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 from typing import Sequence, Iterable
 
+from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import Flow
 from misc.output import Progress
 from misc.utils import write_flows, get_dir_items, get_dir_pcaps
@@ -28,6 +29,7 @@ d = dict(
 class PcapAggregator:
     def __init__(self, progress=Progress()):
         self.progress = progress
+        self.parser = PcapParser(self.progress)
 
     def aggregate(self, out_file: Path, pcaps: Sequence[Path], ns: Sequence[int],
                   labels):
@@ -37,15 +39,27 @@ class PcapAggregator:
         :param ns: how many flows to take from each pcap (takes the top n largest flows)
         :param labels: the classification of the flows either  at the file level or the flow level
         """
-        parser = PcapParser(self.progress)
         with out_file.open(newline='', mode='w+') as f:
             writer = csv.writer(f, delimiter=',')
 
             for pcap, n, label in zip(pcaps, ns, labels):
                 print(pcap.name)
-                flows = parser.parse_file(pcap, n)
-                flows = self._label_flows(flows, label)
+                self.write_pcap_flows(writer, pcap, n, label)
+
+    def write_pcap_flows(self, writable, pcap: Path, n: int, label):
+        flows = self.parser.parse_file(pcap, n)
+        flows = self._label_flows(flows, label)
+        write_flows(writable, flows)
+
+    def merge_csvs(self, out_file: Path, csvs: Sequence[Path]):
+        with out_file.open(newline='', mode='w+') as f:
+            writer = csv.writer(f, delimiter=',')
+
+            p = BasicProcessor()
+            for file in csvs:
+                flows = p.process_file_to_flows(file)
                 write_flows(writer, flows)
+
 
     @staticmethod
     def get_file_label(file: Path):
@@ -65,7 +79,6 @@ class PcapAggregator:
     @staticmethod
     def _label_flows(flows, label):
         apps = label if (isinstance(label, list) or isinstance(label, tuple)) else [label] * len(flows)
-        print(apps)
         if len(apps) != len(flows):
             raise Exception("number of labels isn't equal to the number of flows")
 
