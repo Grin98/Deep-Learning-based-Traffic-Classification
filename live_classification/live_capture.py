@@ -170,8 +170,13 @@ class LiveCaptureProvider:
                          'not ip6 and ' \
                          'not igmp and ' \
                          'not icmp and ' \
-                         'port not 123'
+                         'not icmp6 and ' \
+                         'port not 123 and ' \
+                         'not net 224.0.0.0/8 and ' \
+                         'not net 239.255.255.250 and ' \
+                         'not net 239.255.255.253'
 
+        # '(not multicast or net 232.0.0.0/8)' <-- ideal, but not all interfaces support multicast
         # RECOMMEND: KEEP THIS AT FALSE!
         if save_to_file:
             output_file = str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))
