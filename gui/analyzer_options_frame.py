@@ -1,11 +1,14 @@
+import itertools
+import numpy as np
 import subprocess as sp
 import threading
 from pathlib import Path
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from tkinter import *
 import matplotlib
 
 from misc.constants import LABEL_LIST, LARGE_FONT
+from pcap_extraction.pcap_aggregation import PcapAggregator
 from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
@@ -31,8 +34,8 @@ class AnalyzerOptions(ttk.Frame):
         threading.Thread(target=self._analyze_pcap).start()
 
     def _analyze_pcap(self):
-        analyzer = PcapAnalyzer(self.file)
-        output = analyzer.analyze().split("\n")
+        self.analyzer = PcapAnalyzer(self.file)
+        output = self.analyzer.analyze().split("\n")
         self.show_analyze.fill_list(output)
         self.show_analyze.pack(side=TOP, fill="both", expand=True)
 
@@ -57,7 +60,8 @@ class DominantFlowOnlyOption(ttk.Frame):
         self.generate_button.pack(side=BOTTOM, pady=20)
 
     def _on_generate_click(self):
-        pass
+        out_file = Path(filedialog.asksaveasfilename(initialfile=f'{self.master.file.stem}_{self.selected_label}.csv'))
+        PcapAggregator().write_pcap_flows(out_file, self.master.file, 1, self.selected_label)
 
     def _on_label_select(self, event):
         self.selected_label = self.label_options.get()
@@ -96,7 +100,13 @@ class FlowAnalyze(ttk.Frame):
         ttk.Button(self, text="Create CSV", width=24, command=self._on_create_csv_click).pack(side=TOP)
 
     def _on_create_csv_click(self):
-        pass
+        out_file = Path(filedialog.asksaveasfilename(initialfile=f'{self.master.file.stem}_labeled.csv'))
+        indices, labels = zip(*[(self._label_indices(label, indices.get()))
+                                for label, indices in self.entries_map.items()
+                                if indices.get()])
+        indices = list(itertools.chain.from_iterable(indices))
+        labels = list(itertools.chain.from_iterable(labels))
+        self.master.analyzer.write_chosen_flows(out_file, indices, labels)
 
     def fill_list(self, l):
         info_list = l[0].split(',')
@@ -106,3 +116,9 @@ class FlowAnalyze(ttk.Frame):
         self.pcap_info.set(text)
         for index, item in enumerate(l[1:], start=1):
             self.flow_list.insert(END, f'{index}: {item}')
+
+    @staticmethod
+    def _label_indices(label: str, indices: str):
+        indices = np.array(indices.split(sep=','), dtype=int)
+        labels = [label] * len(indices)
+        return indices, labels

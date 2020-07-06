@@ -68,7 +68,7 @@ class PcapAnalyzer:
         self.extract_flows_map()
         pcap_meta = self.get_pcap_metadata(self.pcap_file)
 
-        self.flows = OrderedDict(sorted(self.flows.items(), key=lambda entry: -entry[1].total_packet_data))
+        self.flows = OrderedDict(sorted(self.flows.items(), key=lambda entry: entry[1].total_packet_amount, reverse=True))
         output = f"{pcap_meta}\n"
         for (flow, flow_metadata) in self.flows.items():
             output += f"{flow}  :  {flow_metadata.describe(pcap_meta)}\n"
@@ -99,8 +99,8 @@ class PcapAnalyzer:
         if len(flow_indices) != len(set(flow_indices)):
             raise Exception("there are duplicate indices")
 
-        flows = [self._create_flow_from_meta(five_tuple, flow_meta, label)
-                 for i, ((five_tuple, flow_meta), label) in enumerate(zip(list(self.flows), labels))
+        flows = [self._create_flow_from_meta(entry[0], entry[1], label)
+                 for i, (entry, label) in enumerate(zip(list(self.flows), labels))
                  if i+1 in flow_indices]
 
         write_flows(writable, flows)
