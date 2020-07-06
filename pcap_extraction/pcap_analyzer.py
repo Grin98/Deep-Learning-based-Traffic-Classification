@@ -11,6 +11,8 @@ from misc.data_classes import Flow
 from misc.utils import write_flows
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
+MINIMUM_FLOW_PACKETS = 5
+
 
 class FlowMetadata:
     def __init__(self, packet_meta):
@@ -62,11 +64,14 @@ class FlowMetadata:
 class PcapAnalyzer:
     def __init__(self, pcap_file: Path, prediction=None):
         self.display_filter = 'ip and ' \
-                              'not dns and ' \
-                              'not icmp and ' \
-                              'not igmp and ' \
-                              'not ntp ' \
-                              'and not stun'
+                         'not ipv6 and ' \
+                         'not dns and ' \
+                         'not icmp and ' \
+                         'not icmpv6 and ' \
+                         'not igmp and ' \
+                         'not ntp ' \
+                         'and not stun'
+
         self.custom_parameters = {"-C": PROFILE}
         self.prediction = prediction
         self.pcap_file = pcap_file
@@ -80,6 +85,8 @@ class PcapAnalyzer:
         self.extract_flows_map()
         pcap_meta = self.get_pcap_metadata(self.pcap_file)
 
+        self.flows = {flow: self.flows[flow] for flow in self.flows if
+                      self.flows[flow].total_packet_amount > MINIMUM_FLOW_PACKETS}
         self.flows = OrderedDict(
             sorted(self.flows.items(), key=lambda entry: entry[1].total_packet_amount, reverse=True))
         output = f"{pcap_meta}\n"

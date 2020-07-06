@@ -229,7 +229,7 @@ class AnalyzerPage(ttk.Frame):
             return
 
         dir_ = files[0].parent
-        out_file = dir_/'merged.csv'
+        out_file = dir_/f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S.pcapng"))}.csv'
         PcapAggregator().merge_csvs(out_file, files)
         messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
 
