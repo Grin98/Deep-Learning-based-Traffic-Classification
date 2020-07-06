@@ -12,7 +12,7 @@ from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 
 from classification.clasifiers import Classifier
-from expiraments.cross_validation import CrossValidation
+from experiments.cross_validation import CrossValidation
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from flowpic_dataset.processors import HoldOutPreProcessor, BasicProcessor, CrossValidationPreProcessor, get_dir_csvs
@@ -26,7 +26,7 @@ from pcap_extraction.pcap_aggregation import PcapAggregator
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 
-# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 1 --k 5
+# python experiments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 1 --k 5
 
 class C:
     def __init__(self, x):

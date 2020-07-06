@@ -10,7 +10,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from expiraments.experiment import Experiment
+from experiments.experiment import Experiment
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer
@@ -99,7 +99,7 @@ class CrossValidation(Experiment):
         return saved_state['i'], saved_state['k'], saved_state['f1'], saved_state['acc'], saved_state['loss']
 
 
-# python expiraments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
+# python experiments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
     exp = CrossValidation()

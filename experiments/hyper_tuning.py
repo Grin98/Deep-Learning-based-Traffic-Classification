@@ -16,8 +16,8 @@ from typing import Sequence, Iterable, Tuple
 import numpy as np
 import torch
 
-from expiraments.cross_validation import CrossValidation
-from expiraments.experiment import Experiment
+from experiments.cross_validation import CrossValidation
+from experiments.experiment import Experiment
 from misc.utils import create_dir
 from misc.output import Logger
 
@@ -59,7 +59,7 @@ def run_conf(conf, log: Logger):
     return f1, conf
 
 
-# python expiraments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
+# python experiments/hyper_tuning.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 
 if __name__ == '__main__':
     set_start_method('spawn')

@@ -21,7 +21,7 @@ if __name__ == '__main__':
                 f = open(path + "\\" + filename + ".sh", "w+")
                 text: str = "#!/usr/bin/env bash\n\n" \
                             "out_dir=hyper_param_out\nmkdir -p $out_dir\n" \
-                            "log_path=$out_dir/" + filename + "_out.log\n\n python expiraments/split_experiment.py " \
+                            "log_path=$out_dir/" + filename + "_out.log\n\n python experiments/split_experiment.py " \
                                                               "--data-dir data_reg_overlap_split " \
                                                               "--out-dir $out_dir " \
                                                               "--epochs 60 " \

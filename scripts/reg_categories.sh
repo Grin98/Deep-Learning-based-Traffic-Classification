@@ -5,7 +5,7 @@ log_path=$out_dir/out.log
 
 mkdir -p $out_dir
 
-python expiraments/split_experiment.py \
+python experiments/split_experiment.py \
 --data-dir data_reg \
 --out-dir $out_dir \
 --data-format 1 \
