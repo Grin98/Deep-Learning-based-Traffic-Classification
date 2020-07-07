@@ -166,7 +166,6 @@ class LiveCaptureProvider:
         # TODO: see if we can find more capture filters to add
         capture_filter = 'ip and ' \
                          'port not 53 and ' \
-                         'not broadcast and ' \
                          'not ip6 and ' \
                          'not igmp and ' \
                          'not icmp and ' \
