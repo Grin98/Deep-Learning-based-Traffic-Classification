@@ -27,7 +27,7 @@ class GuiController(Tk):
         Tk.__init__(self, *args, **kwargs)
 
         Tk.wm_title(self, "Traffic Classification")
-        self.iconbitmap("../statistics.ico")
+        self.iconbitmap("statistics.ico")
         container = ttk.Frame(self)
         container.grid(column=0, row=0, sticky=(N, S, E, W))
 

@@ -45,6 +45,8 @@ class AnalyzerOptions(ttk.Frame):
     def clear(self):
         self.show_analyze.clear()
         self.dominant_flow_only_frame.clear()
+        self.show_analyze.pack_forget()
+        self.dominant_flow_only_frame.pack_forget()
 
 
 class DominantFlowOnlyOption(ttk.Frame):

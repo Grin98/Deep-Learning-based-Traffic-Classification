@@ -32,7 +32,7 @@ class FlowPicGraphFrame(ttk.Frame):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.classifier_categories = ['browsing', 'chat', 'file_transfer', 'video', 'voip']
         self.all_categories = self.classifier_categories + ['unknown']
-        model_checkpoint = '../model'
+        model_checkpoint = 'model'
         model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
         self.pcap_classifier = PcapClassifier(model, device, progress=progress)
         self.csv_classifier = FlowCsvClassifier(model, device, progress=progress)
