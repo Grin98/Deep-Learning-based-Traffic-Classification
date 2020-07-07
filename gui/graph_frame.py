@@ -96,7 +96,8 @@ class FlowPicGraphFrame(ttk.Frame):
     def _create_combobox(self):
 
         self.flow_selection["values"] = list(
-            map(lambda item: f'{item[0]}({self.all_categories[item[1].pred]})', self.flows_map.items()))
+            map(lambda item: f'{item[0]}({self.all_categories[item[1].pred]})',
+                sorted(self.flows_map.items(), key=lambda entry: entry[1].flow.num_packets, reverse=True)))
 
     def _on_flow_select(self, event):
         self.figure_per_flow.clear()
