@@ -141,7 +141,7 @@ class FlowPicGraphFrame(ttk.Frame):
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
-        flows = [(np.array(flow) * 8 / BYTES_IN_KB) / TIME_INTERVAL for flow in flows]
+        flows = [(np.array(flow) / BYTES_IN_KB / TIME_INTERVAL * 8) for flow in flows]
 
         return self.all_categories, x, flows
 
