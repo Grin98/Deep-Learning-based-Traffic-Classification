@@ -29,7 +29,6 @@ class AnalyzerOptions(ttk.Frame):
         self.dominant_flow_only_frame.pack(side=TOP, fill="both", expand=True)
 
     def on_analyze_click(self):
-        self.dominant_flow_only_frame.clear()
         self.dominant_flow_only_frame.pack_forget()
         threading.Thread(target=self._analyze_pcap).start()
 
@@ -42,6 +41,10 @@ class AnalyzerOptions(ttk.Frame):
     def update_file(self, filepath):
         self.file = Path(filepath)
         self.title.configure(text=self.file.name)
+
+    def clear(self):
+        self.show_analyze.clear()
+        self.dominant_flow_only_frame.clear()
 
 
 class DominantFlowOnlyOption(ttk.Frame):
@@ -114,7 +117,7 @@ class FlowAnalyze(ttk.Frame):
         info_list = l[0].split(',')
         text = ''
         for info in info_list[1:]:
-            text += f'{info.replace("}", "").replace("", "" )}\n'
+            text += f'{info.replace("}", "").replace("", "")}\n'
         self.pcap_info.set(text)
         for index, item in enumerate(l[1:], start=1):
             self.flow_list.insert(END, f'{index}: {item}')
@@ -124,3 +127,8 @@ class FlowAnalyze(ttk.Frame):
         indices = np.array(indices.split(sep=','), dtype=int)
         labels = [label] * len(indices)
         return indices, labels
+
+    def clear(self):
+        self.flow_list.delete(0, END)
+        for entry in self.entries_map.values():
+            entry.delete(0, END)

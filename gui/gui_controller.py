@@ -214,6 +214,7 @@ class AnalyzerPage(ttk.Frame):
         func()
 
     def on_return_button_click(self):
+        self.options_frame.clear()
         self.main_frame.pack(side=TOP)
         self.options_frame.pack_forget()
         self.back_button.pack(side=BOTTOM)
