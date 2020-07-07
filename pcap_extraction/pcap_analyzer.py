@@ -145,9 +145,9 @@ class PcapAnalyzer:
         quantity, resolution = capture_bit_rate_str.split("\r")[0].split(" ")
         if resolution == "kbps":
             return float(float(quantity) * 1e3)
-        elif resolution == "mbps":
+        elif resolution == "Mbps":
             return float(float(quantity) * 1e6)
-        elif resolution == "gbps":
+        elif resolution == "Gbps":
             return float(float(quantity) * 1e9)
         return float(quantity)
 
