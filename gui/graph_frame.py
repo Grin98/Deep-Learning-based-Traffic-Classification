@@ -137,7 +137,8 @@ class FlowPicGraphFrame(ttk.Frame):
             for start_time in x:
                 sums = [np.sum(classified_flow.flow.sizes[((
                                                                    classified_flow.flow.times + classified_flow.flow.start_time >= start_time) & (
-                                                                   classified_flow.flow.times + classified_flow.flow.start_time < start_time + TIME_INTERVAL))])
+                                                                   classified_flow.flow.times + classified_flow.flow.start_time < start_time + TIME_INTERVAL))]
+                               , dtype=np.long)
                         for classified_flow in flows_by_categories]
                 flows[index].append(np.sum(sums))
 
