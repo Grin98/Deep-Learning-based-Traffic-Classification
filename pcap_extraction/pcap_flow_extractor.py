@@ -80,9 +80,9 @@ class PcapParser:
             print(error, "\nNote: the pcap file might be corrupted, so the classifier will work with what it could get")
 
         if n is None:
-            max_five_tuples = list(packet_streams.keys())
-        else:
-            max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
+            n = len(list(packet_streams.keys()))
+
+        max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
         return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple])
                 for five_tuple in max_five_tuples]
 
