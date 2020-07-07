@@ -2,6 +2,8 @@ from tkinter import ttk
 from tkinter import *
 import queue
 import threading
+from typing import List
+
 import matplotlib
 import time
 import numpy as np
@@ -92,21 +94,19 @@ class LiveClassificationFrame(ttk.Frame):
     def _calculate_bandwidth(bandwidth, time_interval):
         return (bandwidth * BYTES_IN_BITS / BYTES_IN_KB) / time_interval
 
-    def _extract_flow_values(self, classified_flow: ClassifiedFlow):
-        # TODO need to fix so it will work with blocks
-        x = list(
-            np.arange(0, classified_flow.flow.times[-1],
-                      BLOCK_INTERVAL))
+    def _extract_flow_values(self, classified_blocks: List[ClassifiedBlock]):
+        max_time = BLOCK_DURATION + BLOCK_INTERVAL*(len(classified_blocks)-1)
+        x = list(np.arange(0, max_time, BLOCK_INTERVAL))
         bandwidth_per_category = [[] for _ in self.classifier_categories]
 
         for window_index, time_window in enumerate(x):
-            min_index = max(min(window_index - 3, len(classified_flow.classified_blocks) - 1), 0)
-            max_index = min(window_index, len(classified_flow.classified_blocks) - 1)
-            times = np.array(classified_flow.flow.times)
-            sizes = np.array(classified_flow.flow.sizes)
-            size_in_bits = np.sum(sizes[((time_window <= times) & (times < time_window + BLOCK_INTERVAL))]) * 8
+            min_index = max(min(window_index - 3, len(classified_blocks) - 1), 0)
+            max_index = min(window_index, len(classified_blocks) - 1)
+            times = get_block_times_array(classified_blocks[max_index])
+            sizes = get_block_sizes_array(classified_blocks[max_index])
+            size_in_bits = np.sum(sizes[((0 <= times) & (times < BLOCK_INTERVAL))]) * BYTES_IN_BITS
             prob_sum = np.array([0.0] * len(self.classifier_categories))
-            for block in classified_flow.classified_blocks[min_index:max_index + 1]:
+            for block in classified_blocks[min_index:max_index + 1]:
                 prob_sum += block.probabilities
             prob_sum /= (max_index + 1) - min_index
             for index, bandwidth_list in enumerate(bandwidth_per_category):
@@ -118,11 +118,11 @@ class LiveClassificationFrame(ttk.Frame):
         self.figure_per_flow.clear()
 
         graph = self.figure_per_flow.add_subplot(111)
-        key = str(self.flow_selection.get()).split("(")[0]
-        flow = self.flows_map[key]
-        labels, x, y_axis = self._extract_flow_values(flow)
+        key = self.flow_selection.get()
+        classified_blocks = self.flows_map[key]
+        labels, x, y_axis = self._extract_flow_values(classified_blocks)
 
-        graph.set_title("Classification for " + str(flow.flow.five_tuple))
+        graph.set_title("Classification for " + str(key))
 
         self.graph._tkcanvas.grid_forget()
         self.graph_per_flow._tkcanvas.grid(column=0, row=1, columnspan=3)
@@ -168,10 +168,10 @@ class LiveClassificationFrame(ttk.Frame):
 
         results = zip(flows, classified_blocks)
         for (flow, block) in results:
-            if self.flows_map.__contains__(flow):
-                self.flows_map[flow].append(block)
+            if self.flows_map.__contains__(str(flow)):
+                self.flows_map[str(flow)].append(block)
             else:
-                self.flows_map[flow] = [block]
+                self.flows_map[str(flow)] = [block]
 
         blocks_by_categories = [[] for _ in self.all_categories]
         for classified_block in classified_blocks:
