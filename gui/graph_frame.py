@@ -96,8 +96,7 @@ class FlowPicGraphFrame(ttk.Frame):
     def _create_combobox(self):
 
         self.flow_selection["values"] = list(
-            map(lambda item: f'{item[0]}({self.all_categories[item[1].pred]})',
-                sorted(self.flows_map.items(), key=lambda entry: entry[1].flow.num_packets, reverse=True)))
+            map(lambda item: f'{item[0]}({self.all_categories[item[1].pred]})', self.flows_map.items()))
 
     def _on_flow_select(self, event):
         self.figure_per_flow.clear()
@@ -192,7 +191,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.flows_map = {f'{index}: {str(classified_flow.flow.five_tuple)}': classified_flow for
                           index, classified_flow in
-                          enumerate(flows_data)}
+                          enumerate(sorted(flows_data, key=lambda cf: cf.flow.num_packets, reverse=True))}
         categories_by_int = list(map(lambda category: self.all_categories.index(category), self.all_categories))
         if len(csv_flows_data) > 0:
             self.f1_score_frame.calculate_f1_score(csv_flows_data, csv_flows_data, categories_by_int)
