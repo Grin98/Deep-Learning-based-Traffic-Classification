@@ -29,6 +29,11 @@ class StatisticsFrame(ttk.Frame):
             map(lambda f: [self.categories.index(f.flow.app)]*f.flow.num_packets, actual_flows_by_categories)
         )), dtype=np.int8)
 
+        # TODO confusion matrix: can add here the code for a confusion matrix using
+        #  actual_flows_preds(ground truth) and analyzed_flows_preds(model prediction).
+        #  important: you are encouraged to do it in a separate method but you must use actual_flows_pred
+        #  and analyzed_flows_pred as they are computed here.
+
         existing_labels: List = np.unique(actual_flows_preds).tolist()
         total_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average='weighted', labels=existing_labels)
         per_class_f1 = f1_score(actual_flows_preds, analyzed_flows_preds, average=None, labels=existing_labels)

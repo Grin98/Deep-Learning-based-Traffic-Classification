@@ -32,10 +32,6 @@ class Classifier:
 
         probabilities = self.model(X)
         _, pred = torch.max(probabilities, dim=1)
-
-        # print('out', out)
-        # print('vals', values)
-        # print('pred', pred)
         return pred, probabilities
 
     def classify_multiple_flows(self, flows: Sequence[Flow]) -> Sequence[ClassifiedFlow]:
@@ -77,7 +73,6 @@ class Classifier:
 
         c1, c2 = common
         ratio = c2[1] / c1[1]
-        print(c1, c2, ratio)
         if ratio > UNKNOWN_THRESHOLD:
             return -1
         return c1[0]
