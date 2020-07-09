@@ -62,13 +62,13 @@ class PcapParser:
                 if i % LOADING_BAR_UPDATE_INTERVAL == 0:
                     self.progress.set_counter(i, packet_count)
 
-                packet_meta = (float(packet._fields['Time']),  int(packet._fields['Length']))
+                packet_meta = (float(packet.time),  int(packet.length))
                 five_tuple = (
-                    packet._fields['Source'],
-                    packet._fields['SrcPort'],
-                    packet._fields['Destination'],
-                    packet._fields['DstPort'],
-                    packet._fields['Protocol']
+                    packet.source,
+                    packet.srcport,
+                    packet.destination,
+                    packet.dstport,
+                    packet.protocol
                 )
 
                 if five_tuple in packet_streams:
