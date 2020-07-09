@@ -231,8 +231,9 @@ class AnalyzerPage(ttk.Frame):
 
         dir_ = files[0].parent
         out_file = dir_/f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
-        PcapAggregator().merge_csvs(out_file, files)
-        messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
+        # TODO pass a boolean variable as random_start depending on gui checkbox
+        PcapAggregator().merge_csvs(out_file, files, random_start=True)
+        messagebox.showinfo(title=f'{out_file.name}', message=f'created successfully at:\n{out_file}')
 
 class StartPage(ttk.Frame):
 

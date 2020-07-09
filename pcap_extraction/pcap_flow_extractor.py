@@ -47,12 +47,7 @@ class PcapParser:
                          'not ntp ' \
                          'and not stun'
 
-        pcap_metadata = self.get_pcap_metadata(file)
-        packet_count = pcap_metadata[CAPINFOS_PACKET_COUNT]
-
-        print('avg bit rate: ', pcap_metadata[CAPINFOS_BIT_RATE])
-        print('avg packet size: ', pcap_metadata[CAPINFOS_AVG_PACKET_SIZE])
-
+        packet_count = self.get_pcap_metadata(file)[CAPINFOS_PACKET_COUNT]
         capture = pyshark.FileCapture(str(file),
                                       custom_parameters={"-C": PROFILE},
                                       display_filter=display_filter,

@@ -52,12 +52,12 @@ class C:
 
 if __name__ == '__main__':
 
-    file = Path('my_file')
-    with file.open(newline='') as f_in:
-        data = csv.reader(f_in, delimiter=',')
-        print([1 for line in data])
+    # file = Path('my_file')
+    # with file.open(newline='') as f_in:
+    #     data = csv.reader(f_in, delimiter=',')
+    #     print([1 for line in data])
 
-    print(type(int(' 4')))
+    print(max([1, 2, 3]))
     exit()
     # a = Path('pcaps/aim_chat_3a.pcap')
     # b = Path('pcaps/aim_chat_3b.pcap')

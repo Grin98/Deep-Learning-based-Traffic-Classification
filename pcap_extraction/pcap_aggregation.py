@@ -1,6 +1,7 @@
 import csv
+import numpy as np
 from pathlib import Path
-from typing import Sequence, Iterable
+from typing import Sequence, Iterable, Tuple
 
 from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import Flow
@@ -30,6 +31,8 @@ class PcapAggregator:
     def __init__(self, progress=Progress()):
         self.progress = progress
         self.parser = PcapParser(self.progress)
+        self.processor = BasicProcessor()
+
 
     def aggregate(self, out_file: Path, pcaps: Sequence[Path], ns: Sequence[int],
                   labels):
@@ -51,15 +54,29 @@ class PcapAggregator:
         flows = self._label_flows(flows, label)
         write_flows(writable, flows)
 
-    def merge_csvs(self, out_file: Path, csvs: Sequence[Path]):
+    def merge_csvs(self, out_file: Path, csvs: Sequence[Path], random_start: bool = False):
+        print(str(out_file))
         with out_file.open(newline='', mode='w+') as f:
             writer = csv.writer(f, delimiter=',')
 
-            p = BasicProcessor()
-            for file in csvs:
-                flows = p.process_file_to_flows(file)
-                write_flows(writer, flows)
+            if not random_start:
+                for file in csvs:
+                    flows = self.processor.process_file_to_flows(file)
+                    write_flows(writer, flows)
+            else:
+                end_times = [self._get_file_end_time(file) for file in csvs]
+                max_end = max(end_times)
+                for file, end in zip(csvs, end_times):
+                    flows = self.processor.process_file_to_flows(file)
+                    new_pcap_start_time = np.random.uniform(low=0.0, high=max_end - end)
+                    flows = [Flow.change_start_time(f, new_pcap_start_time + f.start_time) for f in flows]
+                    print(new_pcap_start_time)
+                    print([(f.five_tuple, f.start_time) for f in flows])
+                    write_flows(writer, flows)
 
+    def _get_file_end_time(self, file: Path) -> float:
+        flows = self.processor.process_file_to_flows(file)
+        return max([f.times[-1] for f in flows])
 
     @staticmethod
     def get_file_label(file: Path):
