@@ -52,6 +52,7 @@ class PcapParser:
                                       custom_parameters={"-C": PROFILE},
                                       display_filter=display_filter,
                                       only_summaries=True)
+
         try:
             for i, packet in enumerate(capture):
                 if i % LOADING_BAR_UPDATE_INTERVAL == 0:
@@ -78,8 +79,9 @@ class PcapParser:
             n = len(list(packet_streams.keys()))
 
         max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
-        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple])
-                for five_tuple in max_five_tuples]
+        return [flow for flow in
+                (self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple]) for five_tuple in max_five_tuples)
+                if flow is not None]
 
     @staticmethod
     def get_pcap_metadata(filepath):
@@ -115,7 +117,9 @@ class PcapParser:
     @staticmethod
     def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
         times, sizes = zip(*stream)
-        return Flow.create('app', five_tuple, times[0], times, sizes, normalize=True)
+        flow = Flow.create('app', five_tuple, times[0], times, sizes, normalize=True)
+        flow = None if flow.num_packets == 0 else flow
+        return flow
 
     @staticmethod
     def _is_undesired_packet(packet: Packet) -> bool:

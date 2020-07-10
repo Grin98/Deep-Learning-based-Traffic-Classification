@@ -235,6 +235,7 @@ class AnalyzerPage(ttk.Frame):
         PcapAggregator().merge_csvs(out_file, files, random_start=True)
         messagebox.showinfo(title=f'{out_file.name}', message=f'created successfully at:\n{out_file}')
 
+
 class StartPage(ttk.Frame):
 
     def __init__(self, parent, controller):
