@@ -22,7 +22,7 @@ from misc.data_classes import Flow
 from misc.output import Logger, Progress
 from misc.utils import show_flow_pic, is_file, Timer, load_model, get_dir_items
 from model.flow_pic_model import FlowPicModel
-from pcap_extraction.pcap_aggregation import PcapAggregator
+from pcap_extraction.aggregation import Aggregator
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
 

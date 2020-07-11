@@ -12,7 +12,7 @@ from gui.interface_selection_frame import InterfaceSelectionFrame
 from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
 from misc.utils import strfdelta
-from pcap_extraction.pcap_aggregation import PcapAggregator
+from pcap_extraction.aggregation import Aggregator
 from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
@@ -232,7 +232,7 @@ class AnalyzerPage(ttk.Frame):
         dir_ = files[0].parent
         out_file = dir_/f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
         # TODO pass a boolean variable as random_start depending on gui checkbox
-        PcapAggregator().merge_csvs(out_file, files, random_start=True)
+        Aggregator().merge_csvs(out_file, files, random_start=True)
         messagebox.showinfo(title=f'{out_file.name}', message=f'created successfully at:\n{out_file}')
 
 

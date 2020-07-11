@@ -1,42 +1,28 @@
 import csv
 import numpy as np
 from pathlib import Path
-from typing import Sequence, Iterable, Tuple
+from typing import Sequence
 
 from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import Flow
 from misc.output import Progress
-from misc.utils import write_flows, get_dir_items, get_dir_pcaps
+from misc.utils import write_flows
 from pcap_extraction.pcap_flow_extractor import PcapParser
 
-d = dict(
-    html='browsing',
-    chat='chat',
-    video='video',
-    voip='voip',
-    file='file_transfer',
-    netflix='video',
-    audio='voip',
-    ftps='file_transfer',
-    scp='file_transfer',
-    sftp='file_transfer',
-    spotify='voip',
-    torrent='file_transfer',
-    vimeo='video',
-    youtube='video'
-)
 
-
-class PcapAggregator:
+class Aggregator:
     def __init__(self, progress=Progress()):
         self.progress = progress
         self.parser = PcapParser(self.progress)
         self.processor = BasicProcessor()
 
-
-    def aggregate(self, out_file: Path, pcaps: Sequence[Path], ns: Sequence[int],
-                  labels):
+    def aggregate_pcaps(self, out_file: Path, pcaps: Sequence[Path], ns: Sequence[int],
+                        labels):
         """
+        extracts flows from pcaps.
+        attaches classification to the flows.
+        writes them to a file.
+
         :param out_file: the path to where the file is (file will be created if it doesn't exists)
         :param pcaps: paths to the pcap files that will be aggregated together into a file
         :param ns: how many flows to take from each pcap (takes the top n largest flows)
@@ -49,13 +35,34 @@ class PcapAggregator:
                 print(pcap.name)
                 self.write_pcap_flows(writer, pcap, n, label)
 
-    def write_pcap_flows(self, writable, pcap: Path, n: int, label):
+    def write_pcap_flows(self, writable, pcap: Path, n: int, labels):
+        """
+        extracts flows from pcap.
+        attaches classification to the flows.
+        writes them to a file.
+
+        :param writable: a file or an object with writerows method
+        :param pcap: pcap file path
+        :param n: num flows to extract
+        :param labels: flow labels either a string or sequence of strings
+        """
+
         flows = self.parser.parse_file(pcap, n)
-        flows = self._label_flows(flows, label)
+        flows = self._label_flows(flows, labels)
         write_flows(writable, flows)
 
     def merge_csvs(self, out_file: Path, csvs: Sequence[Path], random_start: bool = False):
-        print(str(out_file))
+        """
+        writes flows from different csv files to a single csv
+        :param out_file: file to write to
+        :param csvs: csv files with flows
+        :param random_start: if true csv files start from random value.
+                explanation: flows in csv are assumed to come from the same pcap file where
+                the start of each flow is relative to the start of the pcap (pcap start is 0)
+                thus if random_start is True, the start time of each csv is moved from 0 to
+                a random value between 0 and the maximum time of when a flow ends.
+        """
+
         with out_file.open(newline='', mode='w+') as f:
             writer = csv.writer(f, delimiter=',')
 
@@ -75,37 +82,19 @@ class PcapAggregator:
                     write_flows(writer, flows)
 
     def _get_file_end_time(self, file: Path) -> float:
+        """
+        returns the maximum time of when a flow ends in the given file
+        """
         flows = self.processor.process_file_to_flows(file)
         return max([f.times[-1] for f in flows])
 
     @staticmethod
-    def get_file_label(file: Path):
-        gb = 1e9
-        if (file.stat().st_size / gb) > 1:
-            print(f"{file.stat().st_size / gb:.2f}GB is too large {file}")
-            return None
-
-        name = file.stem.lower()
-        for key in d.keys():
-            if key in name:
-                return d[key]
-
-        print(f"don't know how to classify {file}")
-        return None
-
-    @staticmethod
     def _label_flows(flows, label):
+        """
+        attaches labels to the flows
+        """
         apps = label if (isinstance(label, list) or isinstance(label, tuple)) else [label] * len(flows)
         if len(apps) != len(flows):
             raise Exception("number of labels isn't equal to the number of flows")
 
         return [Flow.change_app(f, app) for f, app in zip(flows, apps)]
-
-
-if __name__ == '__main__':
-    files = get_dir_pcaps(Path('../../PCAPS'))
-    a = PcapAggregator()
-    files, labels = zip(*[(file, a.get_file_label(file)) for file in files if a.get_file_label(file) is not None])
-    ns = [1] * len(files)
-    out = Path('out.csv')
-    a.aggregate(out, files, ns, labels)
