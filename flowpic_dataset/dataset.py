@@ -46,8 +46,9 @@ class BlocksDataSet(Dataset):
 
     @classmethod
     def from_flows_file(cls, csv_file_path, global_label=0):
-        p = QuickFlowFileProcessor()
-        blocks = p.transform_file_to_blocks(csv_file_path)
+        p = BasicProcessor()
+        flows = p.process_file_to_flows(csv_file_path)
+        blocks = p.split_multiple_flows_to_blocks(flows)
         return cls.from_blocks(blocks, global_label)
 
     @classmethod

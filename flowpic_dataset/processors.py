@@ -15,7 +15,13 @@ class BasicProcessor:
     provides the basic processing functions of flows
     """
 
-    def process_file_to_flows(self, input_file_path: Path):
+    def process_file_to_flows(self, input_file_path: Path) -> Sequence[Flow]:
+        """
+        extracts flows from a csv file
+        :param input_file_path: relative path to a csv file where every row is of a flow format
+        :return: sequence of Flow
+        """
+
         file_extension = input_file_path.suffix
         if file_extension != '.csv':
             return []
@@ -25,13 +31,12 @@ class BasicProcessor:
             return [Flow.create_from_row(row) for row in data]
 
     def split_multiple_flows_to_blocks(self, flows: Sequence[Flow]) -> Sequence[Block]:
-        blocks = []
-        for f in flows:
-            blocks += self.split_flow_to_blocks(f)
-
-        return blocks
+        return list(itertools.chain.from_iterable([self.split_flow_to_blocks(f) for f in flows]))
 
     def split_flow_to_blocks(self, flow: Flow) -> Sequence[Block]:
+        """
+        splits a flow to a list of blocks(see README for block definition)
+        """
         times = flow.times
         sizes = flow.sizes
         num_blocks = max(int(times[-1] / BLOCK_DELTA - BLOCK_DURATION / BLOCK_DELTA) + 1, 1)
@@ -60,6 +65,9 @@ class BasicProcessor:
 
     @staticmethod
     def split(flows: Sequence[Flow], group_percents: Sequence[float]) -> Sequence[Sequence[Flow]]:
+        """
+        randomly divides the flows to groups, where the group i is of size len(flows) * group_percents[i]
+        """
         if sum(group_percents) != 1.0:
             raise Exception('sum of percents of group must be equal to 1')
 
@@ -78,6 +86,11 @@ class BasicProcessor:
         return groups
 
     def sample_group_blocks(self, groups: Sequence[Sequence[Block]], target_amount: int):
+        """
+        reduces the total amount of blocks of the groups to be equal to target_amount
+        by gradually reducing the size of the large groups to mitigate imbalance.
+        """
+
         current_amount = sum(map(lambda g: len(g), groups))
         excess = current_amount - target_amount
         if excess <= 0:
@@ -98,6 +111,10 @@ class BasicProcessor:
 
     @staticmethod
     def sample_blocks(blocks: Sequence[Block], target_amount: int):
+        """
+        reduces the amount of blocks to be equal to target_amount
+        """
+
         current_amount = len(blocks)
         if current_amount > target_amount:
             indices = random.sample(range(current_amount), target_amount)
@@ -108,6 +125,11 @@ class BasicProcessor:
 
     @staticmethod
     def _write_blocks(blocks: Sequence[Block], file: Path, tag: str = None):
+        """
+        writes the blocks to the file in csv format.
+        tag is for adding additional information to the print
+        """
+
         tag = '' if tag is None else tag
         print(f'{tag} saving {len(blocks)}')
         blocks = [b.convert_to_row() for b in blocks]
@@ -117,6 +139,10 @@ class BasicProcessor:
 
 
 class DirectoriesProcessor(BasicProcessor, ABC):
+    """
+    base class for processing files in a directory's tree
+    assumes that the files are at the leaf level
+    """
     def process_dataset(self, dataset_dir: str):
         self._process_dirs(Path(dataset_dir))
         print('finished processing')
@@ -137,8 +163,7 @@ class DirectoriesProcessor(BasicProcessor, ABC):
 
 class HoldOutPreProcessor(DirectoriesProcessor):
     """
-    statically splits dataset of flows to Train and Test sets before splitting each flow to blocks
-    and in addition there is an overlap between consecutive blocks depending on the value of [block_delta_in_seconds]
+    splits dataset of flows to Train and Test sets before splitting each flow to blocks.
     """
 
     def __init__(self, out_root_dir,
@@ -146,6 +171,13 @@ class HoldOutPreProcessor(DirectoriesProcessor):
                  train_size_cap: int,
                  test_size_cap: int,
                  ):
+        """
+
+        :param out_root_dir: the root dir of the processed dataset
+        :param test_percent: percent of flows (not blocks) to be saved as test
+        :param train_size_cap: cap of how many blocks each category in train will have
+        :param test_size_cap: cap of how many blocks each category in train will have
+        """
         super().__init__()
         self.out_root_dir = Path(out_root_dir)
         self.train_path = out_root_dir / Path('train')
@@ -155,6 +187,13 @@ class HoldOutPreProcessor(DirectoriesProcessor):
         self.test_size_cap = test_size_cap
 
     def _process_dir_files(self, input_dir_path: Path):
+        """
+        gathers the flows from all the csv files in the directory.
+        splits them to train and test.
+        splits the flows in train and test to blocks.
+        samples blocks from train and test to mitigate imbalance in the dataset.
+        writes the sampled blocks to a csv files.
+        """
         out_file = 'data.csv'
         test_file_path = create_output_dir(self.test_path, input_dir_path) / out_file
         train_file_path = create_output_dir(self.train_path, input_dir_path) / out_file
@@ -175,6 +214,10 @@ class HoldOutPreProcessor(DirectoriesProcessor):
 
 
 class CrossValidationPreProcessor(DirectoriesProcessor):
+    """
+    splits dataset flows to train and test, where train is further divided to groups(or folds in cross validation terms)
+    which can be used for hyper-parameter tuning with cross validation.
+    """
 
     def __init__(self,
                  out_root_dir,
@@ -188,10 +231,7 @@ class CrossValidationPreProcessor(DirectoriesProcessor):
         :param test_percent: percent of flows (not blocks) to be saved as test
         :param train_size_cap: cap of how many blocks each category in train will have
         :param test_size_cap: cap of how many blocks each category in train will have
-        :param k: num of folds
-        :param block_duration_in_seconds: the duration of a block
-        :param block_delta_in_seconds: the time difference between the start of 2 consecutive blocks
-        :param packet_size_limit: packets with larger size then this parameter will be discarded
+        :param k: num of groups(aka folds)
         """
         super().__init__()
         self.out_root_dir = Path(out_root_dir)
@@ -204,6 +244,15 @@ class CrossValidationPreProcessor(DirectoriesProcessor):
         self.k = k
 
     def _process_dir_files(self, input_dir_path: Path):
+        """
+        gathers the flows from all the csv files in the directory.
+        splits them to train and test.
+        splits the flows in train to groups of equal size.
+        splits the flows in train and test to blocks.
+        samples blocks from train and test to mitigate imbalance in the dataset.
+        writes the sampled blocks to csv files.
+        """
+
         out_file = 'data.csv'
         group_out_file_paths = self.create_out_file_paths(self.groups, input_dir_path, out_file)
         test_file_path = create_output_dir(self.test_path, input_dir_path) / out_file
@@ -230,19 +279,8 @@ class CrossValidationPreProcessor(DirectoriesProcessor):
 
     @staticmethod
     def create_out_file_paths(out_root_dirs: Sequence[Path], input_dir_path: Path, file_name: str):
+        """
+        returns a list of file paths
+        """
         dir_paths = create_multiple_output_dirs(out_root_dirs, input_dir_path)
         return [p / file_name for p in dir_paths]
-
-
-class QuickFlowFileProcessor:
-    """
-    splits file flows to raw blocks but doesn't write them out to a file,
-    instead it returns them.
-    """
-
-    def __init__(self):
-        self.p: BasicProcessor = BasicProcessor()
-
-    def transform_file_to_blocks(self, file: Path) -> Sequence[Block]:
-        flows = self.p.process_file_to_flows(file)
-        return self.p.split_multiple_flows_to_blocks(flows)
