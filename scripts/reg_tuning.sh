@@ -5,13 +5,13 @@ log_path=$out_dir/out.log
 
 mkdir -p $out_dir
 
-python experiments/hyper_tuning.py \
---data-dir data_cv_reg \
+python expiraments/hyper_tuning.py \
+--data-dir data_cv_nz_reg \
 --out-dir $out_dir \
 --bs-train 128 \
 --bs-test 256 \
 --epochs 40 \
---print_every 40 \
+--print-every 40 \
 --save-checkpoint 0 \
 --load-checkpoint 0 \
 --checkpoint-every 10 \
