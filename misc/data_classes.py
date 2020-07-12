@@ -65,7 +65,8 @@ class Flow(NamedTuple):
 class Block(NamedTuple):
     start_time: float
     num_packets: int
-    data: List[Tuple[float, int]]
+    times: np.array
+    sizes: np.array
 
     @classmethod
     def create_from_row(cls, row: List[str]):
@@ -76,15 +77,15 @@ class Block(NamedTuple):
         sizes = row[(num_packets + off_set):]
 
         # casting from string
-        times = np.array(times, dtype=np.float)
-        sizes = np.array(sizes, dtype=np.int)
+        times = np.array(times, dtype=float)
+        sizes = np.array(sizes, dtype=int)
 
-        return Block(start_time, num_packets, list(zip(times, sizes)))
+        return Block(start_time, num_packets, times, sizes)
 
     @classmethod
     def create_from_stream(cls, start_time: float, data: List[Tuple[float, int]]):
         """
-        This method meant to be used on data from a raw stream and not from Flow (where it has already been processed).
+        This method meant to be used on data from a stream and not from Flow (where it has already been processed).
         Mainly used in live_capture.
 
         :param start_time: the start time of the block
@@ -104,14 +105,13 @@ class Block(NamedTuple):
         num_packets = len(times)
         times -= start_time
 
-        return Block(start_time, num_packets, list(zip(times.tolist(), sizes.tolist())))
+        return Block(start_time, num_packets, times, sizes)
 
     def convert_to_row(self):
         """
         :return: returns the block as a list in a format for saving it in a csv file
         """
-        times, sizes = zip(*self.data)
-        row = [self.start_time, self.num_packets] + list(times) + list(sizes)
+        row = [self.start_time, self.num_packets] + self.times.tolist() + self.sizes.tolist()
         return row
 
 

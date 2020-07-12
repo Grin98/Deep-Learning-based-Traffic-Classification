@@ -58,7 +58,7 @@ class BasicProcessor:
             block_start_time = b * BLOCK_DELTA
             block_times = block_times - block_start_time
 
-            block = Block(block_start_time, num_packets, list(zip(list(block_times), list(block_sizes))))
+            block = Block(block_start_time, num_packets, block_times, block_sizes)
             blocks.append(block)
 
         return blocks

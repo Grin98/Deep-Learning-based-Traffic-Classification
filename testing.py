@@ -52,12 +52,15 @@ class C:
 
 if __name__ == '__main__':
 
+    a = [[(1, 1), (2, 2)], [(3, 3), (4, 4)]]
+    b = [[(5, 5), (6, 6)], [(7, 7), (8, 8)]]
+    z = list(zip(a, b))
+    print(z)
     # file = Path('my_file')
     # with file.open(newline='') as f_in:
     #     data = csv.reader(f_in, delimiter=',')
     #     print([1 for line in data])
 
-    print(max([1, 2, 3]))
     exit()
     # a = Path('pcaps/aim_chat_3a.pcap')
     # b = Path('pcaps/aim_chat_3b.pcap')

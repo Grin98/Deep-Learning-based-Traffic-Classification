@@ -7,8 +7,8 @@
 ### Terminology
 
 * Sample - a 2-tuple of (`packet_arrival_time`, `packet_size`); where `packet_arrival_time` is the inter-arrival time of the packet and `packet_size` excludes app/transport/IP headers
-* Flow - all the packets in a specific 5-tuple connection (class: `Flow`). Here, a connection is composed of the classic 4-tuple (ip_src, port_src, ip_dst, port_dst) as well as the transport protocol (mostly TCP/UDP)
-* Stream - a contiguous subset of samples in a flow
+* Flow - all the packets in a specific 5-tuple connection (class: `Flow`). Here, a connection is composed of the classic 4-tuple (ip_src, port_src, ip_dst, port_dst) as well as the transport protocol
+* Stream - an unfiltered contiguous sequence of samples of a flow
 * Block - all the packets of a specific 5-tuple during a specific time interval (class: `Block`)
 * FlowPic - a 2D histogram that is constructed from a specific block. X-axis is time, Y-axis is packet size
     * by default the dimensions are 1500x1500 (60 seconds time normalized to 1500; packet size: MTU is 1500 bytes)

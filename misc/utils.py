@@ -230,20 +230,6 @@ def write_flows(writable, flows: Sequence[Flow]):
         writable.writerows(rows)
 
 
-def get_block_sizes_array(classified_block: ClassifiedBlock):
-    """
-    returns the sizes of the packets in the block
-    """
-    return np.array(classified_block.block.data)[:, 1]
-
-
-def get_block_times_array(classified_block: ClassifiedBlock):
-    """
-    returns the times of the packets in the block
-    """
-    return np.array(classified_block.block.data)[:, 0]
-
-
 def chain_list_of_tuples(l):
     return list(itertools.chain.from_iterable(l))
 
