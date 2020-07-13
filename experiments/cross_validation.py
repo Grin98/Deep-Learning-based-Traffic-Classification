@@ -43,7 +43,7 @@ class CrossValidation(Experiment):
 
         loader = FlowCSVDataLoader(self.log)
         for i in range(start_i, k):
-            ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, test_group_index=i)
+            ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, validation_group_index=i)
             dl_train = DataLoader(ds_train, bs_train, shuffle=True)
             dl_test = DataLoader(ds_test, bs_test, shuffle=True)
 

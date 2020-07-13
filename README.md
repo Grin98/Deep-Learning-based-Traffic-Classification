@@ -48,7 +48,7 @@ Additionally, you can see your running jobs and their ids with the `squeue` comm
 a current running job of yours, you can do it with `scancel <job-id>` or execute the script called "cancel"
 which will find and cancel all your jobs. Another option to cancel is if you execute "run" with source i.e
 `source run 2 1 my_script.sh output.out` you then can use `scancel $id`  
-Important: "cancel" script searches for a hard coded user name so change it to your user name.
+Important: "cancel" script searches for a hard coded user name so change it in the script to your user name.
 
 ### Tips
 * MobaXterm is a very convenient program for connecting to the servers.
