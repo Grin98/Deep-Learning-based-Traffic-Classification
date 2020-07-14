@@ -47,28 +47,24 @@ class PcapParser:
                          'not ntp ' \
                          'and not stun'
 
-        pcap_metadata = self.get_pcap_metadata(file)
-        packet_count = pcap_metadata[CAPINFOS_PACKET_COUNT]
-
-        print('avg bit rate: ', pcap_metadata[CAPINFOS_BIT_RATE])
-        print('avg packet size: ', pcap_metadata[CAPINFOS_AVG_PACKET_SIZE])
-
+        packet_count = self.get_pcap_metadata(file)[CAPINFOS_PACKET_COUNT]
         capture = pyshark.FileCapture(str(file),
                                       custom_parameters={"-C": PROFILE},
                                       display_filter=display_filter,
                                       only_summaries=True)
+
         try:
             for i, packet in enumerate(capture):
                 if i % LOADING_BAR_UPDATE_INTERVAL == 0:
                     self.progress.set_counter(i, packet_count)
 
-                packet_meta = (float(packet._fields['Time']),  int(packet._fields['Length']))
+                packet_meta = (float(packet.time),  int(packet.length))
                 five_tuple = (
-                    packet._fields['Source'],
-                    packet._fields['SrcPort'],
-                    packet._fields['Destination'],
-                    packet._fields['DstPort'],
-                    packet._fields['Protocol']
+                    packet.source,
+                    packet.srcport,
+                    packet.destination,
+                    packet.dstport,
+                    packet.protocol
                 )
 
                 if five_tuple in packet_streams:
@@ -80,11 +76,12 @@ class PcapParser:
             print(error, "\nNote: the pcap file might be corrupted, so the classifier will work with what it could get")
 
         if n is None:
-            max_five_tuples = list(packet_streams.keys())
-        else:
-            max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
-        return [self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple])
-                for five_tuple in max_five_tuples]
+            n = len(list(packet_streams.keys()))
+
+        max_five_tuples = nlargest(n, packet_streams, key=lambda key: len(packet_streams.get(key)))
+        return [flow for flow in
+                (self._transform_stream_to_flow(five_tuple, packet_streams[five_tuple]) for five_tuple in max_five_tuples)
+                if flow is not None]
 
     @staticmethod
     def get_pcap_metadata(filepath):
@@ -120,7 +117,9 @@ class PcapParser:
     @staticmethod
     def _transform_stream_to_flow(five_tuple: Tuple, stream: Sequence[Tuple[float, int]]):
         times, sizes = zip(*stream)
-        return Flow.create('app', five_tuple, times[0], times, sizes, normalize=True)
+        flow = Flow.create('app', five_tuple, times[0], times, sizes, normalize=True)
+        flow = None if flow.num_packets == 0 else flow
+        return flow
 
     @staticmethod
     def _is_undesired_packet(packet: Packet) -> bool:

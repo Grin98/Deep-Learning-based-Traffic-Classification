@@ -14,7 +14,11 @@ class Flow(NamedTuple):
     sizes: np.ndarray
 
     @classmethod
-    def create_from_row(cls, row: List[str]):
+    def create_from_row(cls, row: List[str]) -> Flow:
+        """
+        :param row: a row in the format of a Flow from a csv file
+        :return: Flow
+        """
         app = row[0]
         five_tuple = row[1:6]
         start_time = float(row[6])
@@ -32,6 +36,12 @@ class Flow(NamedTuple):
                sizes: Sequence,
                normalize: bool = False
                ):
+        """
+        samples with too large of a size, normalizes times to start from 0 if parameter normalize is True
+        and returns a Flow.
+        Important: don't use on data from an already existing Flow, it will reduce the size of all samples
+        by an additional 1 and corrupt the flow.
+        """
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
 
@@ -55,16 +65,32 @@ class Flow(NamedTuple):
 
     @staticmethod
     def change_app(flow, app: str) -> Flow:
-        return Flow.create(app, flow.five_tuple, flow.start_time, flow.times, flow.sizes)
+        """
+        returns a new Flows which is identical to the given flow except for app
+        """
+        return Flow(app, flow.five_tuple, flow.start_time, len(flow.times), flow.times, flow.sizes)
+
+    @staticmethod
+    def change_start_time(flow, start_time: float) -> Flow:
+        """
+        returns a new Flows which is identical to the given flow except for start_time
+        """
+        return Flow(flow.app, flow.five_tuple, start_time, len(flow.times), flow.times, flow.sizes)
 
 
 class Block(NamedTuple):
     start_time: float
     num_packets: int
-    data: List[Tuple[float, int]]
+    times: np.array
+    sizes: np.array
 
     @classmethod
     def create_from_row(cls, row: List[str]):
+        """
+        :param row: a row in the format of a Block from a csv file
+        :return: Block
+        """
+
         start_time = float(row[0])
         num_packets = int(row[1])
         off_set = 2  # meta data occupies first indices
@@ -72,15 +98,15 @@ class Block(NamedTuple):
         sizes = row[(num_packets + off_set):]
 
         # casting from string
-        times = np.array(times, dtype=np.float)
-        sizes = np.array(sizes, dtype=np.int)
+        times = np.array(times, dtype=float)
+        sizes = np.array(sizes, dtype=int)
 
-        return Block(start_time, num_packets, list(zip(times, sizes)))
+        return Block(start_time, num_packets, times, sizes)
 
     @classmethod
     def create_from_stream(cls, start_time: float, data: List[Tuple[float, int]]):
         """
-        This method meant to be used on data from a raw stream and not from Flow (where it has already been processed).
+        This method meant to be used on data from a stream and not from Flow (where it has already been processed).
         Mainly used in live_capture.
 
         :param start_time: the start time of the block
@@ -90,6 +116,7 @@ class Block(NamedTuple):
                 be subtracted from all the time values of the packets in data
         :return: a new Block object
         """
+
         times, sizes = zip(*data)
         times = np.array(times, dtype=float)
         sizes = np.array(sizes, dtype=int)
@@ -100,14 +127,13 @@ class Block(NamedTuple):
         num_packets = len(times)
         times -= start_time
 
-        return Block(start_time, num_packets, list(zip(times.tolist(), sizes.tolist())))
+        return Block(start_time, num_packets, times, sizes)
 
     def convert_to_row(self):
         """
         :return: returns the block as a list in a format for saving it in a csv file
         """
-        times, sizes = zip(*self.data)
-        row = [self.start_time, self.num_packets] + list(times) + list(sizes)
+        row = [self.start_time, self.num_packets] + self.times.tolist() + self.sizes.tolist()
         return row
 
 
@@ -120,7 +146,7 @@ class ClassifiedFlow(NamedTuple):
 class ClassifiedBlock(NamedTuple):
     block: Block
     pred: int
-    probabilities: Sequence[float]
+    probabilities: Sequence[float]  # probabilities of how much the classifier was confident for each category
 
 
 class BatchResult(NamedTuple):

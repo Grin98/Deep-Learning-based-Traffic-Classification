@@ -85,10 +85,13 @@ class PcapAnalyzer:
         self.extract_flows_map()
         pcap_meta = self.get_pcap_metadata(self.pcap_file)
 
-        self.flows = {flow: self.flows[flow] for flow in self.flows if
-                      self.flows[flow].total_packet_amount > MINIMUM_FLOW_PACKETS}
+        self.flows = {flow: self.flows[flow] for flow in self.flows
+                      if self.flows[flow].total_packet_amount > MINIMUM_FLOW_PACKETS}
+
         self.flows = OrderedDict(
-            sorted(self.flows.items(), key=lambda entry: entry[1].total_packet_amount, reverse=True))
+            sorted(self.flows.items(), key=lambda entry: entry[1].total_packet_amount, reverse=True)
+        )
+
         output = f"{pcap_meta}\n"
         for (flow, flow_metadata) in self.flows.items():
             output += f"{flow}  :  {flow_metadata.describe(pcap_meta)}\n"

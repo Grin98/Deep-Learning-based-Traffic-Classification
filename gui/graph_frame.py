@@ -191,7 +191,7 @@ class FlowPicGraphFrame(ttk.Frame):
 
         self.flows_map = {f'{index}: {str(classified_flow.flow.five_tuple)}': classified_flow for
                           index, classified_flow in
-                          enumerate(flows_data)}
+                          enumerate(sorted(flows_data, key=lambda cf: cf.flow.num_packets, reverse=True))}
         categories_by_int = list(map(lambda category: self.all_categories.index(category), self.all_categories))
         if len(csv_flows_data) > 0:
             self.f1_score_frame.calculate_f1_score(csv_flows_data, csv_flows_data, categories_by_int)

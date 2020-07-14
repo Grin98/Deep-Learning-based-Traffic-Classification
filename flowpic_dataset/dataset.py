@@ -9,7 +9,7 @@ from torch.utils.data.dataset import Dataset
 import csv
 from typing import List, Sequence, Tuple, NamedTuple, overload
 import numpy as np
-from flowpic_dataset.processors import QuickFlowFileProcessor, BasicProcessor
+from flowpic_dataset.processors import BasicProcessor
 from misc.data_classes import Flow, Block
 from misc.utils import build_pic
 
@@ -39,16 +39,14 @@ class BlocksDataSet(Dataset):
     @classmethod
     def from_blocks_file(cls, csv_file_path, global_label=0):
         with open(csv_file_path, newline='', mode='r') as f:
-            start_times, _, data = zip(*[Block.create_from_row(row) for row in csv.reader(f, delimiter=',')])
-            labels = np.array([global_label] * len(data))
-
-            return BlocksDataSet(data, labels, start_times)
+            blocks = [Block.create_from_row(row) for row in csv.reader(f, delimiter=',')]
+            return cls.from_blocks(blocks, global_label)
 
     @classmethod
     def from_flows_file(cls, csv_file_path, global_label=0):
-        p = QuickFlowFileProcessor()
-        blocks = p.transform_file_to_blocks(csv_file_path)
-        return cls.from_blocks(blocks, global_label)
+        p = BasicProcessor()
+        flows = p.process_file_to_flows(csv_file_path)
+        return cls.from_flows(flows, global_label)
 
     @classmethod
     def from_flows(cls, flows: Sequence[Flow], global_label=0):
@@ -58,14 +56,16 @@ class BlocksDataSet(Dataset):
 
     @classmethod
     def from_blocks(cls, blocks: Sequence[Block], global_label=0):
-        start_times, _, data = zip(*blocks)
+        start_times, _, times, sizes = zip(*blocks)
+        data = [list(zip(block_times, block_sizes)) for block_times, block_sizes in zip(times, sizes)]
         labels = np.array([global_label] * len(data))
-
         return BlocksDataSet(data, labels, start_times)
 
     def get_block(self, index: int) -> Block:
-        stream = self._data[index]
-        return Block(self.start_times[index], len(stream), stream)
+        times, sizes = zip(*self._data[index])
+        times = np.array(times, dtype=float)
+        sizes = np.array(sizes, dtype=int)
+        return Block(self.start_times[index], len(times), times, sizes)
 
     def get_blocks(self, indices: Sequence[int]) -> Sequence[Block]:
         return [self.get_block(i) for i in indices]

@@ -18,8 +18,19 @@ from pcap_extraction.pcap_flow_extractor import PcapParser
 
 LOADING_BAR_UPDATE_INTERVAL = 2
 
+
 class Classifier:
-    def __init__(self, model, device, seed: int = 42, progress=Progress()):
+    """
+
+    """
+    def __init__(self, model, device: str, seed: int = 42, progress=Progress()):
+        """
+
+        :param model: the model to use when classifying
+        :param device: either cpu or cuda
+        :param seed: seed for the pseudo random generators
+        :param progress: used for showing progress in the gui
+        """
         self.model = model
         self.device = device
         self.progress = progress
@@ -27,18 +38,21 @@ class Classifier:
         set_seed(seed)
 
     def classify(self, X) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        :param X: batch of FlowPics to classify
+        :return: the actual pred and the probabilities for the different categories of each block
+        """
         if self.device == 'cuda':
             X = X.to(self.device)
 
         probabilities = self.model(X)
         _, pred = torch.max(probabilities, dim=1)
-
-        # print('out', out)
-        # print('vals', values)
-        # print('pred', pred)
         return pred, probabilities
 
     def classify_multiple_flows(self, flows: Sequence[Flow]) -> Sequence[ClassifiedFlow]:
+        """
+        classifies the given flows
+        """
         self.progress.counter_title('classified flows').set_counter(0)
         num_flows = len(flows)
         res = []
@@ -49,12 +63,20 @@ class Classifier:
         return res
 
     def classify_flow(self, f: Flow) -> ClassifiedFlow:
+        """
+        classifies the flow
+        """
         ds = BlocksDataSet.from_flows([f])
         distribution, classified_blocks = self.classify_dataset(ds)
         pred = self.get_pred(distribution)
         return ClassifiedFlow(f, pred, classified_blocks)
 
     def classify_dataset(self, ds: BlocksDataSet, batch_size: int = 128):
+        """
+        classifies the blocks in a dataset and returns the number of predictions of each category
+        and the classified blocks.
+        """
+
         dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
         cnt = Counter([])
         dl_iter = iter(dl)
@@ -71,19 +93,25 @@ class Classifier:
 
     @staticmethod
     def get_pred(dist: Counter):
+        """
+        returns -1(aka unknown) if the UNKNOWN_THRESHOLD is passed otherwise returns the most common prediction
+        """
+
         common = dist.most_common(n=2)
         if len(common) == 1:
             return common[0][0]
 
         c1, c2 = common
         ratio = c2[1] / c1[1]
-        print(c1, c2, ratio)
         if ratio > UNKNOWN_THRESHOLD:
             return -1
         return c1[0]
 
 
 class PcapClassifier:
+    """
+    class for classifying pcap files
+    """
 
     def __init__(self, model,
                  device: str,
@@ -100,6 +128,12 @@ class PcapClassifier:
         self.parser = PcapParser(self.progress)
 
     def classify_file(self, file: Path, num_flows_to_classify: int) -> Sequence[ClassifiedFlow]:
+        """
+
+        :param file: the file to classify
+        :param num_flows_to_classify: how many flows in the pcap to classify (takes the flows with the most packets)
+        :return: the classified flows
+        """
         self.progress.reset()
         self.progress.progress_title(f'parsing file {str(file.name)}')
         flows = self.parser.parse_file(file, num_flows_to_classify)
@@ -114,6 +148,10 @@ class PcapClassifier:
 
 
 class FlowCsvClassifier:
+    """
+    class for classifying csv files
+    """
+
     def __init__(self, model,
                  device: str,
                  seed: int = 42,
@@ -141,40 +179,5 @@ class FlowCsvClassifier:
         classified_flows = list(itertools.chain.from_iterable([self.classify_file(f)
                                                                for f in files]))
         return classified_flows
-
-
-if __name__ == '__main__':
-    device = 'cpu'
-    file_checkpoint = '../reg_overlap_split'
-    f = Path('../parsed_flows/facebook-chat.csv')
-    p = Path('../pcaps/email1a.pcap')
-
-    model, _, _, _ = load_model(file_checkpoint, FlowPicModel, device)
-    c = Classifier(model, device)
-    # ds = BlocksDataSet.from_flows_file(f, 1)
-    # a, b = c.classify_dataset(ds)
-    # print(f'direct {a}')
-    #
-    # c = FlowCsvClassifier(model, device)
-    # print('csv', Counter([b.pred for b in c.classify_file(f)[0].classified_blocks]))
-
-    c = PcapClassifier(model, device)
-    print('pcap', Counter([b.pred for b in c.classify_file(p, 3)[0].classified_blocks]))
-
-    # ds = FlowsDataSet(file_samples, global_label=3)
-    # dl = DataLoader(ds, batch_size=128, shuffle=True)
-    #
-    # cnt = Counter([])
-    # f = 0
-    # dl_iter = iter(dl)
-    # for j in range(len(dl)):
-    #     x, y = next(dl_iter)
-    #     pred = c.classify(x)
-    #     pred = pred.cpu()
-    #     pred = pred.tolist()
-    #     cnt += Counter(pred)
-    # print('total =', len(ds))
-    # print('f1 =', f/len(dl))
-    # print(cnt)
 
 

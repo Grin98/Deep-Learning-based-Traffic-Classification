@@ -13,7 +13,7 @@ from flowpic_dataset.dataset import BlocksDataSet
 from misc.constants import BLOCK_DURATION, BLOCK_INTERVAL, BYTES_IN_KB, BYTES_IN_BITS
 from misc.data_classes import ClassifiedFlow, ClassifiedBlock
 from misc.output import Progress
-from misc.utils import load_model, chain_list_of_tuples, get_block_sizes_array, get_block_times_array
+from misc.utils import load_model, chain_list_of_tuples
 from model.flow_pic_model import FlowPicModel
 from live_classification.live_capture import LiveCaptureProvider
 
@@ -87,8 +87,8 @@ class LiveClassificationFrame(ttk.Frame):
     @staticmethod
     def _get_classified_block_mask(classified_block: ClassifiedBlock, time_interval, interval):
         mask = time_interval - (BLOCK_INTERVAL * interval)
-        return (get_block_times_array(classified_block) > mask - BLOCK_INTERVAL) & (
-                get_block_times_array(classified_block) < mask)
+        return (classified_block.block.times > mask - BLOCK_INTERVAL) & (
+                classified_block.block.times < mask)
 
     @staticmethod
     def _calculate_bandwidth(bandwidth, time_interval):
@@ -102,8 +102,8 @@ class LiveClassificationFrame(ttk.Frame):
         for window_index, time_window in enumerate(x):
             min_index = max(min(window_index - 3, len(classified_blocks) - 1), 0)
             max_index = min(window_index, len(classified_blocks) - 1)
-            times = get_block_times_array(classified_blocks[max_index])
-            sizes = get_block_sizes_array(classified_blocks[max_index])
+            times = classified_blocks[max_index].block.times
+            sizes = classified_blocks[max_index].block.sizes
             size_in_bits = np.sum(sizes[((0 <= times) & (times < BLOCK_INTERVAL))]) * BYTES_IN_BITS
             prob_sum = np.array([0.0] * len(self.classifier_categories))
             for block in classified_blocks[min_index:max_index + 1]:
@@ -147,8 +147,7 @@ class LiveClassificationFrame(ttk.Frame):
             print(f"time: {time_interval}, interval: {interval}")
             for index, blocks_list in enumerate(self.blocks_in_intervals[interval]):
                 bandwidth = np.sum(chain_list_of_tuples(
-                    [get_block_sizes_array(classified_block)[
-                         self._get_classified_block_mask(classified_block, time_interval, interval)]
+                    [classified_block.block.sizes[self._get_classified_block_mask(classified_block, time_interval, interval)]
                      for classified_block in blocks_list]))
 
                 bandwidth = self._calculate_bandwidth(bandwidth, BLOCK_INTERVAL)

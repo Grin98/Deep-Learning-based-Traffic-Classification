@@ -13,7 +13,7 @@ python experiments/cross_validation.py \
 --epochs 40 \
 --lr 0.001 \
 --save-checkpoint 1 \
---load-checkpoint 1 \
+--load-checkpoint 0 \
 --checkpoint-every 20 \
 --hidden-dims 64 \
 --filters-per-layer 10 20 \

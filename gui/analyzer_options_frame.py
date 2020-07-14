@@ -8,7 +8,7 @@ import matplotlib
 import numpy as np
 
 from misc.constants import LABEL_LIST, LARGE_FONT
-from pcap_extraction.pcap_aggregation import PcapAggregator
+from pcap_extraction.aggregation import Aggregator
 from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
@@ -66,7 +66,7 @@ class DominantFlowOnlyOption(ttk.Frame):
 
     def _on_generate_click(self):
         out_file = Path(filedialog.asksaveasfilename(initialfile=f'{self.master.file.stem}_{self.selected_label}.csv'))
-        PcapAggregator().write_pcap_flows(out_file, self.master.file, 1, self.selected_label)
+        Aggregator().write_pcap_flows(out_file, self.master.file, 1, self.selected_label)
         messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
 
     def _on_label_select(self, event):

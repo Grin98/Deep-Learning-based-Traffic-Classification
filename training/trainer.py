@@ -49,34 +49,28 @@ class Trainer(abc.ABC):
     def fit(self, dl_train, dl_test: DataLoader,
             num_epochs, model_checkpoint: str,
             checkpoint_every: int,
-            save_checkpoint: bool,
-            load_checkpoint: bool,
             early_stopping: int,
             print_every: int) -> FitResult:
         """
         Trains the model for multiple epochs with a given training set,
         and calculates validation loss over a given validation set.
-        :param save_checkpoint: Whether to save a checkpoint or not
-        :param load_checkpoint: Whether to load a saved checkpoint or not
-        :param checkpoint_every: Number of epochs for every checkpoint save
+
         :param dl_train: Dataloader for the training set.
         :param dl_test: Dataloader for the test set.
         :param num_epochs: Number of epochs to train for.
-        :param model_checkpoint: Whether to save model to file every time the
-            test set accuracy improves. Should be a string containing a
-            filename without extension.
+        :param model_checkpoint: Should be a string containing a
+            filename without extension where the model would be saved too.
+        :param checkpoint_every: Number of epochs between every save
         :param early_stopping: Whether to stop training early if there is no
             test loss improvement for this number of epochs.
         :param print_every: Print progress every this number of epochs.
         :return: A FitResult object containing train and test losses per epoch.
         """
-        train_loss, train_acc, train_f1, test_loss, test_acc, test_f1 = [], [], [], [], [], []
 
         best_acc = None
         epochs_without_improvement = 0
         start_epoch = 1
-        if is_file(model_checkpoint) and load_checkpoint:
-            self.model, best_acc, start_epoch, epochs_without_improvement = load_model(model_checkpoint, type(self.model), self.device)
+        train_loss, train_acc, train_f1, test_loss, test_acc, test_f1 = [], [], [], [], [], []
 
         for epoch in range(start_epoch, num_epochs + 1):
             verbose = False  # pass this to train/test_epoch.
@@ -96,7 +90,7 @@ class Trainer(abc.ABC):
 
             epochs_without_improvement = epochs_without_improvement + 1
 
-            if model_checkpoint is not None and save_checkpoint and epoch % checkpoint_every == 0:
+            if model_checkpoint is not None and epoch % checkpoint_every == 0:
                 save_model(model_checkpoint, self.model, epoch, best_acc, epochs_without_improvement)
 
             if best_acc is None or acc > best_acc:
@@ -181,11 +175,7 @@ class Trainer(abc.ABC):
                        file=pbar_file) as pbar:
             dl_iter = iter(data_loader)
             for batch_idx in range(num_batches):
-                # s = time()
                 batch = next(dl_iter)
-                # f = time()
-                # print('batch fetch time', f - s)
-                # s = time()
                 batch_res = forward_fn(batch)
 
                 pbar.set_description(f'{pbar_name} ({batch_res.loss:.3f})')
@@ -199,17 +189,13 @@ class Trainer(abc.ABC):
                     f1_per_class = batch_res.f1_per_class
                 else:
                     f1_per_class = list(map(add, f1_per_class, batch_res.f1_per_class))
-                # f = time()
-                # print('batch process time', f - s)
 
             avg_loss = sum(losses) / num_batches
             accuracy = 100. * num_correct / num_total
             avg_f1 = sum(f1_scores) / len(f1_scores)
-            avg_f1_per_class = [round(f / num_batches, ndigits=2) for f in f1_per_class]
             pbar.set_description(f'{pbar_name} '
                                  f'(Loss {avg_loss:.3f}, '
                                  f'Accuracy {accuracy:.1f}, '
                                  f'F1 {avg_f1:.3f}), ')
-                                 # f'F1 Classes {avg_f1_per_class}')
 
         return EpochResult(losses=losses, accuracy=accuracy, f1=avg_f1)
