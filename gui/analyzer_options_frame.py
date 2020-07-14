@@ -1,11 +1,11 @@
 import itertools
-import numpy as np
-import subprocess as sp
 import threading
 from pathlib import Path
-from tkinter import ttk, filedialog, messagebox
 from tkinter import *
+from tkinter import ttk, filedialog, messagebox
+
 import matplotlib
+import numpy as np
 
 from misc.constants import LABEL_LIST, LARGE_FONT
 from pcap_extraction.pcap_aggregation import PcapAggregator

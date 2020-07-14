@@ -1,10 +1,7 @@
-from datetime import datetime
 import threading
 import time
-import tkinter
-from string import Template
+from datetime import datetime
 from tkinter import filedialog, messagebox
-from timeit import Timer
 
 from gui.analyzer_options_frame import AnalyzerOptions
 from gui.graph_frame import *
@@ -13,7 +10,6 @@ from gui.live_classification_frame import LiveClassificationFrame
 from misc.output import Progress
 from misc.utils import strfdelta
 from pcap_extraction.pcap_aggregation import PcapAggregator
-from pcap_extraction.pcap_analyzer import PcapAnalyzer
 
 matplotlib.use("TkAgg")
 
@@ -230,9 +226,10 @@ class AnalyzerPage(ttk.Frame):
             return
 
         dir_ = files[0].parent
-        out_file = dir_/f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
+        out_file = dir_ / f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
         PcapAggregator().merge_csvs(out_file, files)
         messagebox.showinfo(title=f'{out_file.name}', message='created successfully')
+
 
 class StartPage(ttk.Frame):
 
@@ -252,6 +249,11 @@ class StartPage(ttk.Frame):
         analyzer_button = ttk.Button(self, text="Label Captured Traffic",
                                      command=lambda: controller.show_frame(AnalyzerPage), width=50)
         analyzer_button.pack(pady=5, padx=5)
+
+
+def main():
+    app = GuiController()
+    app.mainloop()
 
 
 if __name__ == '__main__':
