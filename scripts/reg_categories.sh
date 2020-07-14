@@ -15,9 +15,7 @@ python experiments/split_experiment.py \
 --print-every 5 \
 --lr 0.001 \
 --reg 0.0001 \
---save-checkpoint 1 \
---load-checkpoint 0 \
---checkpoint-every 50 \
+--checkpoint-every 25 \
 --hidden-dims 64 \
 --filters-per-layer 10 20 \
 --layers-per-block 1 \

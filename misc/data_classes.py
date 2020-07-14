@@ -37,8 +37,9 @@ class Flow(NamedTuple):
                normalize: bool = False
                ):
         """
-        normalizes times to start from 0 if parameter normalize is True and returns a Flow.
-        Important: don't use on data from an already existing Flow, it will reduce the size of all packets
+        samples with too large of a size, normalizes times to start from 0 if parameter normalize is True
+        and returns a Flow.
+        Important: don't use on data from an already existing Flow, it will reduce the size of all samples
         by an additional 1 and corrupt the flow.
         """
         times = np.array(times, dtype=float)
