@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 result_queue = queue.Queue()
 
 
-
 class FlowPicGraphFrame(ttk.Frame):
 
     def __init__(self, parent, progress: Progress):
@@ -40,7 +39,9 @@ class FlowPicGraphFrame(ttk.Frame):
         self.max_time = 0
         self.min_time = 0
         self.flows_map = {}
-
+        self.logarithmic_scale = IntVar()
+        self.logarithmic_scale_button = ttk.Checkbutton(self, text="Logarithmic scale", variable=self.logarithmic_scale,
+                                                        onvalue=1, offvalue=0, command=self._on_scale_change)
         self.f1_score_frame = StatisticsFrame(self, self.all_categories)
         self.figure = plt.figure(figsize=(7, 7), dpi=80)
         self.figure_per_flow = plt.figure(figsize=(7, 7), dpi=80)
@@ -167,6 +168,14 @@ class FlowPicGraphFrame(ttk.Frame):
 
         return self.classifier_categories, x, bandwidth_per_category
 
+    def _on_scale_change(self):
+        for axis in self.figure.get_axes():
+            if self.logarithmic_scale.get() == 1:
+                axis.set_yscale('log')
+            else:
+                axis.set_yscale('linear')
+        self.graph.draw()
+
     def classify_pcap_file(self, files_list: List[Path]):
         self.title = str(list(map(lambda file: file.name, files_list)))
         files_list.sort(key=lambda file: file.suffix[1])
@@ -204,6 +213,8 @@ class FlowPicGraphFrame(ttk.Frame):
         self._on_return_click()
         self.figure.clear()
         self.graph.draw()
+        self.logarithmic_scale_button.grid_forget()
+        self.logarithmic_scale.set(0)
         self.f1_score_frame.grid_forget()
         self.f1_score_frame.clear_frame()
         self.flow_selection_label.grid_forget()
@@ -211,8 +222,8 @@ class FlowPicGraphFrame(ttk.Frame):
 
     def draw_graphs(self):
         self.figure.subplots_adjust(hspace=0.5)
-        self.figure.tight_layout()
         self.graph.draw()
+        self.logarithmic_scale_button.grid(column=4, row=0, sticky=W + E + N + S)
         self.f1_score_frame.grid(column=4, row=1, columnspan=3)
         self.flow_selection_label.grid(column=1, row=2, sticky=W + E + N + S)
         self.flow_selection.grid(column=1, row=3, sticky=W + E + N + S)
