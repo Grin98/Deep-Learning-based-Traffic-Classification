@@ -57,11 +57,7 @@ class CrossValidation(Experiment):
 
             trainer = FlowPicTrainer(model, loss_fn, optimizer, self.log, self.device, parallel)
             res = trainer.fit(dl_train, dl_test, epochs, model_checkpoint,
-                              checkpoint_every=checkpoint_every,
-                              save_checkpoint=save_checkpoint,
-                              load_checkpoint=load_checkpoint,
-                              early_stopping=early_stopping,
-                              print_every=print_every)
+                              checkpoint_every, early_stopping, print_every)
 
             if res.num_epochs > 0:
                 f1 += res.test_f1[-1]
