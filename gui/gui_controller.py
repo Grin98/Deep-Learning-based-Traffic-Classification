@@ -231,8 +231,7 @@ class AnalyzerPage(ttk.Frame):
 
         dir_ = files[0].parent
         out_file = dir_/f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
-        # TODO pass a boolean variable as random_start depending on gui checkbox
-        Aggregator().merge_csvs(out_file, files, random_start=True)
+        Aggregator().merge_csvs(out_file, files, random_start=False)
         messagebox.showinfo(title=f'{out_file.name}', message=f'created successfully at:\n{out_file}')
 
 

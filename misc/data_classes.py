@@ -55,11 +55,11 @@ class Flow(NamedTuple):
 
     @staticmethod
     def change_app(flow, app: str) -> Flow:
-        return Flow.create(app, flow.five_tuple, flow.start_time, flow.times, flow.sizes)
+        return Flow(app, flow.five_tuple, flow.start_time, len(flow.times), flow.times, flow.sizes)
 
     @staticmethod
     def change_start_time(flow, start_time: float) -> Flow:
-        return Flow.create(flow.app, flow.five_tuple, start_time, flow.times, flow.sizes)
+        return Flow(flow.app, flow.five_tuple, start_time, len(flow.times), flow.times, flow.sizes)
 
 
 class Block(NamedTuple):

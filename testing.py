@@ -11,7 +11,7 @@ from pyshark.packet.packet import Packet
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 
-from classification.clasifiers import Classifier
+from classification.clasifiers import Classifier, FlowCsvClassifier
 from experiments.cross_validation import CrossValidation
 from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
@@ -52,14 +52,24 @@ class C:
 
 if __name__ == '__main__':
 
-    a = [[(1, 1), (2, 2)], [(3, 3), (4, 4)]]
-    b = [[(5, 5), (6, 6)], [(7, 7), (8, 8)]]
-    z = list(zip(a, b))
-    print(z)
-    # file = Path('my_file')
-    # with file.open(newline='') as f_in:
-    #     data = csv.reader(f_in, delimiter=',')
-    #     print([1 for line in data])
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model_checkpoint = 'model'
+    model, _, _, _ = load_model(model_checkpoint, FlowPicModel, device)
+    c = FlowCsvClassifier(model, device)
+
+    flows = c.classify_file(Path('./csvs/total/rand_chat.csv'))
+    # flow = flows[12].flow
+    # print(flow)
+    preds = list(map(lambda f: f.pred, flows))
+    cnt = Counter(preds)
+    print('rand', cnt, preds)
+
+    flows = c.classify_file(Path('./csvs/total/def_chat.csv'))
+    # flow = flows[12].flow
+    # print(flow)
+    preds = list(map(lambda f: f.pred, flows))
+    cnt = Counter(preds)
+    print('def', cnt, preds)
 
     exit()
     # a = Path('pcaps/aim_chat_3a.pcap')
