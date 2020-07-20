@@ -35,7 +35,7 @@ class Experiment(abc.ABC):
             # Training params
             data_dir=None, out_dir=None,
             bs_train=128, bs_test=None, epochs=100, print_every=5,
-            early_stopping=3, save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0,
+            early_stopping=3, checkpoint_every=40, lr=1e-3, reg=0,
             # Model params
             filters_per_layer=None, layers_per_block=2, pool_every=2,
             drop_every=2, hidden_dims=None,
@@ -72,12 +72,6 @@ class Experiment(abc.ABC):
         p.add_argument('--early-stopping', type=int,
                        help='Stop after this many epochs without '
                             'improvement', default=None)
-        p.add_argument('--save-checkpoint', type=int,
-                       help='Save model checkpoints to this file when test '
-                            'accuracy improves', default=0)
-        p.add_argument('--load-checkpoint', type=int, default=0,
-                       help='whether to start training using '
-                            'the file provided in --checkpoints as starting point')
         p.add_argument('--checkpoint-every', type=int, default=40,
                        help='once in how many epochs to save the model')
         p.add_argument('--lr', type=float,

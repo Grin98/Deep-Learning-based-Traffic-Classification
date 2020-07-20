@@ -26,15 +26,13 @@ class SplitExperiment(Experiment):
 
     def run(self, data_dir=None, out_dir=None, data_format=0,
             bs_train=128, bs_test=None, epochs=100, early_stopping=3, print_every=5,
-            save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
+            checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
             parallel=True, **kw):
 
-        model_checkpoint = None
         out_dir = Path(out_dir)
         create_dir(out_dir)
-        if save_checkpoint or load_checkpoint:
-            model_checkpoint = str(out_dir/'model')
+        model_checkpoint = str(out_dir/'model')
 
         dataset_loader = FlowCSVDataLoader()
         self.timer.start()
@@ -55,10 +53,9 @@ class SplitExperiment(Experiment):
         self.timer.start()
         fit_res = trainer.fit(dl_train, dl_test, epochs, model_checkpoint,
                               checkpoint_every, early_stopping, print_every)
-        self.timer.lap('training')
 
-        if save_checkpoint:
-            self.save_fit_graphs(out_dir, fit_res)
+        self.timer.lap('training')
+        self.save_fit_graphs(out_dir, fit_res)
 
         return fit_res
 

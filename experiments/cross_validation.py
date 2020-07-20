@@ -28,7 +28,7 @@ class CrossValidation(Experiment):
         self.log = log
 
     def run(self, data_dir=None, out_dir=None, bs_train=128, bs_test=256, epochs=40, print_every=5, early_stopping=3,
-            save_checkpoint=False, load_checkpoint=False, checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
+            checkpoint_every=40, lr=1e-3, reg=0, filters_per_layer=None,
             layers_per_block=2, pool_every=2, drop_every=2, hidden_dims=None,
             parallel=True, k: int = None, **kw):
 
@@ -38,9 +38,6 @@ class CrossValidation(Experiment):
         cv_checkpoint = str(out_dir / 'cv')
 
         start_i, f1, acc, loss = 0, 0, 0, 0
-        if load_checkpoint and is_file(cv_checkpoint):
-            start_i, k, f1, acc, loss = self.load_cv(cv_checkpoint)
-
         loader = FlowCSVDataLoader(self.log)
         for i in range(start_i, k):
             ds_train, ds_test = loader.load_cross_validation_dataset(data_dir, validation_group_index=i)
@@ -64,9 +61,8 @@ class CrossValidation(Experiment):
                 acc += res.test_acc[-1]
                 loss += res.test_acc[-1]
 
-            if save_checkpoint:
-                self.save_cv(cv_checkpoint, i, k, f1, acc, loss)
-                self.save_fit_graphs(out_dir, res, tag=str(i))
+            self.save_cv(cv_checkpoint, i, k, f1, acc, loss)
+            self.save_fit_graphs(out_dir, res, tag=str(i))
 
         return f1 / k, acc / k, loss / k
 
