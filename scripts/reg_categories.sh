@@ -11,11 +11,11 @@ python experiments/split_experiment.py \
 --data-format 1 \
 --bs-train 128 \
 --bs-test 256 \
---epochs 50 \
+--epochs 40 \
 --print-every 5 \
 --lr 0.001 \
 --reg 0.0001 \
---checkpoint-every 25 \
+--checkpoint-every 20 \
 --hidden-dims 64 \
 --filters-per-layer 10 20 \
 --layers-per-block 1 \
