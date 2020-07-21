@@ -62,7 +62,7 @@ class FlowPicGraphFrame(ttk.Frame):
         y_values_for_fill = {label: [] for label in labels}
         for value_list in values:
             current_y = 0
-            for label, value in zip(reversed(labels), reversed(value_list)):
+            for label, value in zip(labels, value_list):
                 y_values_for_fill[label].append((current_y, current_y + value))
 
                 current_y = current_y + value
