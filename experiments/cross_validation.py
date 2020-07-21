@@ -79,17 +79,6 @@ class CrossValidation(Experiment):
         torch.save(saved_state, checkpoint_filename)
         print(f'*** Saved checkpoint to {cv_checkpoint} at fold {i + 1}/{k}')
 
-    @staticmethod
-    def load_cv(cv_checkpoint: str):
-        if not cv_checkpoint.endswith('.pt'):
-            checkpoint_filename = f'{cv_checkpoint}.pt'
-        else:
-            checkpoint_filename = cv_checkpoint
-
-        print(f'*** Loading checkpoint file {checkpoint_filename}')
-        saved_state = torch.load(checkpoint_filename)
-        return saved_state['i'], saved_state['k'], saved_state['f1'], saved_state['acc'], saved_state['loss']
-
 
 # python experiments/cross_validation.py --data-dir data_cv_reg --out-dir del --bs-train 128 --bs-test 256 --epochs 40 --lr 0.001 --save-checkpoint 0 --load-checkpoint 0 --checkpoint-every 100 --hidden-dims 64 --filters-per-layer 10 20 --layers-per-block 1 --parallel 0 --verbose 0 --k 5
 

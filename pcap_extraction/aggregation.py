@@ -77,8 +77,6 @@ class Aggregator:
                     flows = self.processor.process_file_to_flows(file)
                     new_pcap_start_time = np.random.uniform(low=0.0, high=max_end - end)
                     flows = [Flow.change_start_time(f, new_pcap_start_time + f.start_time) for f in flows]
-                    print(new_pcap_start_time)
-                    print([(f.five_tuple, f.start_time) for f in flows])
                     write_flows(writer, flows)
 
     def _get_file_end_time(self, file: Path) -> float:
