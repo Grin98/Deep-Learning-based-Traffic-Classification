@@ -14,7 +14,7 @@ from gui.statistics_frame import StatisticsFrame
 from misc.constants import TIME_INTERVAL, BLOCK_INTERVAL, BYTES_IN_KB, FLOWS_TO_CLASSIFY, PCAP_KEY, CSV_KEY, COMPLETED
 from misc.data_classes import ClassifiedFlow
 from misc.output import Progress
-from misc.utils import load_model
+from misc.utils import load_model, move_item
 from model.flow_pic_model import FlowPicModel
 
 matplotlib.use("TkAgg")
@@ -57,9 +57,18 @@ class FlowPicGraphFrame(ttk.Frame):
     @staticmethod
     def _create_graph(graph, labels, x, y_axis_by_category):
         y_axis_by_category = [y_axis_per_flow for y_axis_per_flow in y_axis_by_category if len(y_axis_per_flow) > 0]
+
+        # TODO remove hard coded indices, better to do it in a dynamic way with respect to average bandwidth of each
+        #  category such that the lower the bandwidth the earlier the calculation of the category.
+        # moves the voip category to a lower layer in the graph so that it would be seen when changing the graph
+        # to its logarithmic representation
+        labels = move_item(labels, from_index=4, to_index=2)
+        y_axis_by_category = move_item(y_axis_by_category, from_index=4, to_index=2)
+
         values = list(zip(*y_axis_by_category))
         y_values = {label: [] for label in labels}
         y_values_for_fill = {label: [] for label in labels}
+
         for value_list in values:
             current_y = 0
             for label, value in zip(labels, value_list):
@@ -67,6 +76,9 @@ class FlowPicGraphFrame(ttk.Frame):
 
                 current_y = current_y + value
                 y_values[label].append(current_y)
+
+        # revert changes to the order
+        labels = move_item(labels, from_index=2, to_index=4)
 
         for label in labels:
             graph.plot(x, y_values[label], label=label)

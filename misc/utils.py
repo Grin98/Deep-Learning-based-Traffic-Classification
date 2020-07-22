@@ -6,7 +6,7 @@ from multiprocessing import Lock
 from pathlib import Path
 from string import Template
 from time import time
-from typing import List, Sequence, Tuple, overload
+from typing import List, Sequence, Tuple, overload, Union
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -247,3 +247,13 @@ def strfdelta(tdelta, fmt):
     d["S"] = '{:02d}'.format(seconds)
     t = DeltaTemplate(fmt)
     return t.substitute(**d)
+
+
+def move_item(ls: Union[List, Tuple], from_index: int, to_index: int):
+    item = ls[from_index]
+    item = [item] if isinstance(ls, list) else (item,)
+    if to_index < from_index:
+        ls = ls[:to_index] + item + ls[to_index: from_index] + ls[from_index + 1:]
+    else:
+        ls = ls[:from_index] + ls[from_index + 1:to_index + 1] + item + ls[to_index + 1:]
+    return ls

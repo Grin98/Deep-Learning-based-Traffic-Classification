@@ -51,7 +51,7 @@ class Aggregator:
         flows = self._label_flows(flows, labels)
         write_flows(writable, flows)
 
-    def merge_csvs(self, out_file: Path, csvs: Sequence[Path], random_start: bool = False):
+    def merge_csvs(self, out_file: Path, csvs: Sequence[Path], random_start: bool = True):
         """
         writes flows from different csv files to a single csv
         :param out_file: file to write to

@@ -227,7 +227,7 @@ class AnalyzerPage(ttk.Frame):
 
         dir_ = files[0].parent
         out_file = dir_ / f'merged_{str(time.strftime("%Y-%m-%d_%H-%M-%S"))}.csv'
-        Aggregator().merge_csvs(out_file, files, random_start=False)
+        Aggregator().merge_csvs(out_file, files, random_start=True)
         messagebox.showinfo(title=f'{out_file.name}', message=f'created successfully at:\n{out_file}')
 
 
