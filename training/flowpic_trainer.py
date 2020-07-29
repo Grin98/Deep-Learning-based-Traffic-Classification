@@ -31,7 +31,7 @@ class FlowPicTrainer(Trainer):
 
         y = y.cpu()
         pred = pred.cpu()
-        weighted_s = f1_score(y, pred, average='weighted')
+        weighted_s = f1_score(y, pred, average='macro')
         per_class_s = f1_score(y, pred, average=None)
 
         return BatchResult(loss, num_total, num_correct, weighted_s, per_class_s)
