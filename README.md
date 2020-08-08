@@ -5,7 +5,7 @@
 
 ### Terminology
 * Sample - a 2-tuple of (`packet_arrival_time`, `packet_size`); where `packet_arrival_time` is the inter-arrival time of the packet and `packet_size` excludes app/transport/IP headers.
-* Stream - an unfiltered and unprocessed contiguous sequence of samples of a 5-tuple connection. Here, a connection is composed of the classic 4-tuple (ip_src, port_src, ip_dst, port_dst) as well as the transport protocol.
+* Stream - an unfiltered and unprocessed contiguous sequence of samples\packets of a 5-tuple connection (ip_src, port_src, ip_dst, port_dst, protocol).
 * Flow - all the samples in a specific 5-tuple connection where the `packet_size` is lesser then 1500 and `packet_arrival_time` is normalized to start from 0 (class: `Flow`).
 * Block - all the samples of a specific flow during a time interval of 60 seconds where `packet_arrival_time` is normalized to start from 0 (class: `Block`)
 * FlowPic - a 2D histogram which is constructed from a specific block, where X-axis is time, Y-axis is packet size
@@ -21,7 +21,7 @@ TODO
 
 ## 3. Training on The Technion Servers
 [link1](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers) and [link2](https://vistalab-technion.github.io/cs236781/assignments/getting-started) 
-contain a very good explanation on how to use the servers.  
+contain great explanations on how to use the servers.  
 Here, we will provide an explanation on how we interacted with the servers but it doesn't mean that there are no
 other options and we recommend to read the explanations in the links.  
 That said let us begin with assuming that 
@@ -43,21 +43,38 @@ As explained in [link1](https://vistalab-technion.github.io/cs236781/assignments
 there are a few ways in which you can run the bash script but for training the model we recommend using
 the `sbatch` command and for convenience you can just run the script named "run" that is in the repository.  
 For example, `./run 2 1 my_script.sh output.out` means to execute my_script.sh with sbatch on node 2
-with 1 GPU where the stdout will be written to output.out.  
-Additionally, you can see your running jobs and their ids with the `squeue` command, and if you want to cancel
+with 1 GPU and 2 CPUs (twice the number of GPUs) where the stdout will be written to output.out.  
+Additionally, you can see currently running jobs and their ids with the `squeue` command, and if you want to cancel
 a current running job of yours, you can do it with `scancel <job-id>` or execute the script called "cancel"
 which will find and cancel all your jobs. Another option to cancel is if you execute "run" with source i.e
-`source run 2 1 my_script.sh output.out` you then can use `scancel $id`  
+`source run 2 1 my_script.sh output.out` you then can use `scancel $id` as long as you didn't exit the current shell.  
 Important: "cancel" script searches for a hard coded user name so change it in the script to your user name.
 
-### Tips
-* MobaXterm is a very convenient program for connecting to the servers.
-* MobaXtrem can't copy large folders/files and it's better to use scp(secure copy) for such tasks.
-* we recommend to install a program which allows you to open a bash shell on windows (git bash for example)
-which will allow you to use scp from your computer.
-* try to change a node If you see that your job isn't running due to lack of resources.
+### Training
+To train the model you will need to run reg_categories.sh as mentioned in the previous section.  
+The training takes 35 epochs (around 2.5 hours on 2 GPUs) to reach it's best results.  
+The script creates a new folder named "reg_out" that is used as an output folder.  
+At the end of the training the folder will contain:
+* out.log - a copy of the prints to stdout
+* model.py - the trained model (can be passed as input to function load_model())
+* acc.png - graph of accuracy as function of epoch number
+* f1.png - graph of f1_score as function of epoch number
+* loss.png - graph of loss as function of epoch number
 
-## 4. Credits
+### Tips
+* MobaXterm is a very convenient program for connecting to the servers and downloading/uploading small files.
+* MobaXtrem can't copy large folders/files and it's better to use scp(secure copy protocol) for such tasks.
+* Install a program which allows you to open a bash shell on windows (git bash for example)
+which will allow you to use scp from your computer.
+* Try changing nodes If you see that your job isn't running due to lack of resources.
+
+## 4. Classification
+We provide 3 different wrapper classes for using the model as a classifier:
+* Classifier - low level api (classifying at the flow level)
+* PcapClassifier - classifies flows in pcap files
+* FlowCsvClassifier - classifies flows in csv files  
+
+## 5. Credits
 
 ### 3rd Party Libraries
 - Pytorch
@@ -67,9 +84,9 @@ which will allow you to use scp from your computer.
 - tqdm
 - matplotlib
 
-### Special Thanks
-We want to thank Tal Shapira for providing us the dataset that he and Yuval Shavitt used in their article "FlowPic: Encrypted Internet Traffic Classification is
-as Easy as Image Recognition" and for helping us to understand the subject in the initial stages of the project.
-
 ### Mentors
 We'd like to thank Mr. Itzik Ashkenazi and Mr. Aviel Glam for their wonderful guidance throughout the semester
+
+### Special Thanks
+We want to thank Tal Shapira for providing us the dataset that he and Yuval Shavitt used in their article "FlowPic: Encrypted Internet Traffic Classification is
+as Easy as Image Recognition" and for helping us in the initial stages of the project.

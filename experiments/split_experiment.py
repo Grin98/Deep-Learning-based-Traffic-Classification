@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from flowpic_dataset.loader import FlowCSVDataLoader, Format
 from model.flow_pic_model import FlowPicModel
 from experiments.experiment import Experiment
-from training.flowpic_trainer import FlowPicTrainer
+from trainers.flowpic_trainer import FlowPicTrainer
 from misc.output import Logger
 
 

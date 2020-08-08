@@ -52,14 +52,6 @@ class C:
 
 if __name__ == '__main__':
 
-    ls = [0, 1, 2, 3, 4, 5, 6, 7]
-    from_index: int = 0
-    to_index: int = 0
-
-    item = ls[from_index]
-    if to_index < from_index:
-        ls = ls[:to_index] + [item] + ls[to_index: from_index] + ls[from_index + 1:]
-    else:
-        ls = ls[:from_index] + ls[from_index + 1:to_index+1] + [item] + ls[to_index+1:]
-
-    print(ls)
+    a, b = FlowCSVDataLoader(Logger(verbose=False)).load_dataset('data_cv_nz_reg', format_=Format.SplitCV)
+    print(a)
+    print(b)

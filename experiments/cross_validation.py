@@ -15,10 +15,10 @@ from flowpic_dataset.dataset import BlocksDataSet
 from flowpic_dataset.loader import FlowCSVDataLoader
 from misc.utils import create_dir, _create_pre_trained_model, is_file, Timer
 from model.flow_pic_model import FlowPicModel
-from training.flowpic_trainer import FlowPicTrainer
+from trainers.flowpic_trainer import FlowPicTrainer
 from misc.output import Logger
 from misc.data_classes import BatchResult
-from training.trainer import Trainer
+from trainers.trainer import Trainer
 
 
 class CrossValidation(Experiment):
