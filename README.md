@@ -14,7 +14,7 @@
 
 ## 2. Requirements And Set-Up
 ### Wireshark
-TODO
+See guide for setting up wireshark in the drive under Networking Project/Wireshark_Setup
 
 ### Conda
 TODO
@@ -24,12 +24,11 @@ TODO
 contain great explanations on how to use the servers.  
 Here, we will provide an explanation on how we interacted with the servers but it doesn't mean that there are no
 other options and we recommend to read the explanations in the links.  
-That said let us begin with assuming that 
-user@campus.technion.ac.il is our Technion mail user
 
 ### Connecting
-First of all connect to the csl3 server with you user by executing: `ssh -X user@csl3.cs.technion.ac.il` (password is the same as to your email).      
-From csl3 connect to the rishon server by executing: `ssh user@rishon.cs.technion.ac.il` (password is the same as to your email).  
+let user@campus.technion.ac.il be our Technion mail user  
+First of all connect to the csl3 server with your user by executing: `ssh -X user@csl3.cs.technion.ac.il` (password is the same as to your email).      
+Now, connect from csl3 to the rishon server by executing: `ssh user@rishon.cs.technion.ac.il` (password is the same as to your email).  
 
 ### Environment Set-UP
 See the "Environment Set-Up" section in [link2](https://vistalab-technion.github.io/cs236781/assignments/getting-started)
