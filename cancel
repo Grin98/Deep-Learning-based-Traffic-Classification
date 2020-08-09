@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+user=ron.gr
+
+ids=$(squeue | awk -v var="$user" '$4 == var' | awk '{print $1}')
+scancel $ids
+echo "canceled $ids"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+path=$1
+
+if [ "$#" -eq "2" ]
+then
+	path=$2
+	flag=$1
+fi
+
+scp $flag $path ron.gr@csl3.cs.technion.ac.il:./$path

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+num_server=$1
+num_gpus=$2
+num_cpus=$(( $num_gpus * 2 ))
+script_path=$3
+out=$4
+
+id=$(sbatch -w rishon$num_server -c $num_cpus --gres=gpu:$num_gpus -o $out -J run $script_path |
+awk '{print $4}')
+
+echo "job $id, using $num_cpus cpus and $num_gpus gpus"
+sleep 1
+squeue | awk -v var="ron.gr"  '$4 == var' | awk '{print}'
+
