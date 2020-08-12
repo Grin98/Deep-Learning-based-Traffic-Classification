@@ -1,4 +1,4 @@
 tqdm
-sckit-learn
+scikit-learn
 pyshark
 matplotlib
