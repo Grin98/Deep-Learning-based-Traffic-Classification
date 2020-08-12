@@ -41,7 +41,7 @@ In the root directory there is a folder named "environment_setup" with the follo
 * install_packages.sh - script for installing all relevant packages
 
 Run the following code from inside of environment_setup folder  
-`conda env create -f environment.ym`   
+`conda env create -f environment.yml`   
 `conda activate flowpic`  
 `./install_packages.sh`  
 The above code will create an environment called flowpic and install all the packages needed for 
