@@ -38,10 +38,14 @@ Note: if you are connected to the Technion's network then you can skip the first
 In the root directory there is a folder named "environment_setup" with the following files:
 * environment.yml - an empty environment file
 * requirements.txt - libraries to install
-* create_environment.sh - script for creating an environment with all relevant libraries
+* install_packages.sh - script for installing all relevant packages
 
-Run create_environment.sh from the environment_setup folder and it will create an environment named "flowpic".  
-To activate the environment from anywhere you want use `conda activate flowpic`
+Run the following code from inside of environment_setup folder  
+`conda env create -f environment.ym`   
+`conda activate flowpic`  
+`./install_packages.sh`  
+The above code will create an environment called flowpic and install all the packages needed for 
+training the model
 
 ### Running Python Scripts
 First of all create a bash script that invokes your desired python script.  
