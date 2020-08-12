@@ -17,36 +17,45 @@
 See guide for setting up wireshark in the drive under Networking Project/Wireshark_Setup
 
 ### Conda
-TODO
+Follow the instruction under the section "Environment set-up" [here](https://vistalab-technion.github.io/cs236781/assignments/getting-started)
+and install python3 version of miniconda (step 1).  
+The link also contains additional information on how to setup and use an environment if you will need 
+it in the future.
 
 ## 3. Training on The Technion Servers
-[link1](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers) and [link2](https://vistalab-technion.github.io/cs236781/assignments/getting-started) 
-contain great explanations on how to use the servers.  
+[This link](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers) 
+contains a great explanation on how to use the servers.  
 Here, we will provide an explanation on how we interacted with the servers but it doesn't mean that there are no
-other options and we recommend to read the explanations in the links.  
+other options and we recommend to read the explanation in the link.  
 
 ### Connecting
 let user@campus.technion.ac.il be our Technion mail user  
 First of all connect to the csl3 server with your user by executing: `ssh -X user@csl3.cs.technion.ac.il` (password is the same as to your email).      
-Now, connect from csl3 to the rishon server by executing: `ssh user@rishon.cs.technion.ac.il` (password is the same as to your email).  
+Now, connect from csl3 to the rishon server by executing: `ssh user@rishon.cs.technion.ac.il` (password is the same as to your email).   
+Note: if you are connected to the Technion's network then you can skip the first step of connecting to csl3. 
 
 ### Environment Set-UP
-See the "Environment Set-Up" section in [link2](https://vistalab-technion.github.io/cs236781/assignments/getting-started)
-for a detailed explanation on how to install and use conda on the server.
+In the root directory there is a folder named "environment_setup" with the following files:
+* environment.yml - an empty environment file
+* requirements.txt - libraries to install
+* create_environment.sh - script for creating an environment with all relevant libraries
 
-### Running Scripts
+Run create_environment.sh from the environment_setup folder and it will create an environment named "flowpic".  
+To activate the environment from anywhere you want use `conda activate flowpic`
+
+### Running Python Scripts
 First of all create a bash script that invokes your desired python script.  
-Secondly activate your environment with `conda activate <env-name>`.  
-Now you are ready to run your script. 
-As explained in [link1](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers)
-there are a few ways in which you can run the bash script but for training the model we recommend using
-the `sbatch` command and for convenience you can just run the script named "run" that is in the repository.  
-For example, `./run 2 1 my_script.sh output.out` means to execute my_script.sh with sbatch on node 2
+Secondly, activate your environment (if needed).  
+Now you are ready to run your script.  
+As explained in [here](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers) under the "General" section,
+there are a few ways in which you can run the bash script but from our experience you would usually 
+just use the `sbatch` command, for convenience you can just run the bash script named "run" that is in the 
+root directory.    
+For example, `./run 2 1 my_script.sh output.out` means to execute my_script.sh with sbatch on node 2 
 with 1 GPU and 2 CPUs (twice the number of GPUs) where the stdout will be written to output.out.  
-Additionally, you can see currently running jobs and their ids with the `squeue` command, and if you want to cancel
-a current running job of yours, you can do it with `scancel <job-id>` or execute the script called "cancel"
-which will find and cancel all your jobs. Another option to cancel is if you execute "run" with source i.e
-`source run 2 1 my_script.sh output.out` you then can use `scancel $id` as long as you didn't exit the current shell.  
+Additionally, you can see currently running jobs and their ids with the `squeue` command, and if you 
+want to cancel a currently running job of yours, you can do it with `scancel <job-id>` or execute the bash script 
+called "cancel" which will find and cancel all your jobs.  
 Important: "cancel" script searches for a hard coded user name so change it in the script to your user name.
 
 ### Training
